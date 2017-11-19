@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "colorful-contribution",
+  "version": "0.1",
+  "author": "gigaflw",
+  "description": "Custom color scheme for github contribution bar",
+  "browser_action": {
+    "default_title": "How are you feeling today?"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["colorful.js"]
+    }
+  ]
+}
