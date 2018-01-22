@@ -5,12 +5,15 @@
   "author": "gigaflw",
   "description": "Custom color scheme for github contribution bar",
   "browser_action": {
-    "default_title": "How are you feeling today?"
+    "default_popup": "popup.html",
+    "default_title": "ColorfulGithub"
   },
-  "content_scripts": [
-    {
-      "matches": ["https://github.com/*"],
-      "js": ["colorful.js"]
-    }
-  ]
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "content_scripts": [{
+    "matches": ["https://github.com/*"],
+    "js": ["colorful.js"]
+  }]
 }
