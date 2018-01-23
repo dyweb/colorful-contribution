@@ -2,43 +2,15 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-23 21:50:46
+ * @Last Modified time: 2018-01-23 22:04:09
  */
 
 /*
  * Save the selected `theme` into `chrome.storage.local` so that
  * content script `colorful.js` can find it.
  */
-function sendTheme(theme) {
-  if (!theme) return
 
-  if (!theme.thresholds) {
-    theme.thresholds = window.CGC_CONFIG.default_thresholds
-  }
-
-  chrome.storage.local.set({
-    'colorful-github': theme
-  }, () => {
-    chrome.tabs.executeScript({
-      file: 'colorful.js'
-    })
-  })
-}
-
-/*
- * Init `chrome.storage.sync` where permanent user settings are saved
- */
-function initStorage() {
-  chrome.storage.sync.set({
-    'version': window.CGC_CONFIG.version,
-    'colorful-github-all': window.CGC_CONFIG.default_themes,
-    'colorful-github-selected': ''
-  })
-}
-
-function saveThemes(themes) {
-  chrome.storage.sync.set({'colorful-github-all': themes})
-}
+let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid ambiguity
 
 /*
  * Add options to popup pages according to `themes`
@@ -81,20 +53,20 @@ function initButtons(themes) {
 
     nameInput.addEventListener('change', event => {
       theme.name = event.target.value
-      saveThemes(themes)
+      CGC.saveThemes(themes)
     })
 
     colorInput.addEventListener('change', event => {
       // TODO
       theme.colors[1] = event.target.value
-      saveThemes(themes)
+      CGC.saveThemes(themes)
     })
 
     delBtn.addEventListener('click', event => {
       if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
         let ind = themes.indexOf(theme)
         themes.splice(ind, 1)
-        saveThemes(themes)
+        CGC.saveThemes(themes)
         window.location.reload()
       }
     })
@@ -127,7 +99,6 @@ function initButtons(themes) {
       }
     })
 
-
     fragment.appendChild(themeBlock)
   }
   document.getElementById('color-select').appendChild(fragment)
@@ -140,8 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   chrome.storage.sync.get('colorful-github-all', (obj) => {
     if (!obj['colorful-github-all']) {
-      initStorage()
-      themes = window.CGC_CONFIG.default_themes
+      CGC.initStorage()
+      themes = CGC.default_themes
     } else {
       themes = obj['colorful-github-all']
     }
@@ -149,9 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initButtons(themes)
 
     function setTheme(themeName) {
-      sendTheme(themes.find(t => t.name == themeName))
-      chrome.storage.sync.set({ 'colorful-github-selected': themeName })
+      CGC.setTheme(themes.find(t => t.name == themeName))
       colorSelect.dataset.selected = themeName
+
       Array.prototype.forEach.call(colorSelect.querySelectorAll('.theme-block'), blk => {
         if (blk.dataset.name === themeName) {
           blk.classList.add('selected')
