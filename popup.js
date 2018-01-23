@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-23 14:49:16
+ * @Last Modified time: 2018-01-23 21:38:40
  */
 
 /*
@@ -36,6 +36,10 @@ function initStorage() {
   })
 }
 
+function saveThemes(themes) {
+  chrome.storage.sync.set({'colorful-github-all': themes})
+}
+
 /*
  * Add options to popup pages according to `themes`
  */
@@ -43,26 +47,76 @@ function initButtons(themes) {
   if (!themes) return
 
   let fragment = document.createDocumentFragment()
+
   for (let theme of themes) {
-    let themeBlock = document.createElement('div'),
-      themeNameBlock = document.createElement('div'),
-      themeColorBlock = document.createElement('div')
+    let colorBlocksStr = theme.colors.reduce((acc, cur) =>
+      acc + `<div class="color-block" style="background-color: ${cur}"></div>`, '')
 
-    themeNameBlock.classList.add('theme-name')
-    themeNameBlock.appendChild(document.createTextNode(theme.name))
+    let themeBlockHTML = `
+    <div class="theme-block" data-name="${theme.name}">
+      <div class="theme-name underline">
+        <input class="invisible-input" type="text" value="${theme.name}" disabled>
+      </div>
+      <div class="theme-colors">
+        ${colorBlocksStr}
+        <div class="color-edit-box underline hidden">
+          <input class="invisible-input" type="text" value="${theme.colors[0]}" disabled>
+        </div>
+      </div>
+      <div class="theme-editor">
+        <i class="fa fa-pencil edit-btn"></i>
+        <i class="fa fa-trash"></i>
+      </div>
+    </div>`
 
-    themeColorBlock.classList.add('theme-colors')
-    for (let color of theme.colors) {
-      let colorBlock = document.createElement('div')
-      colorBlock.classList.add('color-block')
-      colorBlock.style['background-color'] = color
-      themeColorBlock.appendChild(colorBlock)
-    }
+    let themeBlock = document.createElement('div')
+    themeBlock.innerHTML = themeBlockHTML
+    themeBlock = themeBlock.childNodes[1]
 
-    themeBlock.classList.add('theme-block')
-    themeBlock.dataset.name = theme.name
-    themeBlock.appendChild(themeNameBlock)
-    themeBlock.appendChild(themeColorBlock)
+    // Editor stuff
+    let editBtn = themeBlock.querySelector('.edit-btn'),
+      nameInput = themeBlock.querySelector('.theme-name input'),
+      colorInput = themeBlock.querySelector('.color-edit-box input')
+
+    nameInput.addEventListener('change', event => {
+      theme.name = event.target.value
+      saveThemes(themes)
+    })
+
+    colorInput.addEventListener('change', event => {
+      // TODO
+      theme.colors[1] = event.target.value
+      saveThemes(themes)
+    })
+
+    editBtn.addEventListener('click', event => {
+      // Toggling editing mode when click on the edit button
+      // if in editing mode:
+      //  a. theme name editable with a underline
+      //  b. theme color editable, with an extra color string input field (again, with a underline)
+      //  c. edit button is a floppy denoting save
+      let btn = event.target,
+        block = btn.parentNode.parentNode,
+        nameInput = block.querySelector('.theme-name input'),
+        colorInput = block.querySelector('.color-edit-box input')
+
+      if (!block.classList.contains('editing')) {
+        // entering edit mode
+        btn.classList.remove('fa-pencil')
+        btn.classList.add('fa-floppy-o')
+        block.classList.add('editing')
+        colorInput.parentNode.classList.remove('hidden') // show extra color string field
+        colorInput.disabled = nameInput.disabled = false  // editable
+      } else {
+        // entering non-edit mode
+        btn.classList.add('fa-pencil')
+        btn.classList.remove('fa-floppy-o')
+        block.classList.remove('editing')
+        colorInput.parentNode.classList.add('hidden')   // hide extra color string field
+        colorInput.disabled = nameInput.disabled = true // non-editable
+      }
+    })
+
 
     fragment.appendChild(themeBlock)
   }
