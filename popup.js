@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-23 21:38:40
+ * @Last Modified time: 2018-01-23 21:50:46
  */
 
 /*
@@ -65,7 +65,7 @@ function initButtons(themes) {
       </div>
       <div class="theme-editor">
         <i class="fa fa-pencil edit-btn"></i>
-        <i class="fa fa-trash"></i>
+        <i class="fa fa-trash del-btn"></i>
       </div>
     </div>`
 
@@ -75,6 +75,7 @@ function initButtons(themes) {
 
     // Editor stuff
     let editBtn = themeBlock.querySelector('.edit-btn'),
+      delBtn = themeBlock.querySelector('.del-btn'),
       nameInput = themeBlock.querySelector('.theme-name input'),
       colorInput = themeBlock.querySelector('.color-edit-box input')
 
@@ -87,6 +88,15 @@ function initButtons(themes) {
       // TODO
       theme.colors[1] = event.target.value
       saveThemes(themes)
+    })
+
+    delBtn.addEventListener('click', event => {
+      if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
+        let ind = themes.indexOf(theme)
+        themes.splice(ind, 1)
+        saveThemes(themes)
+        window.location.reload()
+      }
     })
 
     editBtn.addEventListener('click', event => {
@@ -161,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let elem = event.target
 
       while (!elem.classList.contains('theme-block')) {
+        if (elem.classList.contains('theme-editor')) return // will not select the theme if clicked on editor area
         elem = elem.parentNode
       }
       // every .theme-block should have a data-name field
