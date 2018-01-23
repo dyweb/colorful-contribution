@@ -4,18 +4,53 @@
     <title>Colorful Github Contribution</title>
     <style type="text/css">
       body {
-        margin: 10px;
-        white-space: nowrap;
+        background-color: #ddd;
+        margin: 0 0 -10px;
       }
 
-      h1 {
-        font-size: 15px;
-      }
+      .theme-block {
+        background-color: #eee;
+        /*background-color: rgba(255, 255, 255, 0.5);*/
+        width: 200px;
+        height: 40px;
+        /*box-sizing: content-box;*/
+        padding: 5px 10px;
+        margin-bottom: 5px;
 
-      #container {
-        align-items: center;
         display: flex;
-        justify-content: space-between;
+        align-items: center;
+
+        transition: background-color .2s, border .2s;
+        border: 2px solid transparent;
+      }
+
+      .theme-block:last-of-type {
+        margin-bottom: 0;
+      }
+
+      .theme-block:hover,
+      .theme-block.selected {
+        border: 2px solid #aaa;
+      }
+
+      .theme-name {
+        font-size: 15px;
+        text-align: center;
+        width: 30%;
+        margin-right: 10px;
+      }
+
+      .theme-colors {
+        flex-grow: 1;
+        height: 80%;
+
+        display: flex;
+        box-shadow: 0px 0px 2px rgba(0,0,0,0.5);
+      }
+
+      .color-block {
+        width: 20%;
+        height: 100%;
       }
     </style>
     <script src="config.js"></script>
@@ -23,11 +58,22 @@
   </head>
 
   <body>
-    <h1>Color themes</h1>
-    <div>
-      <select id="color-select">
-        <option selected disabled hidden value=''></option>
-      </select>
+    <div id="color-select">
+      <!-- To be added by `pop.js` -->
+
+      <!-- Demo block -->
+      <!--
+      <div class="theme-block" id="theme-block-demo" data-name="FooBar">
+        <div class="theme-name">FooBar</div>
+        <div class="theme-colors">
+          <div class="color-block" style="background-color: #111"></div>
+          <div class="color-block" style="background-color: #555"></div>
+          <div class="color-block" style="background-color: #888"></div>
+          <div class="color-block" style="background-color: #bbb"></div>
+          <div class="color-block" style="background-color: #eee"></div>
+        </div>
+      </div>
+       -->
     </div>
   </body>
 </html>
