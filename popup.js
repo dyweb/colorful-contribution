@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-23 22:04:09
+ * @Last Modified time: 2018-01-23 22:08:41
  */
 
 /*
@@ -52,6 +52,7 @@ function initButtons(themes) {
       colorInput = themeBlock.querySelector('.color-edit-box input')
 
     nameInput.addEventListener('change', event => {
+      document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
       theme.name = event.target.value
       CGC.saveThemes(themes)
     })
