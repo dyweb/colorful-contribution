@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 20:56:23
+ * @Last Modified time: 2018-01-25 21:26:31
  */
 
 /*
@@ -140,14 +140,22 @@ function setEditMode(themeBlock, val) {
 
   if (val) {
     // entering edit mode
+
+    // only 1 block can enter edit mode at once
+    for (let b of themeBlock.parentNode.querySelectorAll('.theme-block')) {
+      setEditMode(b, false)
+    }
+
     btn.classList.remove('fa-pencil')
-    btn.classList.add('fa-floppy-o')
+    btn.classList.add('fa-check')
     themeBlock.classList.add('editing')
     colorInput.disabled = nameInput.disabled = false  // editable
+    nameInput.focus()
+
   } else {
     // leave edit mode
     btn.classList.add('fa-pencil')
-    btn.classList.remove('fa-floppy-o')
+    btn.classList.remove('fa-check')
     themeBlock.classList.remove('editing')
     colorInput.disabled = nameInput.disabled = true // non-editable
   }
@@ -163,7 +171,6 @@ function resetAllThemeBlocks(except) {
   let blocks = document.querySelectorAll('#theme-panel .theme-block')
   for (let b of blocks) {
     if (b.dataset.name === except) continue
-
     b.classList.remove('selected')
     b.querySelector('.del-btn').classList.remove('confirming')
     setEditMode(b, false)
@@ -211,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!themeName) return
       CGC.setTheme(themeName)
       themePanel.dataset.selected = themeName
+
       themePanel.querySelector(`.theme-block[data-name=${themeName}]`).classList.add('selected')
     }
 
@@ -224,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add click event of setting themes
     themePanel.addEventListener('click', (event) => {
       let elem = event.target
-      let inEditorArea = false, inBlockArea = false
+      let inEditorArea = false, inBlockArea = false, isEditing = false
 
       while (elem !== themePanel) {
         if (elem.classList.contains('theme-editor')) {
@@ -233,19 +241,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elem.classList.contains('theme-block')) {
           // found the block we want
           inBlockArea = true
+          isEditing = elem.classList.contains('editing')
           break
         }
         elem = elem.parentNode
       }
 
-      if (inBlockArea) {
+      if (inBlockArea && !inEditorArea && !isEditing) {
+        // will not select a theme by clicking on its editor area
         resetAllThemeBlocks(elem.dataset.name)
-        if (!inEditorArea) {
-          // will not select a theme by clicking on its editor area
-          setTheme(elem.dataset.name) // every .theme-block should have a data-name field
-        }
+        setTheme(elem.dataset.name) // every .theme-block should have a data-name field
       }
     })
   })
-
 })
