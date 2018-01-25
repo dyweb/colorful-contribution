@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-23 22:08:41
+ * @Last Modified time: 2018-01-25 14:37:07
  */
 
 /*
@@ -16,6 +16,7 @@ let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid am
  * Add options to popup pages according to `themes`
  */
 function initButtons(themes) {
+  // TODO: This function is too LONG!
   if (!themes) return
 
   let fragment = document.createDocumentFragment()
@@ -51,18 +52,21 @@ function initButtons(themes) {
       nameInput = themeBlock.querySelector('.theme-name input'),
       colorInput = themeBlock.querySelector('.color-edit-box input')
 
+    // Modify theme name
     nameInput.addEventListener('change', event => {
       document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
       theme.name = event.target.value
       CGC.saveThemes(themes)
     })
 
+    // Modify theme colors
     colorInput.addEventListener('change', event => {
       // TODO
       theme.colors[1] = event.target.value
       CGC.saveThemes(themes)
     })
 
+    // Delete theme
     delBtn.addEventListener('click', event => {
       if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
         let ind = themes.indexOf(theme)
@@ -72,6 +76,7 @@ function initButtons(themes) {
       }
     })
 
+    // Toggle per-thtem edit mode
     editBtn.addEventListener('click', event => {
       // Toggling editing mode when click on the edit button
       // if in editing mode:
@@ -103,6 +108,12 @@ function initButtons(themes) {
     fragment.appendChild(themeBlock)
   }
   document.getElementById('color-select').appendChild(fragment)
+
+  // Foot panel
+  let addBtn = document.querySelector('.add-btn')
+  addBtn.addEventListener('click', event => {
+    // TODO
+  })
 }
 
 
