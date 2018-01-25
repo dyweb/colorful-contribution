@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-22 21:52:13
+ * @Last Modified time: 2018-01-25 16:29:40
  *
  * This file is intended as content script for github contribution page
  *
@@ -34,6 +34,7 @@ chrome.storage.local.get('colorful-github', (theme) => {
     return
   }
   theme = theme['colorful-github']
+  if (!theme) return
 
   let legends = document.querySelectorAll('.contrib-legend ul.legend > li'),
     days = document.querySelectorAll('.calendar-graph rect.day')

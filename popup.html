@@ -24,7 +24,7 @@
         background-color: #eee;
         width: 200px;
         height: 40px;
-        padding: 5px 10px;
+        padding: 5px 5px;
         margin-bottom: 5px;
 
         display: flex;
@@ -62,6 +62,7 @@
         box-shadow: 0px 0px 2px rgba(0,0,0,0.5);
 
         position: relative;
+        margin-right: 10px;
       }
 
       .color-block {
@@ -71,18 +72,30 @@
 
       /* Per-theme editor stuff */
       .theme-editor {
-        margin-left: 15px;
+        min-width: 25px;
         display: flex;
         flex-direction: column;
+        text-align: center;
       }
 
       .theme-editor > i {
         margin: 3px 0;
         color: rgba(0, 0, 0, 0.4);
-        transition: color, .2s;
+        cursor: pointer;
+        padding: 1px 3px;
+        transition: color, .2s, background-color .2s;
+        border-radius: 5px;
       }
       .theme-editor > i:hover {
         color: rgba(0, 0, 0, 0.9);
+      }
+
+      .theme-editor > .del-btn.confirming {
+        color: rgba(255, 255, 255, 0.9);
+        background-color: #eaa;
+      }
+      .theme-editor > .del-btn.confirming:before {
+        content: "\f1f8?";
       }
 
       .theme-block.editing {

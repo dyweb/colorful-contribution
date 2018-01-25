@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 15:33:59
+ * @Last Modified time: 2018-01-25 16:30:17
  */
 
 /*
@@ -70,10 +70,12 @@ function getThemeBlock(theme) {
 
   // Delete theme
   delBtn.addEventListener('click', event => {
-    if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
-      let ind = CGC.all_themes.indexOf(theme)
-      CGC.all_themes.splice(ind, 1)
-      CGC.saveThemes(CGC.all_themes)
+    if (!event.target.classList.contains('confirming')) {
+      // first click, change style to ask for confirm
+      event.target.classList.add('confirming')
+    } else {
+      // confirmed, delete it
+      CGC.deleteTheme(theme)
       window.location.reload()
     }
   })

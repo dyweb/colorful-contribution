@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 15:34:36
+* @Last Modified time: 2018-01-25 16:30:36
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -83,6 +83,41 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   /*
+   * Delete the theme
+   * `chrome.storage.sync['colorful-github-all']` will be changed
+   * `chrome.storage.sync['colorful-github-selected']` will be set to empty string
+   *   if it happens to be deleted
+   * 
+   * @params theme { String | Object }
+   *    The theme object or its name.
+   *    Will do nothing if a string is given but can not be found from `all_themes`
+   */
+  deleteTheme(theme) {
+    if (typeof(theme) === 'string') {
+      theme = CGC.all_themes.find(t => t.name == theme)
+    }
+    if (!theme) return
+
+    let ind = CGC.all_themes.indexOf(theme)
+    if (ind == -1) return
+
+    CGC.all_themes.splice(ind, 1)
+    CGC.saveThemes(CGC.all_themes)
+
+    chrome.storage.sync.get('colorful-github-selected', obj => {
+      if (obj['colorful-github-selected'] === theme.name ) {
+        chrome.storage.sync.set({'colorful-github-selected': ''})
+      }
+    })
+
+    chrome.storage.local.get('colorful-github', obj => {
+      if (obj['colorful-github'].name === theme.name ) {
+        chrome.storage.local.set({'colorful-github': ''})
+      }
+    })
+  },
+
+  /*
    * Create a default theme and add it into `all_themes`
    * the new copy of default theme will be returned
    * this new theme will be save to `chrome.storage.sync`
@@ -102,6 +137,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     CGC.saveThemes()
     return theme
   }
+
   ///////////////////////////////////
   // Themes Management Interface Ends
   ///////////////////////////////////
