@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 17:33:46
+ * @Last Modified time: 2018-01-25 20:56:23
  */
 
 /*
@@ -32,7 +32,7 @@ function getThemeBlock(theme) {
     </div>
     <div class="theme-colors">
       ${colorBlocksStr}
-      <div class="color-edit-box underline hidden">
+      <div class="color-edit-box underline hidden" data-idx="0">
         <input class="invisible-input" type="text" value="${theme.colors[0]}" disabled>
       </div>
     </div>
@@ -52,7 +52,8 @@ function getThemeBlock(theme) {
   let editBtn = themeBlock.querySelector('.edit-btn'),
     delBtn = themeBlock.querySelector('.del-btn'),
     nameInput = themeBlock.querySelector('.theme-name input'),
-    colorInput = themeBlock.querySelector('.color-edit-box input')
+    colorInput = themeBlock.querySelector('.color-edit-box input'),
+    colorBlocks = themeBlock.querySelectorAll('.color-block')
 
   // Modify theme name
   nameInput.addEventListener('change', event => {
@@ -62,10 +63,17 @@ function getThemeBlock(theme) {
   })
 
   // Modify theme colors
-  colorInput.addEventListener('change', event => {
-    // TODO
-    theme.colors[1] = event.target.value
+  colorInput.addEventListener('input', event => {
+    let colorStr = event.target.value
+
+    if (!colorStr.match(/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/)) return  // illegal color string
+
+    let idx = event.target.parentNode.dataset.idx
+    let colorBlock = event.target.parentNode.parentNode.querySelectorAll('.color-block')[idx]
+    colorBlock.style['background-color'] = event.target.value
+    theme.colors[idx] = event.target.value
     CGC.saveThemes()
+    CGC.sendTheme(theme)
   })
 
   // Delete theme
@@ -90,6 +98,20 @@ function getThemeBlock(theme) {
       setEditMode(block, false)
     }
   })
+
+  for (let cb of colorBlocks) {
+    cb.addEventListener('mouseenter', event => {
+      let cb = event.target,
+        isEditing = cb.parentNode.parentNode.classList.contains('editing'),
+        editBox = cb.parentNode.querySelector('.color-edit-box')
+
+      if (isEditing) {
+        editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
+        editBox.dataset.idx = cb.offsetLeft / cb.offsetWidth
+        editBox.querySelector('input').value = theme.colors[editBox.dataset.idx]
+      }
+    })
+  }
 
   return themeBlock
 }

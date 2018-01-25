@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 17:19:23
+* @Last Modified time: 2018-01-25 21:01:37
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -32,20 +32,38 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   //////////////////////////////
   all_themes: null, // globally accessible variable, initialized from storage instantly after bootup
 
+  /*
+   * Send a theme object to `chrome.storage.local` and carry out content script `colorful.js`
+   * the page will refresh iff this function is executed
+   *
+   * @params: theme: { Object | null }
+   *   optional. If not given, the currently selected theme
+   *     will be sent according to `chrome.storage.sync`
+   */
   sendTheme(theme) {
-    if (!theme) return
-
-    if (!theme.thresholds) {
-      theme.thresholds = CGC.default_thresholds
-    }
-
-    chrome.storage.local.set({
-      'CGC': theme
-    }, () => {
-      chrome.tabs.executeScript({
-        file: 'colorful.js'
+    if (theme === null) {
+      chrome.storage.sync.get('CGC_selected', obj => {
+        let name = obj['CGC_selected']
+        let theme = CGC.all_themes.find(t => t.name === name)
+        CGC.sendTheme(theme)
       })
-    })
+    } else {
+
+      console.assert(theme.name)
+      console.assert(theme.colors)
+
+      if (!theme.thresholds) {
+        theme.thresholds = CGC.default_thresholds
+      }
+
+      chrome.storage.local.set({
+        'CGC': theme
+      }, () => {
+        chrome.tabs.executeScript({
+          file: 'colorful.js'
+        })
+      })
+    }
   },
 
   /*
@@ -74,7 +92,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    */
   setTheme(theme) {
     if (typeof(theme) === 'string') {
-      theme = CGC.all_themes.find(t => t.name == theme)
+      theme = CGC.all_themes.find(t => t.name === theme)
     }
     if (!theme) return
 
