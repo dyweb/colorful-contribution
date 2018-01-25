@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 16:36:45
+* @Last Modified time: 2018-01-25 17:19:23
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -102,7 +102,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     if (ind == -1) return
 
     CGC.all_themes.splice(ind, 1)
-    CGC.saveThemes(CGC.all_themes)
+    CGC.saveThemes()
 
     chrome.storage.sync.get('CGC_selected', obj => {
       if (obj['CGC_selected'] === theme.name ) {

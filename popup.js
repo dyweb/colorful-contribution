@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 16:38:03
+ * @Last Modified time: 2018-01-25 17:33:46
  */
 
 /*
@@ -58,14 +58,14 @@ function getThemeBlock(theme) {
   nameInput.addEventListener('change', event => {
     document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
     theme.name = event.target.value
-    CGC.saveThemes(CGC.all_themes)
+    CGC.saveThemes()
   })
 
   // Modify theme colors
   colorInput.addEventListener('change', event => {
     // TODO
     theme.colors[1] = event.target.value
-    CGC.saveThemes(CGC.all_themes)
+    CGC.saveThemes()
   })
 
   // Delete theme
@@ -80,36 +80,72 @@ function getThemeBlock(theme) {
     }
   })
 
-  // Toggle per-thtem edit mode
+  // Toggle per-theme edit mode
   editBtn.addEventListener('click', event => {
     // Toggling editing mode when click on the edit button
-    // if in editing mode:
-    //  a. theme name editable with a underline
-    //  b. theme color editable, with an extra color string input field (again, with a underline)
-    //  c. edit button is a floppy denoting save
-    let btn = event.target,
-      block = btn.parentNode.parentNode,
-      nameInput = block.querySelector('.theme-name input'),
-      colorInput = block.querySelector('.color-edit-box input')
-
+    let block = event.target.parentNode.parentNode
     if (!block.classList.contains('editing')) {
-      // entering edit mode
-      btn.classList.remove('fa-pencil')
-      btn.classList.add('fa-floppy-o')
-      block.classList.add('editing')
-      colorInput.parentNode.classList.remove('hidden') // show extra color string field
-      colorInput.disabled = nameInput.disabled = false  // editable
+      setEditMode(block, true)
     } else {
-      // entering non-edit mode
-      btn.classList.add('fa-pencil')
-      btn.classList.remove('fa-floppy-o')
-      block.classList.remove('editing')
-      colorInput.parentNode.classList.add('hidden')   // hide extra color string field
-      colorInput.disabled = nameInput.disabled = true // non-editable
+      setEditMode(block, false)
     }
   })
 
   return themeBlock
+}
+
+/*
+ * Enter/Leave edit mode for a theme block ( with class '.theme-block' )
+ * If in editing mode:
+ *  a. theme name editable with a underline
+ *  b. theme color editable, with an extra color string input field (again, with a underline)
+ *  c. edit button is a floppy denoting save
+ *  
+ * @param: themeBlock: {Node}
+ *   a node with class 'theme-block', do nothing if not
+ * @param: val {Bool}
+ *   false : leave edit mode
+ *   anything else : enter edit mode
+ *   
+ */
+function setEditMode(themeBlock, val) {
+  if (!themeBlock || !themeBlock.classList.contains('theme-block')) return
+
+  if (val !== false) { val = true }
+  let btn = themeBlock.querySelector('.edit-btn'),
+    nameInput = themeBlock.querySelector('.theme-name input'),
+    colorInput = themeBlock.querySelector('.color-edit-box input')
+
+  if (val) {
+    // entering edit mode
+    btn.classList.remove('fa-pencil')
+    btn.classList.add('fa-floppy-o')
+    themeBlock.classList.add('editing')
+    colorInput.disabled = nameInput.disabled = false  // editable
+  } else {
+    // leave edit mode
+    btn.classList.add('fa-pencil')
+    btn.classList.remove('fa-floppy-o')
+    themeBlock.classList.remove('editing')
+    colorInput.disabled = nameInput.disabled = true // non-editable
+  }
+}
+
+/*
+ * Clear all css states
+ *
+ * @param: except: {String}
+ *   if given, theme blocks with `theme.dataset.name == except` will not be reset
+ */
+function resetAllThemeBlocks(except) {
+  let blocks = document.querySelectorAll('#theme-panel .theme-block')
+  for (let b of blocks) {
+    if (b.dataset.name === except) continue
+
+    b.classList.remove('selected')
+    b.querySelector('.del-btn').classList.remove('confirming')
+    setEditMode(b, false)
+  }
 }
 
 /*
@@ -136,7 +172,6 @@ function initThemes() {
   })
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
   let themePanel = document.getElementById('theme-panel')
 
@@ -151,16 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initThemes()
 
     function setTheme(themeName) {
+      if (!themeName) return
       CGC.setTheme(themeName)
       themePanel.dataset.selected = themeName
-
-      Array.prototype.forEach.call(themePanel.querySelectorAll('.theme-block'), blk => {
-        if (blk.dataset.name === themeName) {
-          blk.classList.add('selected')
-        } else {
-          blk.classList.remove('selected')
-        }
-      })
+      themePanel.querySelector(`.theme-block[data-name=${themeName}]`).classList.add('selected')
     }
 
     // Reload selected theme
@@ -173,13 +202,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add click event of setting themes
     themePanel.addEventListener('click', (event) => {
       let elem = event.target
+      let inEditorArea = false, inBlockArea = false
 
-      while (!elem.classList.contains('theme-block')) {
-        if (elem.classList.contains('theme-editor')) return // will not select the theme if clicked on editor area
+      while (elem !== themePanel) {
+        if (elem.classList.contains('theme-editor')) {
+          inEditorArea = true
+        }
+        if (elem.classList.contains('theme-block')) {
+          // found the block we want
+          inBlockArea = true
+          break
+        }
         elem = elem.parentNode
       }
-      // every .theme-block should have a data-name field
-      setTheme(elem.dataset.name)
+
+      if (inBlockArea) {
+        resetAllThemeBlocks(elem.dataset.name)
+        if (!inEditorArea) {
+          // will not select a theme by clicking on its editor area
+          setTheme(elem.dataset.name) // every .theme-block should have a data-name field
+        }
+      }
     })
   })
 

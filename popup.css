@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 16:34:50
+* @Last Modified time: 2018-01-25 16:47:51
 */
 
 body {
@@ -128,9 +128,10 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 
 .color-edit-box > input {
   transition: height .2s;
-}
-.color-edit-box.hidden > input {
   height: 0;
+}
+.theme-block.editing .color-edit-box > input {
+  height: auto;
 }
 
 /* Foot panel */
