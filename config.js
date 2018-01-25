@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 16:30:36
+* @Last Modified time: 2018-01-25 16:36:45
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -40,7 +40,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     }
 
     chrome.storage.local.set({
-      'colorful-github': theme
+      'CGC': theme
     }, () => {
       chrome.tabs.executeScript({
         file: 'colorful.js'
@@ -54,13 +54,13 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   initStorage() {
     chrome.storage.sync.set({
       'version': CGC.version,
-      'colorful-github-all': CGC.default_themes,
-      'colorful-github-selected': ''
+      'CGC_all': CGC.default_themes,
+      'CGC_selected': ''
     })
   },
 
   saveThemes() {
-    chrome.storage.sync.set({'colorful-github-all': CGC.all_themes})
+    chrome.storage.sync.set({'CGC_all': CGC.all_themes})
     // TODO: Save all themes altogether may have efficiency issue
   },
 
@@ -79,13 +79,13 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     if (!theme) return
 
     CGC.sendTheme(theme)
-    chrome.storage.sync.set({ 'colorful-github-selected': theme.name })
+    chrome.storage.sync.set({ 'CGC_selected': theme.name })
   },
 
   /*
    * Delete the theme
-   * `chrome.storage.sync['colorful-github-all']` will be changed
-   * `chrome.storage.sync['colorful-github-selected']` will be set to empty string
+   * `chrome.storage.sync['CGC_all']` will be changed
+   * `chrome.storage.sync['CGC_selected']` will be set to empty string
    *   if it happens to be deleted
    * 
    * @params theme { String | Object }
@@ -104,15 +104,15 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     CGC.all_themes.splice(ind, 1)
     CGC.saveThemes(CGC.all_themes)
 
-    chrome.storage.sync.get('colorful-github-selected', obj => {
-      if (obj['colorful-github-selected'] === theme.name ) {
-        chrome.storage.sync.set({'colorful-github-selected': ''})
+    chrome.storage.sync.get('CGC_selected', obj => {
+      if (obj['CGC_selected'] === theme.name ) {
+        chrome.storage.sync.set({'CGC_selected': ''})
       }
     })
 
-    chrome.storage.local.get('colorful-github', obj => {
-      if (obj['colorful-github'].name === theme.name ) {
-        chrome.storage.local.set({'colorful-github': ''})
+    chrome.storage.local.get('CGC', obj => {
+      if (obj['CGC'].name === theme.name ) {
+        chrome.storage.local.set({'CGC': ''})
       }
     })
   },

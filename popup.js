@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 16:30:17
+ * @Last Modified time: 2018-01-25 16:38:03
  */
 
 /*
@@ -140,12 +140,12 @@ function initThemes() {
 document.addEventListener('DOMContentLoaded', () => {
   let themePanel = document.getElementById('theme-panel')
 
-  chrome.storage.sync.get('colorful-github-all', (obj) => {
-    if (!obj['colorful-github-all']) {
+  chrome.storage.sync.get('CGC_all', (obj) => {
+    if (!obj['CGC_all']) {
       CGC.initStorage()
       CGC.all_themes = CGC.default_themes
     } else {
-      CGC.all_themes = obj['colorful-github-all']
+      CGC.all_themes = obj['CGC_all']
     }
 
     initThemes()
@@ -163,12 +163,14 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     }
 
-    chrome.storage.sync.get('colorful-github-selected', (obj) => {
+    // Reload selected theme
+    chrome.storage.sync.get('CGC_selected', (obj) => {
       if (!chrome.runtime.lastError) {
-        setTheme(obj['colorful-github-selected'])
+        setTheme(obj['CGC_selected'])
       }
     })
 
+    // Add click event of setting themes
     themePanel.addEventListener('click', (event) => {
       let elem = event.target
 

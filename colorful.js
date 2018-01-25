@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 16:29:40
+ * @Last Modified time: 2018-01-25 16:38:54
  *
  * This file is intended as content script for github contribution page
  *
@@ -16,7 +16,7 @@
  *       For now, there are 5 levels, ( so there are 5 legends and 5 different color).
  * 
  * Once this is injected, it
- *   (1) Try to reterieve a key-value pair `colorful-github: < the_theme_to_be_shown >` from `chrome.storage.local`
+ *   (1) Try to reterieve a key-value pair `{ CGC: < the_theme_to_be_shown > }` from `chrome.storage.local`
  *   (2) The format of the theme obj is expected like this
  *     {
  *       name:        string
@@ -28,12 +28,12 @@
  *   (3) For each `.calendar-graph rect.day`, reset its color acoording to the object
  */
 
-chrome.storage.local.get('colorful-github', (theme) => {
+chrome.storage.local.get('CGC', (theme) => {
   if (chrome.runtime.lastError) {
     console.error(chrome.runtime.lastError)
     return
   }
-  theme = theme['colorful-github']
+  theme = theme['CGC']
   if (!theme) return
 
   let legends = document.querySelectorAll('.contrib-legend ul.legend > li'),
