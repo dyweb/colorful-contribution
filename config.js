@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 14:58:33
+* @Last Modified time: 2018-01-25 15:34:36
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -21,6 +21,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     name: 'cherry',
     colors: ['#311', '#755', '#a88', '#dbb', '#fee']
   }],
+
+  default_theme: {
+    name: 'Newbie',
+    colors: ['#aae', '#acc', '#aea', '#cca', '#eaa']
+  },
 
   //////////////////////////////
   // Themes Management Interface
@@ -75,6 +80,27 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
     CGC.sendTheme(theme)
     chrome.storage.sync.set({ 'colorful-github-selected': theme.name })
+  },
+
+  /*
+   * Create a default theme and add it into `all_themes`
+   * the new copy of default theme will be returned
+   * this new theme will be save to `chrome.storage.sync`
+   */
+  addNewTheme() {
+    if (CGC.all_themes === null) {
+      console.error("Themes are not initialized! Failed to add a new one.")
+      return
+    }
+
+    let theme = {
+      name: CGC.default_theme.name,
+      colors: CGC.default_theme.colors.slice(),
+    }
+
+    CGC.all_themes.push(theme)
+    CGC.saveThemes()
+    return theme
   }
   ///////////////////////////////////
   // Themes Management Interface Ends

@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 14:57:29
+ * @Last Modified time: 2018-01-25 15:33:59
  */
 
 /*
@@ -13,114 +13,130 @@
 let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid ambiguity
 
 /*
- * Add options to popup pages according to `themes`
+ * Get the html block of a theme
+ * the arg `theme` will be modified during theme editing events
+ * so the passed `theme` should be preserved
  */
-function addTheme(theme) {
+function getThemeBlock(theme) {
+  // TODO: This function is too LONG!
+  console.assert(theme.name)
+  console.assert(theme.colors && theme.colors.length > 0)
 
+  let colorBlocksStr = theme.colors.reduce((acc, cur) =>
+    acc + `<div class="color-block" style="background-color: ${cur}"></div>`, '')
+
+  let themeBlockHTML = `
+  <div class="theme-block" data-name="${theme.name}">
+    <div class="theme-name underline">
+      <input class="invisible-input" type="text" value="${theme.name}" disabled>
+    </div>
+    <div class="theme-colors">
+      ${colorBlocksStr}
+      <div class="color-edit-box underline hidden">
+        <input class="invisible-input" type="text" value="${theme.colors[0]}" disabled>
+      </div>
+    </div>
+    <div class="theme-editor">
+      <i class="fa fa-pencil edit-btn"></i>
+      <i class="fa fa-trash del-btn"></i>
+    </div>
+  </div>`
+
+  let themeBlock = document.createElement('div')
+  themeBlock.innerHTML = themeBlockHTML
+  themeBlock = themeBlock.childNodes[1]
+
+  // Bind events
+
+  // Editor stuff
+  let editBtn = themeBlock.querySelector('.edit-btn'),
+    delBtn = themeBlock.querySelector('.del-btn'),
+    nameInput = themeBlock.querySelector('.theme-name input'),
+    colorInput = themeBlock.querySelector('.color-edit-box input')
+
+  // Modify theme name
+  nameInput.addEventListener('change', event => {
+    document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
+    theme.name = event.target.value
+    CGC.saveThemes(CGC.all_themes)
+  })
+
+  // Modify theme colors
+  colorInput.addEventListener('change', event => {
+    // TODO
+    theme.colors[1] = event.target.value
+    CGC.saveThemes(CGC.all_themes)
+  })
+
+  // Delete theme
+  delBtn.addEventListener('click', event => {
+    if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
+      let ind = CGC.all_themes.indexOf(theme)
+      CGC.all_themes.splice(ind, 1)
+      CGC.saveThemes(CGC.all_themes)
+      window.location.reload()
+    }
+  })
+
+  // Toggle per-thtem edit mode
+  editBtn.addEventListener('click', event => {
+    // Toggling editing mode when click on the edit button
+    // if in editing mode:
+    //  a. theme name editable with a underline
+    //  b. theme color editable, with an extra color string input field (again, with a underline)
+    //  c. edit button is a floppy denoting save
+    let btn = event.target,
+      block = btn.parentNode.parentNode,
+      nameInput = block.querySelector('.theme-name input'),
+      colorInput = block.querySelector('.color-edit-box input')
+
+    if (!block.classList.contains('editing')) {
+      // entering edit mode
+      btn.classList.remove('fa-pencil')
+      btn.classList.add('fa-floppy-o')
+      block.classList.add('editing')
+      colorInput.parentNode.classList.remove('hidden') // show extra color string field
+      colorInput.disabled = nameInput.disabled = false  // editable
+    } else {
+      // entering non-edit mode
+      btn.classList.add('fa-pencil')
+      btn.classList.remove('fa-floppy-o')
+      block.classList.remove('editing')
+      colorInput.parentNode.classList.add('hidden')   // hide extra color string field
+      colorInput.disabled = nameInput.disabled = true // non-editable
+    }
+  })
+
+  return themeBlock
 }
 
-function initButtons() {
-  // TODO: This function is too LONG!
+/*
+ * initialize popup html according to CGC.all_themes
+ */
+function initThemes() {
+  let themePanel = document.getElementById('theme-panel'),
+      footPanel = document.getElementById('foot-panel')
+
+  // Theme panel
   let fragment = document.createDocumentFragment()
-
   for (let theme of CGC.all_themes) {
-    let colorBlocksStr = theme.colors.reduce((acc, cur) =>
-      acc + `<div class="color-block" style="background-color: ${cur}"></div>`, '')
-
-    let themeBlockHTML = `
-    <div class="theme-block" data-name="${theme.name}">
-      <div class="theme-name underline">
-        <input class="invisible-input" type="text" value="${theme.name}" disabled>
-      </div>
-      <div class="theme-colors">
-        ${colorBlocksStr}
-        <div class="color-edit-box underline hidden">
-          <input class="invisible-input" type="text" value="${theme.colors[0]}" disabled>
-        </div>
-      </div>
-      <div class="theme-editor">
-        <i class="fa fa-pencil edit-btn"></i>
-        <i class="fa fa-trash del-btn"></i>
-      </div>
-    </div>`
-
-    let themeBlock = document.createElement('div')
-    themeBlock.innerHTML = themeBlockHTML
-    themeBlock = themeBlock.childNodes[1]
-
-    // Editor stuff
-    let editBtn = themeBlock.querySelector('.edit-btn'),
-      delBtn = themeBlock.querySelector('.del-btn'),
-      nameInput = themeBlock.querySelector('.theme-name input'),
-      colorInput = themeBlock.querySelector('.color-edit-box input')
-
-    // Modify theme name
-    nameInput.addEventListener('change', event => {
-      document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
-      theme.name = event.target.value
-      CGC.saveThemes(CGC.all_themes)
-    })
-
-    // Modify theme colors
-    colorInput.addEventListener('change', event => {
-      // TODO
-      theme.colors[1] = event.target.value
-      CGC.saveThemes(CGC.all_themes)
-    })
-
-    // Delete theme
-    delBtn.addEventListener('click', event => {
-      if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
-        let ind = CGC.all_themes.indexOf(theme)
-        CGC.all_themes.splice(ind, 1)
-        CGC.saveThemes(CGC.all_themes)
-        window.location.reload()
-      }
-    })
-
-    // Toggle per-thtem edit mode
-    editBtn.addEventListener('click', event => {
-      // Toggling editing mode when click on the edit button
-      // if in editing mode:
-      //  a. theme name editable with a underline
-      //  b. theme color editable, with an extra color string input field (again, with a underline)
-      //  c. edit button is a floppy denoting save
-      let btn = event.target,
-        block = btn.parentNode.parentNode,
-        nameInput = block.querySelector('.theme-name input'),
-        colorInput = block.querySelector('.color-edit-box input')
-
-      if (!block.classList.contains('editing')) {
-        // entering edit mode
-        btn.classList.remove('fa-pencil')
-        btn.classList.add('fa-floppy-o')
-        block.classList.add('editing')
-        colorInput.parentNode.classList.remove('hidden') // show extra color string field
-        colorInput.disabled = nameInput.disabled = false  // editable
-      } else {
-        // entering non-edit mode
-        btn.classList.add('fa-pencil')
-        btn.classList.remove('fa-floppy-o')
-        block.classList.remove('editing')
-        colorInput.parentNode.classList.add('hidden')   // hide extra color string field
-        colorInput.disabled = nameInput.disabled = true // non-editable
-      }
-    })
-
+    let themeBlock = getThemeBlock(theme)
     fragment.appendChild(themeBlock)
   }
-  document.getElementById('color-select').appendChild(fragment)
+  themePanel.appendChild(fragment)
 
   // Foot panel
-  let addBtn = document.querySelector('.add-btn')
+  let addBtn = footPanel.querySelector('.add-btn')
   addBtn.addEventListener('click', event => {
-    // TODO
+    let theme = CGC.addNewTheme()
+    let themeBlock = getThemeBlock(theme)
+    themePanel.appendChild(themeBlock)
   })
 }
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  let colorSelect = document.getElementById('color-select')
+  let themePanel = document.getElementById('theme-panel')
 
   chrome.storage.sync.get('colorful-github-all', (obj) => {
     if (!obj['colorful-github-all']) {
@@ -130,13 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
       CGC.all_themes = obj['colorful-github-all']
     }
 
-    initButtons()
+    initThemes()
 
     function setTheme(themeName) {
       CGC.setTheme(themeName)
-      colorSelect.dataset.selected = themeName
+      themePanel.dataset.selected = themeName
 
-      Array.prototype.forEach.call(colorSelect.querySelectorAll('.theme-block'), blk => {
+      Array.prototype.forEach.call(themePanel.querySelectorAll('.theme-block'), blk => {
         if (blk.dataset.name === themeName) {
           blk.classList.add('selected')
         } else {
@@ -151,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
 
-    colorSelect.addEventListener('click', (event) => {
+    themePanel.addEventListener('click', (event) => {
       let elem = event.target
 
       while (!elem.classList.contains('theme-block')) {
