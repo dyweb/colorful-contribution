@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-23 22:06:24
+* @Last Modified time: 2018-01-25 14:58:33
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -22,9 +22,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     colors: ['#311', '#755', '#a88', '#dbb', '#fee']
   }],
 
-  ////////////////////////////
-  // Themes Storage Interface
-  ////////////////////////////
+  //////////////////////////////
+  // Themes Management Interface
+  //////////////////////////////
+  all_themes: null, // globally accessible variable, initialized from storage instantly after bootup
+
   sendTheme(theme) {
     if (!theme) return
 
@@ -52,16 +54,29 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     })
   },
 
-  saveThemes(themes) {
-    chrome.storage.sync.set({'colorful-github-all': themes})
+  saveThemes() {
+    chrome.storage.sync.set({'colorful-github-all': CGC.all_themes})
     // TODO: Save all themes altogether may have efficiency issue
   },
 
+  /*
+   * Set the theme currently in use
+   * will send to `chrome.storage.local` to trigger actual page modification
+   *
+   * @params theme { String | Object }
+   *    The theme object or its name.
+   *    Will do nothing if a string is given but can not be found from `all_themes`
+   */
   setTheme(theme) {
+    if (typeof(theme) === 'string') {
+      theme = CGC.all_themes.find(t => t.name == theme)
+    }
+    if (!theme) return
+
     CGC.sendTheme(theme)
     chrome.storage.sync.set({ 'colorful-github-selected': theme.name })
   }
-  /////////////////////////////////
-  // Themes Storage Interface Ends
-  /////////////////////////////////
+  ///////////////////////////////////
+  // Themes Management Interface Ends
+  ///////////////////////////////////
 }

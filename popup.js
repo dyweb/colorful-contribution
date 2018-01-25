@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 14:37:07
+ * @Last Modified time: 2018-01-25 14:57:29
  */
 
 /*
@@ -15,13 +15,15 @@ let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid am
 /*
  * Add options to popup pages according to `themes`
  */
-function initButtons(themes) {
-  // TODO: This function is too LONG!
-  if (!themes) return
+function addTheme(theme) {
 
+}
+
+function initButtons() {
+  // TODO: This function is too LONG!
   let fragment = document.createDocumentFragment()
 
-  for (let theme of themes) {
+  for (let theme of CGC.all_themes) {
     let colorBlocksStr = theme.colors.reduce((acc, cur) =>
       acc + `<div class="color-block" style="background-color: ${cur}"></div>`, '')
 
@@ -56,22 +58,22 @@ function initButtons(themes) {
     nameInput.addEventListener('change', event => {
       document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
       theme.name = event.target.value
-      CGC.saveThemes(themes)
+      CGC.saveThemes(CGC.all_themes)
     })
 
     // Modify theme colors
     colorInput.addEventListener('change', event => {
       // TODO
       theme.colors[1] = event.target.value
-      CGC.saveThemes(themes)
+      CGC.saveThemes(CGC.all_themes)
     })
 
     // Delete theme
     delBtn.addEventListener('click', event => {
       if (confirm(`Are you sure to delete the theme '${theme.name}'?`)) {
-        let ind = themes.indexOf(theme)
-        themes.splice(ind, 1)
-        CGC.saveThemes(themes)
+        let ind = CGC.all_themes.indexOf(theme)
+        CGC.all_themes.splice(ind, 1)
+        CGC.saveThemes(CGC.all_themes)
         window.location.reload()
       }
     })
@@ -119,20 +121,19 @@ function initButtons(themes) {
 
 document.addEventListener('DOMContentLoaded', () => {
   let colorSelect = document.getElementById('color-select')
-  let themes = null
 
   chrome.storage.sync.get('colorful-github-all', (obj) => {
     if (!obj['colorful-github-all']) {
       CGC.initStorage()
-      themes = CGC.default_themes
+      CGC.all_themes = CGC.default_themes
     } else {
-      themes = obj['colorful-github-all']
+      CGC.all_themes = obj['colorful-github-all']
     }
 
-    initButtons(themes)
+    initButtons()
 
     function setTheme(themeName) {
-      CGC.setTheme(themes.find(t => t.name == themeName))
+      CGC.setTheme(themeName)
       colorSelect.dataset.selected = themeName
 
       Array.prototype.forEach.call(colorSelect.querySelectorAll('.theme-block'), blk => {
