@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-01-25 21:01:37
+* @Last Modified time: 2018-01-25 22:44:46
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -15,11 +15,23 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
   // built-in themes
   default_themes: [{
-    name: 'grey',
+    name: 'Primal',
+    colors: ['#196127', '#239a3b', '#7bc96f', '#c6e48b', '#eee']    // the color used by GitHub
+  }, {
+    name: 'Cherry',
+    colors: ['#c2185b', '#e91e63', '#f06292', '#f8bbd0', '#eee']
+  }, {
+    name: 'Tide',
+    colors: ['#3949ab', '#5c6bc0', '#9fa8da', '#c5cae9', '#eee']
+  }, {
+    name: 'Solemn',
     colors: ['#111', '#555', '#888', '#bbb', '#eee']
   }, {
-    name: 'cherry',
-    colors: ['#311', '#755', '#a88', '#dbb', '#fee']
+    name: 'Olympic',
+    colors: ['#0000ff', '#fff000', '#000000', '#096600', '#ff0000']
+  }, {
+    name: 'Oreo',
+    colors: ['#222', '#fff', '#222', '#fff', '#222']
   }],
 
   default_theme: {
