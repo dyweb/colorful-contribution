@@ -1,2 +1,5 @@
-# colorful-contribution
-Custom color scheme for github contribution bar
+# Colorful Github Contribution
+Customize your github contribution bar with the colors you like.
+
+# Screenshot
+![screenshot](.github/screenshot.png)
