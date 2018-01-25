@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 21:26:31
+ * @Last Modified time: 2018-01-25 21:59:53
  */
 
 /*
@@ -11,6 +11,14 @@
  */
 
 let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid ambiguity
+
+function findAncestor(elem, elemClass) {
+  while (elem !== null) {
+    if (elem.classList.contains(elemClass)) return elem
+    elem = elem.parentNode
+  }
+  return null
+}
 
 /*
  * Get the html block of a theme
@@ -64,14 +72,15 @@ function getThemeBlock(theme) {
 
   // Modify theme colors
   colorInput.addEventListener('input', event => {
-    let colorStr = event.target.value
+    let elem = event.target,
+      colorStr = elem.value
 
     if (!colorStr.match(/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/)) return  // illegal color string
 
-    let idx = event.target.parentNode.dataset.idx
-    let colorBlock = event.target.parentNode.parentNode.querySelectorAll('.color-block')[idx]
-    colorBlock.style['background-color'] = event.target.value
-    theme.colors[idx] = event.target.value
+    let idx = findAncestor(elem, 'color-edit-box').dataset.idx
+    let colorBlock = findAncestor(elem, 'theme-colors').querySelectorAll('.color-block')[idx]
+    colorBlock.style['background-color'] = colorStr
+    theme.colors[idx] = colorStr
     CGC.saveThemes()
     CGC.sendTheme(theme)
   })
@@ -84,7 +93,9 @@ function getThemeBlock(theme) {
     } else {
       // confirmed, delete it
       CGC.deleteTheme(theme)
-      window.location.reload()
+      let block = findAncestor(event.target, 'theme-block')
+      block.classList.add('deleted')    // display disappearance effect
+      window.setTimeout(() => block.remove(), 500) // add a time delay to diplay the full deletion animation
     }
   })
 
@@ -102,8 +113,8 @@ function getThemeBlock(theme) {
   for (let cb of colorBlocks) {
     cb.addEventListener('mouseenter', event => {
       let cb = event.target,
-        isEditing = cb.parentNode.parentNode.classList.contains('editing'),
-        editBox = cb.parentNode.querySelector('.color-edit-box')
+        isEditing = findAncestor(cb, 'theme-block').classList.contains('editing'),
+        editBox = findAncestor(cb, 'theme-colors').querySelector('.color-edit-box')
 
       if (isEditing) {
         editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
