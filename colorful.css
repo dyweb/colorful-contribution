@@ -1,0 +1,15 @@
+/*
+* @Author: gigaflw
+* @Date:   2018-02-28 21:38:49
+* @Last Modified by:   gigaflw
+* @Last Modified time: 2018-02-28 21:46:55
+*/
+
+/* give github legends and day blocks transistion */
+.contrib-legend ul.legend > li {
+  transition: background .2s;
+}
+
+.calendar-graph rect.day {
+  transition: fill .2s;
+}

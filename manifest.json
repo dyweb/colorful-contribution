@@ -14,7 +14,8 @@
   ],
   "content_scripts": [{
     "matches": ["https://github.com/*"],
-    "js": ["colorful.js"]
+    "js": ["colorful.js"],
+    "css": ["colorful.css"]
   }],
   "homepage_url": "https://github.com/dyweb/colorful-contribution"
 }

@@ -5,7 +5,7 @@ Customize your github contribution bar with the colors you like.
 ![screenshot](.github/screenshot.png)
 
 # Todo
-- [ ] Support transition
+- [x] Support transition
 - [ ] Support images
 - [ ] Support images comprised of multiple / all blocks
 - [ ] Test on various devices

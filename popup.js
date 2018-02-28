@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-01-25 21:59:53
+ * @Last Modified time: 2018-02-28 21:34:30
  */
 
 /*
@@ -12,6 +12,7 @@
 
 let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid ambiguity
 
+// util func
 function findAncestor(elem, elemClass) {
   while (elem !== null) {
     if (elem.classList.contains(elemClass)) return elem
