@@ -17,5 +17,8 @@
     "js": ["colorful.js"],
     "css": ["colorful.css"]
   }],
+  "web_accessible_resources": [
+    "icons/*.ico"
+  ],
   "homepage_url": "https://github.com/dyweb/colorful-contribution"
 }

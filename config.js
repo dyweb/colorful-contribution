@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-02-28 21:35:34
+* @Last Modified time: 2018-02-28 22:59:55
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -32,11 +32,19 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   }, {
     name: 'Oreo',
     colors: ['#222', '#fff', '#222', '#fff', '#222']
+  }, {
+    name: 'Flower',
+    colors: ['#196127', '#239a3b', '#7bc96f', '#c6e48b', 'icons/flower.ico']
   }],
 
+  // the default theme when creating new ones
   default_theme: {
     name: 'Newbie',
     colors: ['#aae', '#acc', '#aea', '#cca', '#eaa']
+  },
+
+  colorType(colorStr) {
+    return colorStr && colorStr[0] == '#' ? 'color' : 'icon'
   },
 
   //////////////////////////////

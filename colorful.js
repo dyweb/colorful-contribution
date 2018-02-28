@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-02-28 21:47:38
+ * @Last Modified time: 2018-02-28 23:10:47
  *
  * This file is intended as content script for github contribution page
  *
@@ -47,7 +47,14 @@ chrome.storage.local.get('CGC', (theme) => {
 
   // Update legend color
   for (let ind = 0; ind < legends.length; ++ind) {
-    legends[ind].style['background-color'] = theme.colors[theme.colors.length - ind]
+    let color = theme.colors[theme.colors.length - ind]
+
+    if (color && color[0] === '#') {
+      legends[ind].style['background-color'] = color
+    } else {
+      // always regard as a image otherwise
+      legends[ind].style['background-image'] = `url(${chrome.extension.getURL(color)})`; 
+    }
   }
 
   // Update contribution block color

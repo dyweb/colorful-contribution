@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-02-28 21:34:30
+ * @Last Modified time: 2018-02-28 23:04:08
  */
 
 /*
@@ -31,8 +31,12 @@ function getThemeBlock(theme) {
   console.assert(theme.name)
   console.assert(theme.colors && theme.colors.length > 0)
 
-  let colorBlocksStr = theme.colors.reduce((acc, cur) =>
-    acc + `<div class="color-block" style="background-color: ${cur}"></div>`, '')
+  let colorBlocksStr = theme.colors.reduce(function(acc, cur) {
+    str = CGC.colorType(cur) === 'color' ?
+      `<div class="color-block" style="background-color: ${cur}"></div>` :
+      `<div class="color-block" style="background-image: url(${cur})"></div>`
+    return acc + str
+  }, '')
 
   let themeBlockHTML = `
   <div class="theme-block" data-name="${theme.name}">
