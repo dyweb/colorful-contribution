@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-02-28 22:59:55
+* @Last Modified time: 2018-02-28 23:20:02
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -34,7 +34,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     colors: ['#222', '#fff', '#222', '#fff', '#222']
   }, {
     name: 'Flower',
-    colors: ['#196127', '#239a3b', '#7bc96f', '#c6e48b', 'icons/flower.ico']
+    colors: ['icons/flower.ico', '#239a3b', '#7bc96f', '#c6e48b', '#eee']
   }],
 
   // the default theme when creating new ones
@@ -95,6 +95,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       'CGC_all': CGC.default_themes,
       'CGC_selected': ''
     })
+  },
+
+  clearStorage() {
+    chrome.storage.sync.clear()
+    chrome.storage.local.clear()
   },
 
   saveThemes() {
