@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-02-28 23:20:02
+* @Last Modified time: 2018-03-01 09:14:23
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -34,7 +34,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     colors: ['#222', '#fff', '#222', '#fff', '#222']
   }, {
     name: 'Flower',
-    colors: ['icons/flower.ico', '#239a3b', '#7bc96f', '#c6e48b', '#eee']
+    colors: ['icons/flower.png', '#239a3b', '#7bc96f', '#c6e48b', '#eee']
+  }, {
+    name: 'Mario',
+    colors: ['icons/mario-1up.png', 'icons/mario-fireflower.png', 'icons/mario-star.png', 'icons/mario-coin.png', '#eee']
   }],
 
   // the default theme when creating new ones

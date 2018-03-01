@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-02-28 21:38:49
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-02-28 22:55:08
+* @Last Modified time: 2018-03-01 09:17:43
 */
 
 /* give github legends and day blocks transistion */
@@ -12,7 +12,7 @@
   background-size: 100% 100%;  /* in case a icon is used */ 
 }
 
-.calendar-graph rect.day {
+.calendar-graph .day {
   transition: fill .2s;
 
   background-size: 100% 100%;  /* in case a icon is used */ 
