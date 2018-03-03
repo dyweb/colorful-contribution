@@ -17,6 +17,7 @@
     "js": ["colorful.js"],
     "css": ["colorful.css"]
   }],
+  "options_page": "options.html",
   "web_accessible_resources": [
     "icons/*.png"
   ],
