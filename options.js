@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-03 23:28:03
+* @Last Modified time: 2018-03-04 11:12:46
 */
 
 let input = document.getElementById("icon-form").children[0]
@@ -43,28 +43,6 @@ let addIconBtn = gallery.children[0]
     })
   }
 
-  function readFileAsDataURL(file, cb) {
-    let reader = new FileReader()
-    reader.addEventListener('load', cb)
-    reader.readAsDataURL(file) 
-  }
-
-  function traverseDir(path, filter, cb){
-    chrome.runtime.getPackageDirectoryEntry(fs => {
-      fs.getDirectory(path, {create: false}, dir => {
-        dir.createReader().readEntries(files => {
-
-          files = files.filter(filter)
-
-          for (let ind in files) {
-            let is_last_file = ind == files.length - 1
-            files[ind].file(f => cb(f, is_last_file))
-          }
-        })
-      })
-    })
-  }
-
   function resizeImg(dataURL, width, height) {
       let img = new Image()
       img.src = dataURL
@@ -87,7 +65,7 @@ let addIconBtn = gallery.children[0]
   input.addEventListener('change', event => {
     if (!input.files[0]) return
 
-    readFileAsDataURL(input.files[0], event => {
+    CGC.readFileAsDataURL(input.files[0], event => {
       let dataURL = resizeImg(event.target.result, 32, 32)
       let iconId = Date.now()
       appendIcon(dataURL, iconId, true)
@@ -101,28 +79,8 @@ let addIconBtn = gallery.children[0]
   // event listeners end
   /////////////////////
 
-  // Display all predefined icon files
-  function load_predefined_icons(cb) {
-    traverseDir('icons',
-        file => file.name.match(/png|jpg|jpeg|ico$/),
-        (file, is_last_file) => {
-          readFileAsDataURL(file, event => {
-            appendIcon(event.target.result, file.name, false) // predefined icons are not deleteable
-            if (is_last_file) cb()
-          })
-        }
-      )
-  }
-
-  // Display all user icon files
-  function load_user_icons(){
-    chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
-      for (let [date, dataURL] of obj['CGC_user_icons']) {
-        appendIcon(dataURL, date, true)
-      }
-    })
-  }
-
-  // put all user icons after predefined ones, so that they do not mix up
-  load_predefined_icons(load_user_icons)
+  CGC.getIcons(
+    (dataURL, fileName) => appendIcon(dataURL, fileName, false), // predefined icons are not deleteable
+    (dataURL, date) => appendIcon(dataURL, date, true),
+  )
 }()

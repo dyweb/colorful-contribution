@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-01 09:14:23
+* @Last Modified time: 2018-03-04 11:13:24
 */
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
@@ -182,9 +182,95 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     CGC.all_themes.push(theme)
     CGC.saveThemes()
     return theme
-  }
+  },
 
   ///////////////////////////////////
   // Themes Management Interface Ends
+  ///////////////////////////////////
+
+  ///////////////////////////////////
+  // Icon Management Interface
+  ///////////////////////////////////
+  /*
+   * Traverse the extension folder
+   *
+   * @params path { String }
+   * @params filter { Function }
+   *         @param { FileEntry } file, `FileEntry`: https://developer.mozilla.org/en-US/docs/Web/API/FileSystemEntry
+   *         @return { Boolean } filter this file out if `true`
+   *         e.g. file => file.name.endsWith('png')
+   * @params cb: { Function }
+   *         @param { File } file - each file will be called with callback, `File`: https://developer.mozilla.org/en-US/docs/Web/API/File
+   *         @param { Boolean } is_last - whether current file is the last
+   */
+  traverseDir(path, filter, cb){
+    chrome.runtime.getPackageDirectoryEntry(fs => {
+      fs.getDirectory(path, {create: false}, dir => {
+        dir.createReader().readEntries(files => {
+
+          files = files.filter(filter)
+
+          for (let ind in files) {
+            let is_last_file = ind == files.length - 1
+            files[ind].file(f => cb(f, is_last_file))
+          }
+        })
+      })
+    })
+  },
+
+  /*
+   * Read a file as dataurl, intended for images
+   * @params file { File }
+   * @params cb { Function }
+   *         @param: event, where `event.target.result` is the dataurl
+   */
+  readFileAsDataURL(file, cb) {
+    let reader = new FileReader()
+    reader.addEventListener('load', cb)
+    reader.readAsDataURL(file)
+  },
+
+  /*
+   * Load all icons, include predefined ones and user-defined ones
+   *
+   * @params predCb { Function }  -  callback for predefined icons
+   *         @params dataURL { String } the dataURL of the image,
+   *         @params fileName { String } the name of the file, used as identifier
+   * @params userdCb { Function }  -  callback for user-defined icons
+   *         @params dataURL { String } the dataURL of the image,
+   *         @params date { Int } the timestamp of the icon, used as identifier
+   *
+   * userCb will only be called after all predefined icons have been called with,
+   *   so that they do not mix up
+   */
+  getIcons(predCb, userdCb) {
+    function load_predefined_icons(then) {
+      CGC.traverseDir('icons',
+          file => file.name.match(/png|jpg|jpeg|ico$/),
+          (file, is_last_file) => {
+            CGC.readFileAsDataURL(file, event => {
+              predCb(event.target.result, file.name)
+              if (is_last_file) then()
+            })
+          }
+        )
+    }
+
+    // Display all user icon files
+    function load_user_icons(){
+      chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
+        for (let [date, dataURL] of obj['CGC_user_icons']) {
+          userdCb(dataURL, date)
+        }
+      })
+    }
+
+    // put all user icons after predefined ones, so that they do not mix up
+    load_predefined_icons(load_user_icons)
+  },
+
+  ///////////////////////////////////
+  // Icon Management Interface Ends
   ///////////////////////////////////
 }
