@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-02-28 23:04:08
+ * @Last Modified time: 2018-03-04 15:48:34
  */
 
 /*
@@ -137,7 +137,8 @@ function getThemeBlock(theme) {
  * If in editing mode:
  *  a. theme name editable with a underline
  *  b. theme color editable, with an extra color string input field (again, with a underline)
- *  c. edit button is a floppy denoting save
+ *  c. edit button is a check denoting save
+ *  d. icon gallery become visible right below the theme block
  *  
  * @param: themeBlock: {Node}
  *   a node with class 'theme-block', do nothing if not
@@ -153,6 +154,7 @@ function setEditMode(themeBlock, val) {
   let btn = themeBlock.querySelector('.edit-btn'),
     nameInput = themeBlock.querySelector('.theme-name input'),
     colorInput = themeBlock.querySelector('.color-edit-box input')
+  let gallery = document.getElementById('icon-gallery')
 
   if (val) {
     // entering edit mode
@@ -168,12 +170,17 @@ function setEditMode(themeBlock, val) {
     colorInput.disabled = nameInput.disabled = false  // editable
     nameInput.focus()
 
+    themeBlock.insertAdjacentElement('afterend', gallery)
+    gallery.classList.remove('hidden')
+
   } else {
     // leave edit mode
     btn.classList.add('fa-pencil')
     btn.classList.remove('fa-check')
     themeBlock.classList.remove('editing')
     colorInput.disabled = nameInput.disabled = true // non-editable
+
+    gallery.classList.add('hidden')
   }
 }
 
@@ -207,6 +214,20 @@ function initThemes() {
     fragment.appendChild(themeBlock)
   }
   themePanel.appendChild(fragment)
+
+  // Icon gallery
+  let gallery = document.getElementById('icon-gallery')
+  function appendIcon(dataURL, id) {
+    let img = document.createElement('img')
+    img.classList.add('icon')
+    img.src = dataURL
+    gallery.appendChild(img)
+  }
+
+  CGC.getIcons(
+    (dataURL, fileName) => appendIcon(dataURL, fileName),
+    (dataURL, date) => appendIcon(dataURL, date),
+  )
 
   // Foot panel
   let addBtn = footPanel.querySelector('.add-btn')

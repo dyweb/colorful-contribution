@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-02-28 23:04:53
+* @Last Modified time: 2018-03-04 16:15:09
 */
 
 body {
@@ -22,6 +22,9 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   text-align: center;
 }
 
+/*****************
+ * Theme Blocks
+ *****************/
 .theme-block {
   background-color: #eee;
   width: 200px;
@@ -50,7 +53,9 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   overflow-y: hidden;
 }
 
-/* Name block */
+/*****************
+ * Name Blocks
+ *****************/
 .theme-name {
   font-size: 15px;
   text-align: center;
@@ -64,7 +69,9 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   font-size: 15px;
 }
 
-/* Color blocks */
+/*****************
+ * Color Blocks
+ *****************/
 .theme-colors {
   flex-grow: 1;
   height: 32px;
@@ -97,7 +104,9 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   transform: scale(1.1)
 }
 
-/* Per-theme editor stuff */
+/*****************
+ * Theme Editor
+ *****************/
 .theme-editor {
   min-width: 25px;
   display: flex;
@@ -161,7 +170,9 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   height: auto;
 }
 
-/* Foot panel */
+/*****************
+ * Foot panel
+ *****************/
 #foot-panel {
   background-color: #eee;
   height: 7px;
@@ -207,3 +218,48 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 #foot-panel:hover > .add-btn {
   opacity: 1;
 }
+
+/*****************
+ * Icon Gallery
+ *****************/
+ #icon-gallery {
+  background-color: #eee;
+
+  height: 40px;
+  width: 200px;
+  line-height: 40px;
+  max-height: 40px;
+  vertical-align: middle;
+
+  overflow-x: scroll;
+  white-space: nowrap;
+
+  margin-bottom: 5px;
+  padding: 0 7px;
+
+  transition: max-height .2s;
+ }
+
+#icon-gallery.hidden {
+  max-height: 0;
+}
+
+#icon-gallery .icon {
+  width: 16px;
+  height: 16px;
+
+  margin: 6px 4px;
+  padding: 3px;
+
+  border: 2px transparent solid;
+  border-radius: 5px;
+  transition: border .1s;
+
+  user-select: none;
+  cursor: pointer;
+}
+
+#icon-gallery .icon:hover {
+  border: 2px #ddd solid;
+}
+
