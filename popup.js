@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 09:37:39
+ * @Last Modified time: 2018-03-29 10:10:49
  */
 
 /*
@@ -170,6 +170,32 @@ function bindColorBlock(colorBlock, theme) {
   })
 }
 
+function bindGallery(gallery) {
+  gallery.addEventListener('click', event => {
+    if (!event.target.classList.contains('icon')) return
+    let icon = event.target,
+      themeBlock = gallery.previousSibling,  // gallery will be moved to be after of the theme block being edited
+      theme = CGC.getTheme(themeBlock.dataset.name)
+
+    // set the content of colorBlock to icon
+    let idx = themeBlock.querySelector('.color-edit-box').dataset.idx
+    let colorBlock = themeBlock.querySelectorAll('.theme-colors .color-block')[idx]
+    colorBlock.outerHTML = getColorBlockStr(icon.src)
+    theme.colors[idx] = icon.src
+    CGC.saveThemes()
+    CGC.sendTheme(theme)
+  })
+}
+
+function bindFootPanel(footPanel) {
+  let addBtn = footPanel.querySelector('.add-btn')
+  addBtn.addEventListener('click', event => {
+    let theme = CGC.addNewTheme()
+    let themeBlock = getThemeBlock(theme)
+    themePanel.appendChild(themeBlock)
+  })
+}
+
 /*
  * Enter/Leave edit mode for a theme block ( with class '.theme-block' )
  * If in editing mode:
@@ -221,7 +247,6 @@ function setEditMode(themeBlock, val) {
     gallery.classList.add('hidden')
   }
 }
-
 //////////////////////////////
 // Editor Functinos End
 //////////////////////////////
@@ -247,10 +272,9 @@ function resetAllThemeBlocks(except) {
  * initialize popup html
  */
 function initPopup() {
-  let themePanel = document.getElementById('theme-panel'),
-      footPanel = document.getElementById('foot-panel')
 
   // Theme panel
+  let themePanel = document.getElementById('theme-panel')
   let fragment = document.createDocumentFragment()
   for (let theme of CGC.all_themes) {
     let themeBlock = getThemeBlock(theme)
@@ -260,7 +284,7 @@ function initPopup() {
 
   // Icon gallery
   let gallery = document.getElementById('icon-gallery')
-  function appendIcon(dataURL, id) {
+  function appendIcon(dataURL, filename) {
     let img = document.createElement('img')
     img.classList.add('icon')
     img.src = dataURL
@@ -272,26 +296,11 @@ function initPopup() {
     (dataURL, date) => appendIcon(dataURL, date),
   )
 
-  gallery.addEventListener('click', event => {
-    if (!event.target.classList.contains('icon')) return
-    let icon = event.target,
-      themeBlock = gallery.previousSibling  // gallery will be moved to be after of the theme block being edited
+  bindGallery(gallery)
 
-    // set the content of colorBlock to icon
-    let idx = themeBlock.querySelector('.color-edit-box').dataset.idx
-    let colorBlock = themeBlock.querySelectorAll('.theme-colors .color-block')[idx]
-    console.log(colorBlock)
-    console.log(getColorBlockStr(icon.src))
-    colorBlock.outerHTML = getColorBlockStr(icon.src)
-  })
-
-  // Foot panel
-  let addBtn = footPanel.querySelector('.add-btn')
-  addBtn.addEventListener('click', event => {
-    let theme = CGC.addNewTheme()
-    let themeBlock = getThemeBlock(theme)
-    themePanel.appendChild(themeBlock)
-  })
+  // Foot Panel
+  let footPanel = document.getElementById('foot-panel')
+  bindFootPanel(footPanel)
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -311,7 +320,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!themeName) return
       CGC.setTheme(themeName)
       themePanel.dataset.selected = themeName
-
       themePanel.querySelector(`.theme-block[data-name=${themeName}]`).classList.add('selected')
     }
 

@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 08:12:26
+ * @Last Modified time: 2018-03-29 10:14:50
  *
  * This file is intended as content script for github contribution page
  *
@@ -21,7 +21,7 @@
  *     {
  *       name:        string
  *       thresholds:  int[]     N integers in desecending order
- *       colors:      string[]  N valide color strings in css
+ *       colors:      string[]  N valid color strings in css
  *     }
  *     where `N` is the number of colors, equals to the number of legends
  *     the length of this object is required to equal to the length of `.contrib-legend ul.legend > li`
@@ -30,9 +30,12 @@
 
 chrome.storage.local.get('CGC', (theme) => {
   function colorType(colorStr) {
-    // Same as `colorType` from CGC.js
-    // Fixme: a tight couple here
-    return colorStr && colorStr[0] == '#' ? 'color' : 'icon'
+      let colorType = null
+      if (colorStr.startsWith('#')) colorType = 'color'
+      else if (colorStr.startsWith('icons/')) colorType = 'icon'
+      else if (colorStr.startsWith('data:image/')) colorType = 'dataURL'
+
+      return colorType
   }
 
   if (chrome.runtime.lastError) {
@@ -54,16 +57,19 @@ chrome.storage.local.get('CGC', (theme) => {
 
   // Update legend color
   for (let ind = 0; ind < legends.length; ++ind) {
-    let color = theme.colors[theme.colors.length - ind - 1]
+    let color = theme.colors[theme.colors.length - ind - 1],
+      colorT = colorType(color)
 
-    if (colorType(color) === 'color') {
+    if (colorT === 'color') {
       legends[ind].style['background-color'] = color
       legends[ind].style['background-image'] = ''
-    } else {
-      // always regard as a image otherwise
+    } else if (colorT === 'icon') {
       legends[ind].style['background-color'] = ''
       legends[ind].style['background-image'] = `url(${chrome.extension.getURL(color)})`
-    }
+    } else if (colorT === 'dataURL') {
+      legends[ind].style['background-color'] = ''
+      legends[ind].style['background-image'] = `url(${color})`
+    } 
   }
 
   // Update contribution block color
@@ -81,6 +87,9 @@ chrome.storage.local.get('CGC', (theme) => {
       if (d.tagName === 'image')  d.outerHTML = d.outerHTML.replace('image', 'rect')  // have to be last line because this will invalidate `d`
     } else if (colorT == 'icon') {
       d.setAttribute('href', chrome.extension.getURL(color))
+      if (d.tagName === 'rect')  d.outerHTML = d.outerHTML.replace('rect', 'image')  // have to be last line because this will invalidate `d`
+    } else if (colorT == 'dataURL') {
+      d.setAttribute('href', color)
       if (d.tagName === 'rect')  d.outerHTML = d.outerHTML.replace('rect', 'image')  // have to be last line because this will invalidate `d`
     }
   }

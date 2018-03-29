@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 09:16:56
+* @Last Modified time: 2018-03-29 10:00:38
 */
 
 // CGC means colorful github contributino
@@ -185,6 +185,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     CGC.all_themes.push(theme)
     CGC.saveThemes()
     return theme
+  },
+
+  getTheme(themeName) {
+    return CGC.all_themes.find(th => th.name === themeName)
   },
 
   ///////////////////////////////////
