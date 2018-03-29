@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 10:00:38
+* @Last Modified time: 2018-03-29 11:24:23
 */
 
 // CGC means colorful github contributino
@@ -209,6 +209,8 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * @params cb: { Function }
    *         @param { File } file - each file will be called with callback, `File`: https://developer.mozilla.org/en-US/docs/Web/API/File
    *         @param { Boolean } is_last - whether current file is the last
+   *
+   *  if there is no file, `cb` will be called immediately with cb(null, true)
    */
   traverseDir(path, filter, cb){
     chrome.runtime.getPackageDirectoryEntry(fs => {
@@ -220,6 +222,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
           for (let ind in files) {
             let is_last_file = ind == files.length - 1
             files[ind].file(f => cb(f, is_last_file))
+          }
+
+          if (files.length === 0) {
+            cb(null, true)
           }
         })
       })
@@ -256,10 +262,13 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       CGC.traverseDir('icons',
           file => file.name.match(/png|jpg|jpeg|ico$/),
           (file, is_last_file) => {
-            CGC.readFileAsDataURL(file, event => {
-              predCb(event.target.result, file.name)
-              if (is_last_file) then()
-            })
+            if (file === null) then()   // empty folder
+            else {
+              CGC.readFileAsDataURL(file, event => {
+                predCb(event.target.result, file.name)
+                if (is_last_file) then()
+              })
+            }
           }
         )
     }

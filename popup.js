@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 10:10:49
+ * @Last Modified time: 2018-03-29 11:23:17
  */
 
 /*
@@ -11,6 +11,7 @@
  */
 
 let CGC = window.CGC // defined in `CGC.js`. Explict announcement to avoid ambiguity
+const COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/ // e.g. '#11AAdd'
 
 // util func
 function findAncestor(elem, elemClass) {
@@ -64,7 +65,7 @@ function getThemeBlock(theme) {
     <div class="theme-colors">
       ${colorBlocksStr}
       <div class="color-edit-box underline hidden" data-idx="0">
-        <input class="invisible-input" type="text" value="${theme.colors[0]}" disabled>
+        <input class="invisible-input" type="text"  disabled value="${theme.colors[0].match(COLOR_REG) ? theme.colors[0] : '<icon>'}">
       </div>
     </div>
     <div class="theme-editor">
@@ -120,11 +121,12 @@ function bindColorInput(colorInputElem, theme) {
     let elem = event.target,
       colorStr = elem.value
 
-    if (!colorStr.match(/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/)) return  // illegal color string
+    if (!colorStr.match(COLOR_REG)) return  // illegal color string
 
     let idx = findAncestor(elem, 'color-edit-box').dataset.idx
     let colorBlock = findAncestor(elem, 'theme-colors').querySelectorAll('.color-block')[idx]
     colorBlock.style['background-color'] = colorStr
+    colorBlock.style['background-image'] = ''
     theme.colors[idx] = colorStr
     CGC.saveThemes()
     CGC.sendTheme(theme)
@@ -165,7 +167,9 @@ function bindColorBlock(colorBlock, theme) {
     if (isEditing) {
       editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
       editBox.dataset.idx = cb.offsetLeft / cb.offsetWidth
-      editBox.querySelector('input').value = theme.colors[editBox.dataset.idx]
+
+      let colorStr = theme.colors[editBox.dataset.idx]
+      editBox.querySelector('input').value = colorStr.match(COLOR_REG) ? colorStr : '<icon>'
     }
   })
 }
@@ -178,9 +182,13 @@ function bindGallery(gallery) {
       theme = CGC.getTheme(themeBlock.dataset.name)
 
     // set the content of colorBlock to icon
-    let idx = themeBlock.querySelector('.color-edit-box').dataset.idx
-    let colorBlock = themeBlock.querySelectorAll('.theme-colors .color-block')[idx]
-    colorBlock.outerHTML = getColorBlockStr(icon.src)
+    let colorInput = themeBlock.querySelector('.color-edit-box'),
+      idx = colorInput.dataset.idx,
+      colorBlock = themeBlock.querySelectorAll('.theme-colors .color-block')[idx]
+
+    colorBlock.style = `background-image: url(${icon.src})`
+    colorInput.querySelector('input').value = '<icon>'
+
     theme.colors[idx] = icon.src
     CGC.saveThemes()
     CGC.sendTheme(theme)
@@ -188,11 +196,23 @@ function bindGallery(gallery) {
 }
 
 function bindFootPanel(footPanel) {
-  let addBtn = footPanel.querySelector('.add-btn')
+  let addBtn = footPanel.querySelector('.add-btn'),
+      undoBtn = footPanel.querySelector('.undo-btn')
   addBtn.addEventListener('click', event => {
     let theme = CGC.addNewTheme()
     let themeBlock = getThemeBlock(theme)
     themePanel.appendChild(themeBlock)
+  })
+  undoBtn.addEventListener('click', event => {
+    if (undoBtn.classList.contains('warning')) {
+      CGC.clearStorage()
+      window.location.reload()
+    } else {
+      undoBtn.classList.add('warning')
+    }
+  })
+  footPanel.addEventListener('mouseleave', event => {
+    undoBtn.classList.remove('warning')
   })
 }
 

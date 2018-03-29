@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 09:28:14
+* @Last Modified time: 2018-03-29 11:22:48
 */
 
 body {
@@ -95,6 +95,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 
   background-repeat: no-repeat;
   background-position: center;
+  background-size: contain;
 
   transition: transform .2s, box-shadow .2s;
 }
@@ -130,7 +131,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   color: rgba(255, 255, 255, 0.9);
   background-color: #eaa;
 }
-.theme-editor > .del-btn.confirming:before {
+.theme-editor > .del-btn.confirming::before {
   content: "\f1f8?";
 }
 
@@ -174,6 +175,9 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
  * Foot panel
  *****************/
 #foot-panel {
+  display: flex;
+  justify-content: space-around;
+
   background-color: #eee;
   height: 7px;
   box-shadow: 0 0 3px #aaa;
@@ -184,14 +188,16 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   text-align: center;
 }
 
-#foot-panel > .add-btn {
+#foot-panel > .btn {
   color: #ccc;
   background-color: transparent;
 
   height: 25px;
   width: 25px;
-  margin: 3px auto;
+  margin: 3px 0;
   padding: 3px;
+  display: inline-block;
+  position: relative;
 
   border: 2px solid #ccc;
   border-radius: 50%;
@@ -201,13 +207,13 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   transition: color .2s, background-color .2s, opacity .2s ease-in;
 }
 
-#foot-panel > .add-btn:hover {
+#foot-panel > .btn:hover {
   color: #eee;
   background-color: #ccc;
 }
 
-#foot-panel > .add-btn > i.fa-plus {
-  font-size: 27px;  /* 2px larger than the box due to the asymmetry of the the character '\f067' */
+#foot-panel > .btn > i.fa {
+  font-size: 25px;
   vertical-align: middle;
 }
 
@@ -215,10 +221,29 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   height: 40px;
 }
 
-#foot-panel:hover > .add-btn {
+#foot-panel:hover > .btn {
   opacity: 1;
 }
 
+
+#foot-panel > .add-btn > i.fa-plus {
+  font-size: 27px;  /* 2px larger than the box due to the asymmetry of the the character '\f067' */
+}
+
+#foot-panel > .undo-btn.warning {
+  color: #c33;
+  background-color: #fdd;
+  border-color: #c33;
+}
+
+#foot-panel > .undo-btn.warning::after {
+  content: 'Restore All?';
+  display: block;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  font-size: 8px;
+}
 /*****************
  * Icon Gallery
  *****************/
@@ -234,7 +259,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   overflow-x: scroll;
   white-space: nowrap;
 
-  /*margin-bottom: 5px;*/
+  margin-bottom: 5px;
   padding: 0 7px;
 
   transition: max-height .2s;
@@ -242,6 +267,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 
 #icon-gallery.hidden {
   max-height: 0;
+  margin: 0;
 }
 
 #icon-gallery .icon {
