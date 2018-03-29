@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 20:00:56
+ * @Last Modified time: 2018-03-29 22:24:34
  */
 
 /*
@@ -199,7 +199,7 @@ function bindGallery(gallery) {
   })
 }
 
-function bindFootPanel(footPanel) {
+function bindFootPanel(footPanel, themePanel) {
   let addBtn = footPanel.querySelector('.add-btn'),
       undoBtn = footPanel.querySelector('.undo-btn')
   addBtn.addEventListener('click', event => {
@@ -324,7 +324,7 @@ function initPopup() {
 
   // Foot Panel
   let footPanel = document.getElementById('foot-panel')
-  bindFootPanel(footPanel)
+  bindFootPanel(footPanel, themePanel)
 }
 
 document.addEventListener('DOMContentLoaded', () => {
