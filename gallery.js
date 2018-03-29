@@ -2,8 +2,13 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 08:27:29
+* @Last Modified time: 2018-03-29 09:15:13
 */
+
+/*
+ * Here I goofed off by saving user uploaded icon into chrome storage as dataURL,
+ *   rather than a real file in extension directory to avoid all the file creation/deletion code
+ */
 
 let input = document.getElementById("icon-form").children[0]
 let gallery = document.getElementById("icon-gallery")

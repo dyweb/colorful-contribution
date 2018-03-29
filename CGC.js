@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 08:35:12
+* @Last Modified time: 2018-03-29 09:16:56
 */
 
 // CGC means colorful github contributino
@@ -51,10 +51,6 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   default_theme: {
     name: 'Newbie',
     colors: ['#aae', '#acc', '#aea', '#cca', '#eaa']
-  },
-
-  patternType(colorStr) {
-    return colorStr && colorStr[0] == '#' ? 'color' : 'icon'
   },
 
   //////////////////////////////

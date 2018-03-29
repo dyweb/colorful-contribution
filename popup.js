@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 08:45:23
+ * @Last Modified time: 2018-03-29 09:37:39
  */
 
 /*
@@ -24,14 +24,22 @@ function findAncestor(elem, elemClass) {
 /*
  * Convert `theme.color` into html str
  * @params: colorStr: { String }
- *   there are two types of valid colorStr:
- *     1. colors: '#AAABBB', '#7FF', etc. (begins with '#')
- *     2. icons: 'icons/*.png'
+ *   there are three types of valid colorStr:
+ *     1. color: '#AAABBB', '#7FF', etc. (begins with '#')
+ *     2. icon: 'icons/XXX.png'   a icon file
+ *     3. dataURL: 'data:image/XXXX'
  */
 function getColorBlockStr(colorStr) {
-  return CGC.patternType(colorStr) === 'color' ?
-    `<div class="color-block" style="background-color: ${colorStr}"></div>` :
-    `<div class="color-block" style="background-image: url(${colorStr})"></div>` // colorType being 'icon'
+  let colorType = 'none'
+
+  if (colorStr.startsWith('#')) colorType = 'color'
+  else if (colorStr.startsWith('icons/') || colorStr.startsWith('data:image/')) colorType = 'icon'
+
+  return {
+    color: `<div class="color-block" style="background-color: ${colorStr}"></div>`,
+    icon: `<div class="color-block" style="background-image: url(${colorStr})"></div>`,
+    none: `<div class="color-block">Error</div>`,
+  }[colorType]
 }
 
 /*
@@ -40,7 +48,6 @@ function getColorBlockStr(colorStr) {
  * so the passed `theme` should be preserved
  */
 function getThemeBlock(theme) {
-  // TODO: This function is too LONG!
   console.assert(theme.name)
   console.assert(theme.colors && theme.colors.length > 0)
 
@@ -80,14 +87,36 @@ function getThemeBlock(theme) {
     colorBlocks = themeBlock.querySelectorAll('.color-block')
 
   // Modify theme name
-  nameInput.addEventListener('change', event => {
+  bindNameInput(nameInput, theme)
+
+  // Modify theme colors
+  bindColorInput(colorInput, theme)
+
+  // Delete theme
+  bindDelBtn(delBtn, theme)
+
+  // Toggle edit mode for this theme
+  bindEditBtn(editBtn, theme)
+
+  // Color blocks
+  colorBlocks.forEach(cb => bindColorBlock(cb, theme))
+
+  return themeBlock
+}
+
+//////////////////////////////
+// Editor Functinos
+//////////////////////////////
+function bindNameInput(nameInputElem, theme) {
+  nameInputElem.addEventListener('change', event => {
     document.querySelector(`.theme-block[data-name=${theme.name}]`).dataset.name = event.target.value
     theme.name = event.target.value
     CGC.saveThemes()
   })
+}
 
-  // Modify theme colors
-  colorInput.addEventListener('input', event => {
+function bindColorInput(colorInputElem, theme) {
+  colorInputElem.addEventListener('input', event => {
     let elem = event.target,
       colorStr = elem.value
 
@@ -100,9 +129,10 @@ function getThemeBlock(theme) {
     CGC.saveThemes()
     CGC.sendTheme(theme)
   })
+}
 
-  // Delete theme
-  delBtn.addEventListener('click', event => {
+function bindDelBtn(delBtn, theme) {
+ delBtn.addEventListener('click', event => {
     if (!event.target.classList.contains('confirming')) {
       // first click, change style to ask for confirm
       event.target.classList.add('confirming')
@@ -114,33 +144,30 @@ function getThemeBlock(theme) {
       window.setTimeout(() => block.remove(), 500) // add a time delay to diplay the full deletion animation
     }
   })
+}
 
-  // Toggle per-theme edit mode
+function bindEditBtn(editBtn, theme) {
   editBtn.addEventListener('click', event => {
     // Toggling editing mode when click on the edit button
-    let block = event.target.parentNode.parentNode
-    if (!block.classList.contains('editing')) {
-      setEditMode(block, true)
-    } else {
-      setEditMode(block, false)
+    let block = findAncestor(event.target, 'theme-block'),
+      editing = block.classList.contains('editing')
+    setEditMode(block, !editing)
+  })
+}
+
+function bindColorBlock(colorBlock, theme) {
+  // .colorInput should follow the mouse as it enter a color block
+  colorBlock.addEventListener('mouseenter', event => {
+    let cb = event.target,
+      isEditing = findAncestor(cb, 'theme-block').classList.contains('editing'),
+      editBox = findAncestor(cb, 'theme-colors').querySelector('.color-edit-box')
+
+    if (isEditing) {
+      editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
+      editBox.dataset.idx = cb.offsetLeft / cb.offsetWidth
+      editBox.querySelector('input').value = theme.colors[editBox.dataset.idx]
     }
   })
-
-  for (let cb of colorBlocks) {
-    cb.addEventListener('mouseenter', event => {
-      let cb = event.target,
-        isEditing = findAncestor(cb, 'theme-block').classList.contains('editing'),
-        editBox = findAncestor(cb, 'theme-colors').querySelector('.color-edit-box')
-
-      if (isEditing) {
-        editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
-        editBox.dataset.idx = cb.offsetLeft / cb.offsetWidth
-        editBox.querySelector('input').value = theme.colors[editBox.dataset.idx]
-      }
-    })
-  }
-
-  return themeBlock
 }
 
 /*
@@ -195,6 +222,11 @@ function setEditMode(themeBlock, val) {
   }
 }
 
+//////////////////////////////
+// Editor Functinos End
+//////////////////////////////
+
+
 /*
  * Clear all css states
  *
@@ -239,6 +271,19 @@ function initPopup() {
     (dataURL, fileName) => appendIcon(dataURL, fileName),
     (dataURL, date) => appendIcon(dataURL, date),
   )
+
+  gallery.addEventListener('click', event => {
+    if (!event.target.classList.contains('icon')) return
+    let icon = event.target,
+      themeBlock = gallery.previousSibling  // gallery will be moved to be after of the theme block being edited
+
+    // set the content of colorBlock to icon
+    let idx = themeBlock.querySelector('.color-edit-box').dataset.idx
+    let colorBlock = themeBlock.querySelectorAll('.theme-colors .color-block')[idx]
+    console.log(colorBlock)
+    console.log(getColorBlockStr(icon.src))
+    colorBlock.outerHTML = getColorBlockStr(icon.src)
+  })
 
   // Foot panel
   let addBtn = footPanel.querySelector('.add-btn')

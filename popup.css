@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-04 16:15:09
+* @Last Modified time: 2018-03-29 09:28:14
 */
 
 body {
@@ -234,7 +234,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   overflow-x: scroll;
   white-space: nowrap;
 
-  margin-bottom: 5px;
+  /*margin-bottom: 5px;*/
   padding: 0 7px;
 
   transition: max-height .2s;
