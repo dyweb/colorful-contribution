@@ -1,6 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "colorful-contribution",
+  "name": "colorful-github-contribution",
+  "short_name": "CGC",
   "version": "0.2",
   "author": "gigaflw",
   "description": "Custom color scheme for github contribution bar",
@@ -21,5 +22,6 @@
   "web_accessible_resources": [
     "icons/*.png"
   ],
+  "icons": {"128": "icon.png"},
   "homepage_url": "https://github.com/dyweb/colorful-contribution"
 }
