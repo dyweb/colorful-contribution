@@ -14,10 +14,10 @@
   ],
   "content_scripts": [{
     "matches": ["https://github.com/*"],
-    "js": ["colorful.js"],
-    "css": ["colorful.css"]
+    "js": ["content.js"],
+    "css": ["content.css"]
   }],
-  "options_page": "options.html",
+  "options_page": "gallery.html",
   "web_accessible_resources": [
     "icons/*.png"
   ],

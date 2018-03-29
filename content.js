@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-01 09:17:40
+ * @Last Modified time: 2018-03-29 08:12:26
  *
  * This file is intended as content script for github contribution page
  *
@@ -30,7 +30,7 @@
 
 chrome.storage.local.get('CGC', (theme) => {
   function colorType(colorStr) {
-    // Same as `colorType` from config.js
+    // Same as `colorType` from CGC.js
     // Fixme: a tight couple here
     return colorStr && colorStr[0] == '#' ? 'color' : 'icon'
   }

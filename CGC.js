@@ -2,8 +2,15 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-04 11:13:24
+* @Last Modified time: 2018-03-29 08:35:12
 */
+
+// CGC means colorful github contributino
+// window.CGC is the collection of global states/methods
+// 
+// Calling relationship:
+// popup.js -- Themes Management Interface -----> CGC.js  -- `sendTheme()` -->  content.js
+// gallery.js  -- Icon Management Interface -/
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
 
@@ -46,7 +53,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     colors: ['#aae', '#acc', '#aea', '#cca', '#eaa']
   },
 
-  colorType(colorStr) {
+  patternType(colorStr) {
     return colorStr && colorStr[0] == '#' ? 'color' : 'icon'
   },
 
@@ -56,7 +63,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   all_themes: null, // globally accessible variable, initialized from storage instantly after bootup
 
   /*
-   * Send a theme object to `chrome.storage.local` and carry out content script `colorful.js`
+   * Send a theme object to `chrome.storage.local` and carry out content script `content.js`
    * the page will refresh iff this function is executed
    *
    * @params: theme: { Object | null }
@@ -83,7 +90,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
         'CGC': theme
       }, () => {
         chrome.tabs.executeScript({
-          file: 'colorful.js'
+          file: 'content.js'
         })
       })
     }
@@ -237,14 +244,14 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * @params predCb { Function }  -  callback for predefined icons
    *         @params dataURL { String } the dataURL of the image,
    *         @params fileName { String } the name of the file, used as identifier
-   * @params userdCb { Function }  -  callback for user-defined icons
+   * @params userCb { Function }  -  callback for user-defined icons
    *         @params dataURL { String } the dataURL of the image,
    *         @params date { Int } the timestamp of the icon, used as identifier
    *
    * userCb will only be called after all predefined icons have been called with,
    *   so that they do not mix up
    */
-  getIcons(predCb, userdCb) {
+  getIcons(predCb, userCb) {
     function load_predefined_icons(then) {
       CGC.traverseDir('icons',
           file => file.name.match(/png|jpg|jpeg|ico$/),
@@ -261,7 +268,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     function load_user_icons(){
       chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
         for (let [date, dataURL] of obj['CGC_user_icons']) {
-          userdCb(dataURL, date)
+          userCb(dataURL, date)
         }
       })
     }
@@ -270,6 +277,22 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     load_predefined_icons(load_user_icons)
   },
 
+  addIcon(iconId, dataURL) {
+    chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
+      obj['CGC_user_icons'].push([iconId, dataURL])
+      chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
+    })
+  },
+
+  removeIcon(iconId, cb) {
+    chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
+      let ind = obj['CGC_user_icons'].findIndex(icon => icon[0] == iconId)
+      if (ind === -1) return
+      obj['CGC_user_icons'].splice(ind, 1)
+      chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
+      cb()
+    })
+  }
   ///////////////////////////////////
   // Icon Management Interface Ends
   ///////////////////////////////////

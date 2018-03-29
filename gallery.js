@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-04 11:12:46
+* @Last Modified time: 2018-03-29 08:27:29
 */
 
 let input = document.getElementById("icon-form").children[0]
@@ -34,13 +34,7 @@ let addIconBtn = gallery.children[0]
   }
 
   function removeIcon(elem, iconId) {
-    chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
-      let ind = obj['CGC_user_icons'].findIndex(icon => icon[0] == iconId)
-      if (ind === -1) return
-      elem.parentNode.removeChild(elem)
-      obj['CGC_user_icons'].splice(ind, 1)
-      chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
-    })
+    CGC.removeIcon(iconId, () => elem.parentNode.removeChild(elem))
   }
 
   function resizeImg(dataURL, width, height) {
@@ -69,11 +63,7 @@ let addIconBtn = gallery.children[0]
       let dataURL = resizeImg(event.target.result, 32, 32)
       let iconId = Date.now()
       appendIcon(dataURL, iconId, true)
-
-      chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
-        obj['CGC_user_icons'].push([iconId, dataURL])
-        chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
-      })
+      CGC.addIcon(iconId, dataURL)
     })
   })
   // event listeners end

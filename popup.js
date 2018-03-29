@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-04 15:48:34
+ * @Last Modified time: 2018-03-29 08:45:23
  */
 
 /*
@@ -10,7 +10,7 @@
  * content script `colorful.js` can find it.
  */
 
-let CGC = window.CGC // defined in `config.js`. Explict announcement to avoid ambiguity
+let CGC = window.CGC // defined in `CGC.js`. Explict announcement to avoid ambiguity
 
 // util func
 function findAncestor(elem, elemClass) {
@@ -19,6 +19,19 @@ function findAncestor(elem, elemClass) {
     elem = elem.parentNode
   }
   return null
+}
+
+/*
+ * Convert `theme.color` into html str
+ * @params: colorStr: { String }
+ *   there are two types of valid colorStr:
+ *     1. colors: '#AAABBB', '#7FF', etc. (begins with '#')
+ *     2. icons: 'icons/*.png'
+ */
+function getColorBlockStr(colorStr) {
+  return CGC.patternType(colorStr) === 'color' ?
+    `<div class="color-block" style="background-color: ${colorStr}"></div>` :
+    `<div class="color-block" style="background-image: url(${colorStr})"></div>` // colorType being 'icon'
 }
 
 /*
@@ -32,9 +45,7 @@ function getThemeBlock(theme) {
   console.assert(theme.colors && theme.colors.length > 0)
 
   let colorBlocksStr = theme.colors.reduce(function(acc, cur) {
-    str = CGC.colorType(cur) === 'color' ?
-      `<div class="color-block" style="background-color: ${cur}"></div>` :
-      `<div class="color-block" style="background-image: url(${cur})"></div>`
+    str = getColorBlockStr(cur)
     return acc + str
   }, '')
 
@@ -201,9 +212,9 @@ function resetAllThemeBlocks(except) {
 }
 
 /*
- * initialize popup html according to CGC.all_themes
+ * initialize popup html
  */
-function initThemes() {
+function initPopup() {
   let themePanel = document.getElementById('theme-panel'),
       footPanel = document.getElementById('foot-panel')
 
@@ -224,7 +235,7 @@ function initThemes() {
     gallery.appendChild(img)
   }
 
-  CGC.getIcons(
+  CGC.getIcons( // put icons into gallery
     (dataURL, fileName) => appendIcon(dataURL, fileName),
     (dataURL, date) => appendIcon(dataURL, date),
   )
@@ -249,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
       CGC.all_themes = obj['CGC_all']
     }
 
-    initThemes()
+    initPopup()
 
     function setTheme(themeName) {
       if (!themeName) return
