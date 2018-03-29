@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "colorful-contribution",
-  "version": "0.1",
+  "version": "0.2",
   "author": "gigaflw",
   "description": "Custom color scheme for github contribution bar",
   "browser_action": {

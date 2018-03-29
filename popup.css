@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 11:22:48
+* @Last Modified time: 2018-03-29 20:02:58
 */
 
 body {
@@ -244,11 +244,14 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   top: 0;
   font-size: 8px;
 }
+
 /*****************
  * Icon Gallery
  *****************/
- #icon-gallery {
-  background-color: #eee;
+#icon-gallery {
+  background-color: #eaeaea;
+  border-top: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
 
   height: 40px;
   width: 200px;
@@ -263,11 +266,13 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   padding: 0 7px;
 
   transition: max-height .2s;
- }
+  cursor: pointer;
+}
 
 #icon-gallery.hidden {
   max-height: 0;
   margin: 0;
+  border: none;
 }
 
 #icon-gallery .icon {

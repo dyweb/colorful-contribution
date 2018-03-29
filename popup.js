@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 11:23:17
+ * @Last Modified time: 2018-03-29 20:00:56
  */
 
 /*
@@ -176,7 +176,11 @@ function bindColorBlock(colorBlock, theme) {
 
 function bindGallery(gallery) {
   gallery.addEventListener('click', event => {
-    if (!event.target.classList.contains('icon')) return
+    if (!event.target.classList.contains('icon')) {
+      chrome.runtime.openOptionsPage()
+      return
+    }
+
     let icon = event.target,
       themeBlock = gallery.previousSibling,  // gallery will be moved to be after of the theme block being edited
       theme = CGC.getTheme(themeBlock.dataset.name)
