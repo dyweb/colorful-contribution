@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "colorful-github-contribution",
   "short_name": "CGC",
-  "version": "0.2",
+  "version": "0.2.1",
   "author": "gigaflw",
   "description": "Custom color scheme for github contribution bar",
   "browser_action": {
