@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 10:14:50
+ * @Last Modified time: 2018-03-31 23:14:48
  *
  * This file is intended as content script for github contribution page
  *
@@ -46,8 +46,7 @@ chrome.storage.local.get('CGC', (theme) => {
   theme = theme['CGC']
   if (!theme) return
 
-  let legends = document.querySelectorAll('.contrib-legend ul.legend > li'),
-    days = document.querySelectorAll('.calendar-graph .day')
+  let legends = document.querySelectorAll('.contrib-legend ul.legend > li')
 
   // Check for the number of legends
   if (legends.length != theme.colors.length) {
@@ -74,23 +73,38 @@ chrome.storage.local.get('CGC', (theme) => {
 
   // Update contribution block color
   function getColor(cnt){
-    let ind = theme.thresholds.findIndex(v => v <= cnt)
+    let ind = theme.thresholds.findIndex(v => v <= cnt) // find the first color with a threshold lower than the target
     return theme.colors[ind]
   }
 
+
+  let days = document.querySelectorAll('.calendar-graph rect.day')
   for (let d of days) {
+    // each day block now can be one of the
+    // 1. <rect class="day"></rect>, same as the github default, except for possible color alteration
+    // 2. <image></image><rect class="day"></rect>, 2 elements
+    //  the upper layer `rect` is used to triggle events and should be set to transparent
+
     let cnt = d.dataset.count,
       color = cnt && getColor(cnt),
       colorT = colorType(color)
     if (colorT === 'color') {
       d.setAttribute('fill', color)
-      if (d.tagName === 'image')  d.outerHTML = d.outerHTML.replace('image', 'rect')  // have to be last line because this will invalidate `d`
-    } else if (colorT == 'icon') {
-      d.setAttribute('href', chrome.extension.getURL(color))
-      if (d.tagName === 'rect')  d.outerHTML = d.outerHTML.replace('rect', 'image')  // have to be last line because this will invalidate `d`
-    } else if (colorT == 'dataURL') {
-      d.setAttribute('href', color)
-      if (d.tagName === 'rect')  d.outerHTML = d.outerHTML.replace('rect', 'image')  // have to be last line because this will invalidate `d`
+      let prev = d.previousElementSibling
+      if (prev && prev.matches('image')) d.parentNode.removeChild(prev)  // remove useless image block
+    } else if (colorT == 'icon' || colorT == 'dataURL') {
+      d.setAttribute('fill', 'transparent')
+      let prev = d.previousElementSibling
+      let href = colorT === 'icon' ? chrome.extension.getURL(color) : color
+
+      if (prev && prev.matches('image')) {
+        prev.setAttribute('href', href)
+      } else {
+        let img = d.cloneNode()
+        img.setAttribute('href', href)
+        d.parentNode.insertBefore(img, d)
+        img.outerHTML = img.outerHTML.replace('rect', 'image')
+      }
     }
   }
 })
