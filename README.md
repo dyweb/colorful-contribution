@@ -31,3 +31,4 @@ Sorry, but for now, it has not yet been published to Chrome Web Store.
 - [x] Add UI for icons
 - [ ] Support images comprised of multiple / all blocks
 - [ ] Test on various devices
+- [ ] Image exportation
