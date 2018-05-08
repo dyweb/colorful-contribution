@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-31 23:14:48
+ * @Last Modified time: 2018-05-08 09:12:17
  *
  * This file is intended as content script for github contribution page
  *
@@ -47,10 +47,15 @@ chrome.storage.local.get('CGC', (theme) => {
   if (!theme) return
 
   let legends = document.querySelectorAll('.contrib-legend ul.legend > li')
+  
+  // check for profile page
+  if (legends.length === 0) {
+    return
+  }
 
   // Check for the number of legends
   if (legends.length != theme.colors.length) {
-    console.error('There are ' + legends.length + ' legends but ' + theme.length + ' theme')
+    console.error('There are ' + legends.length + ' legends but ' + theme.colors.length + ' theme')
     return
   }
 
