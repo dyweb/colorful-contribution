@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-03-29 22:24:34
+ * @Last Modified time: 2018-09-05 10:58:44
  */
 
 /*
@@ -23,24 +23,24 @@ function findAncestor(elem, elemClass) {
 }
 
 /*
- * Convert `theme.color` into html str
- * @params: colorStr: { String }
- *   there are three types of valid colorStr:
+ * Convert `theme.patterns` into html str
+ * @params: patternStr: { String }
+ *   there are three types of valid patternStr:
  *     1. color: '#AAABBB', '#7FF', etc. (begins with '#')
  *     2. icon: 'icons/XXX.png'   a icon file
  *     3. dataURL: 'data:image/XXXX'
  */
-function getColorBlockStr(colorStr) {
-  let colorType = 'none'
+function getPatternBlockStr(patternStr) {
+  let patternType = 'none'
 
-  if (colorStr.startsWith('#')) colorType = 'color'
-  else if (colorStr.startsWith('icons/') || colorStr.startsWith('data:image/')) colorType = 'icon'
+  if (patternStr.startsWith('#')) patternType = 'color'
+  else if (patternStr.startsWith('icons/') || patternStr.startsWith('data:image/')) patternType = 'icon'
 
   return {
-    color: `<div class="color-block" style="background-color: ${colorStr}"></div>`,
-    icon: `<div class="color-block" style="background-image: url(${colorStr})"></div>`,
-    none: `<div class="color-block">Error</div>`,
-  }[colorType]
+    color: `<div class="pattern-block" style="background-color: ${patternStr}"></div>`,
+    icon: `<div class="pattern-block" style="background-image: url(${patternStr})"></div>`,
+    none: `<div class="pattern-block">Error</div>`,
+  }[patternType]
 }
 
 /*
@@ -49,11 +49,16 @@ function getColorBlockStr(colorStr) {
  * so the passed `theme` should be preserved
  */
 function getThemeBlock(theme) {
-  console.assert(theme.name)
-  console.assert(theme.colors && theme.colors.length > 0)
+  // Temporary
+  if (theme.poster) {
+    theme.patterns = CGC.defaultThemes[0].patterns
+  }
 
-  let colorBlocksStr = theme.colors.reduce(function(acc, cur) {
-    str = getColorBlockStr(cur)
+  console.assert(theme.name)
+  console.assert(theme.patterns && theme.patterns.length > 0)
+
+  let patternBlocksStr = theme.patterns.reduce(function(acc, cur) {
+    str = getPatternBlockStr(cur)
     return acc + str
   }, '')
 
@@ -62,10 +67,10 @@ function getThemeBlock(theme) {
     <div class="theme-name underline">
       <input class="invisible-input" type="text" value="${theme.name}" disabled>
     </div>
-    <div class="theme-colors">
-      ${colorBlocksStr}
+    <div class="theme-patterns">
+      ${patternBlocksStr}
       <div class="color-edit-box underline hidden" data-idx="0">
-        <input class="invisible-input" type="text"  disabled value="${theme.colors[0].match(COLOR_REG) ? theme.colors[0] : '<icon>'}">
+        <input class="invisible-input" type="text"  disabled value="${theme.patterns[0].match(COLOR_REG) ? theme.patterns[0] : '<icon>'}">
       </div>
     </div>
     <div class="theme-editor">
@@ -85,7 +90,7 @@ function getThemeBlock(theme) {
     delBtn = themeBlock.querySelector('.del-btn'),
     nameInput = themeBlock.querySelector('.theme-name input'),
     colorInput = themeBlock.querySelector('.color-edit-box input'),
-    colorBlocks = themeBlock.querySelectorAll('.color-block')
+    patternBlocks = themeBlock.querySelectorAll('.pattern-block')
 
   // Modify theme name
   bindNameInput(nameInput, theme)
@@ -100,7 +105,7 @@ function getThemeBlock(theme) {
   bindEditBtn(editBtn, theme)
 
   // Color blocks
-  colorBlocks.forEach(cb => bindColorBlock(cb, theme))
+  patternBlocks.forEach(cb => bindPatternBlock(cb, theme))
 
   return themeBlock
 }
@@ -124,10 +129,10 @@ function bindColorInput(colorInputElem, theme) {
     if (!colorStr.match(COLOR_REG)) return  // illegal color string
 
     let idx = findAncestor(elem, 'color-edit-box').dataset.idx
-    let colorBlock = findAncestor(elem, 'theme-colors').querySelectorAll('.color-block')[idx]
-    colorBlock.style['background-color'] = colorStr
-    colorBlock.style['background-image'] = ''
-    theme.colors[idx] = colorStr
+    let patternBlock = findAncestor(elem, 'theme-patterns').querySelectorAll('.pattern-block')[idx]
+    patternBlock.style['background-color'] = colorStr
+    patternBlock.style['background-image'] = ''
+    theme.patterns[idx] = colorStr
     CGC.saveThemes()
     CGC.sendTheme(theme)
   })
@@ -157,19 +162,19 @@ function bindEditBtn(editBtn, theme) {
   })
 }
 
-function bindColorBlock(colorBlock, theme) {
-  // .colorInput should follow the mouse as it enter a color block
-  colorBlock.addEventListener('mouseenter', event => {
+function bindPatternBlock(patternBlock, theme) {
+  // .colorInput should follow the mouse as it enter a pattern block
+  patternBlock.addEventListener('mouseenter', event => {
     let cb = event.target,
       isEditing = findAncestor(cb, 'theme-block').classList.contains('editing'),
-      editBox = findAncestor(cb, 'theme-colors').querySelector('.color-edit-box')
+      editBox = findAncestor(cb, 'theme-patterns').querySelector('.color-edit-box')
 
     if (isEditing) {
       editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
       editBox.dataset.idx = cb.offsetLeft / cb.offsetWidth
 
-      let colorStr = theme.colors[editBox.dataset.idx]
-      editBox.querySelector('input').value = colorStr.match(COLOR_REG) ? colorStr : '<icon>'
+      let patternStr = theme.patterns[editBox.dataset.idx]
+      editBox.querySelector('input').value = patternStr.match(COLOR_REG) ? patternStr : '<icon>'
     }
   })
 }
@@ -185,15 +190,15 @@ function bindGallery(gallery) {
       themeBlock = gallery.previousSibling,  // gallery will be moved to be after of the theme block being edited
       theme = CGC.getTheme(themeBlock.dataset.name)
 
-    // set the content of colorBlock to icon
+    // set the content of patternBlock to icon
     let colorInput = themeBlock.querySelector('.color-edit-box'),
       idx = colorInput.dataset.idx,
-      colorBlock = themeBlock.querySelectorAll('.theme-colors .color-block')[idx]
+      patternBlock = themeBlock.querySelectorAll('.theme-patterns .pattern-block')[idx]
 
-    colorBlock.style = `background-image: url(${icon.src})`
+    patternBlock.style = `background-image: url(${icon.src})`
     colorInput.querySelector('input').value = '<icon>'
 
-    theme.colors[idx] = icon.src
+    theme.patterns[idx] = icon.src
     CGC.saveThemes()
     CGC.sendTheme(theme)
   })
@@ -300,7 +305,7 @@ function initPopup() {
   // Theme panel
   let themePanel = document.getElementById('theme-panel')
   let fragment = document.createDocumentFragment()
-  for (let theme of CGC.all_themes) {
+  for (let theme of CGC.allThemes) {
     let themeBlock = getThemeBlock(theme)
     fragment.appendChild(themeBlock)
   }
@@ -333,9 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.sync.get('CGC_all', (obj) => {
     if (!obj['CGC_all']) {
       CGC.initStorage()
-      CGC.all_themes = CGC.default_themes
+      CGC.allThemes = CGC.defaultThemes
     } else {
-      CGC.all_themes = obj['CGC_all']
+      CGC.allThemes = obj['CGC_all']
     }
 
     initPopup()

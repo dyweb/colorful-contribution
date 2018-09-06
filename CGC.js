@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 11:24:23
+* @Last Modified time: 2018-09-06 13:37:04
 */
 
 // CGC means colorful github contributino
@@ -12,57 +12,44 @@
 // popup.js -- Themes Management Interface -----> CGC.js  -- `sendTheme()` -->  content.js
 // gallery.js  -- Icon Management Interface -/
 
+console.assert(typeof Theme !== 'undefined', "`Theme` not found, include `theme.js` before `CGC.js`")
+
+Theme.DEFAULT_THRESHOLDS = [0, 3, 5, 8, 10] // 0 => patterns[0], 1,2,3 => patterns[1], etc.
+
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
 
   version: chrome.runtime.getManifest().version,
 
-  // the threshold used by github default contribution coloring
+  // the threshold used by github default contribution coloring, ranged from 0 to 10
   // non-customizeable for now
-  default_thresholds: [10, 8, 5, 3, 0],
+  defaultThresholds: Theme.DEFAULT_THRESHOLDS,
 
   // built-in themes
-  default_themes: [{
-    name: 'Primal',
-    colors: ['#196127', '#239a3b', '#7bc96f', '#c6e48b', '#eee']    // the color used by GitHub
-  }, {
-    name: 'Cherry',
-    colors: ['#c2185b', '#e91e63', '#f06292', '#f8bbd0', '#eee']
-  }, {
-    name: 'Tide',
-    colors: ['#3949ab', '#5c6bc0', '#9fa8da', '#c5cae9', '#eee']
-  }, {
-    name: 'Solemn',
-    colors: ['#111', '#555', '#888', '#bbb', '#eee']
-  }, {
-    name: 'Olympic',
-    colors: ['#0000ff', '#fff000', '#000000', '#096600', '#ff0000']
-  }, {
-    name: 'Oreo',
-    colors: ['#222', '#fff', '#222', '#fff', '#222']
-  }, {
-    name: 'Flower',
-    colors: ['icons/flower.png', '#239a3b', '#7bc96f', '#c6e48b', '#eee']
-  }, {
-    name: 'Mario',
-    colors: ['icons/mario-1up.png', 'icons/mario-fireflower.png', 'icons/mario-star.png', 'icons/mario-coin.png', '#eee']
-  }],
+  defaultThemes: [
+    new ChromaTheme('Primal', ['#eee'   , '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
+    new ChromaTheme('Cherry', ['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
+    new ChromaTheme('Tide',   ['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
+    new ChromaTheme('Solemn', ['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
+    new ChromaTheme('Olympic',['#ff0000', '#096600', '#000000', '#fff000', '#0000ff']),
+    new ChromaTheme('Oreo',   ['#222'   , '#fff'   , '#222'   , '#fff'   , '#222'   ]),
+    new ChromaTheme('Flower', ['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
+    new ChromaTheme('Mario',  ['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
+    new PosterTheme('Comet', 'posters/name.jpg',),
+  ],
 
   // the default theme when creating new ones
-  default_theme: {
-    name: 'Newbie',
-    colors: ['#aae', '#acc', '#aea', '#cca', '#eaa']
-  },
+  defaultTheme: new ChromaTheme('Newbie', ['#aae', '#acc', '#aea', '#cca', '#eaa']),
 
   //////////////////////////////
   // Themes Management Interface
   //////////////////////////////
-  all_themes: null, // globally accessible variable, initialized from storage instantly after bootup
+  allThemes: null, // globally accessible variable, initialized from storage instantly after bootup
 
   /*
    * Send a theme object to `chrome.storage.local` and carry out content script `content.js`
    * the page will refresh iff this function is executed
    *
-   * @params: theme: { Object | null }
+   * @params: theme: { object | null }
    *   optional. If not given, the currently selected theme
    *     will be sent according to `chrome.storage.sync`
    */
@@ -70,17 +57,12 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     if (theme === null) {
       chrome.storage.sync.get('CGC_selected', obj => {
         let name = obj['CGC_selected']
-        let theme = CGC.all_themes.find(t => t.name === name)
+        let theme = CGC.allThemes.find(t => t.name === name)
         CGC.sendTheme(theme)
       })
     } else {
 
-      console.assert(theme.name)
-      console.assert(theme.colors)
-
-      if (!theme.thresholds) {
-        theme.thresholds = CGC.default_thresholds
-      }
+      if (!theme.thresholds) theme.thresholds = CGC.defaultThresholds
 
       chrome.storage.local.set({
         'CGC': theme
@@ -98,7 +80,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   initStorage() {
     chrome.storage.sync.set({
       'version': CGC.version,
-      'CGC_all': CGC.default_themes,
+      'CGC_all': CGC.defaultThemes,
       'CGC_selected': ''
     })
   },
@@ -109,7 +91,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   saveThemes() {
-    chrome.storage.sync.set({'CGC_all': CGC.all_themes})
+    chrome.storage.sync.set({'CGC_all': CGC.allThemes})
     // TODO: Save all themes altogether may have efficiency issue
   },
 
@@ -119,11 +101,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    *
    * @params theme { String | Object }
    *    The theme object or its name.
-   *    Will do nothing if a string is given but can not be found from `all_themes`
+   *    Will do nothing if a string is given but can not be found from `allThemes`
    */
   setTheme(theme) {
     if (typeof(theme) === 'string') {
-      theme = CGC.all_themes.find(t => t.name === theme)
+      theme = CGC.allThemes.find(t => t.name === theme)
     }
     if (!theme) return
 
@@ -139,18 +121,18 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * 
    * @params theme { String | Object }
    *    The theme object or its name.
-   *    Will do nothing if a string is given but can not be found from `all_themes`
+   *    Will do nothing if a string is given but can not be found from `allThemes`
    */
   deleteTheme(theme) {
     if (typeof(theme) === 'string') {
-      theme = CGC.all_themes.find(t => t.name == theme)
+      theme = CGC.allThemes.find(t => t.name == theme)
     }
     if (!theme) return
 
-    let ind = CGC.all_themes.indexOf(theme)
+    let ind = CGC.allThemes.indexOf(theme)
     if (ind == -1) return
 
-    CGC.all_themes.splice(ind, 1)
+    CGC.allThemes.splice(ind, 1)
     CGC.saveThemes()
 
     chrome.storage.sync.get('CGC_selected', obj => {
@@ -167,28 +149,24 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   /*
-   * Create a default theme and add it into `all_themes`
+   * Create a default theme and add it into `allThemes`
    * the new copy of default theme will be returned
    * this new theme will be save to `chrome.storage.sync`
    */
   addNewTheme() {
-    if (CGC.all_themes === null) {
+    if (CGC.allThemes === null) {
       console.error("Themes are not initialized! Failed to add a new one.")
       return
     }
 
-    let theme = {
-      name: CGC.default_theme.name,
-      colors: CGC.default_theme.colors.slice(),
-    }
-
-    CGC.all_themes.push(theme)
+    let theme = CGC.defaultTheme.copy()
+    CGC.allThemes.push(theme)
     CGC.saveThemes()
     return theme
   },
 
   getTheme(themeName) {
-    return CGC.all_themes.find(th => th.name === themeName)
+    return CGC.allThemes.find(th => th.name === themeName)
   },
 
   ///////////////////////////////////
@@ -196,10 +174,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   ///////////////////////////////////
 
   ///////////////////////////////////
-  // Icon Management Interface
+  // Icon & Poster Management Interface
   ///////////////////////////////////
   /*
-   * Traverse the extension folder
+   * Traverse the extension folder (non-recursively)
    *
    * @params path { String }
    * @params filter { Function }
@@ -258,7 +236,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    *   so that they do not mix up
    */
   getIcons(predCb, userCb) {
-    function load_predefined_icons(then) {
+    function loadPredefinedIcons(then) {
       CGC.traverseDir('icons',
           file => file.name.match(/png|jpg|jpeg|ico$/),
           (file, is_last_file) => {
@@ -274,7 +252,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     }
 
     // Display all user icon files
-    function load_user_icons(){
+    function loadUserIcons(){
       chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
         for (let [date, dataURL] of obj['CGC_user_icons']) {
           userCb(dataURL, date)
@@ -283,7 +261,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     }
 
     // put all user icons after predefined ones, so that they do not mix up
-    load_predefined_icons(load_user_icons)
+    loadPredefinedIcons(loadUserIcons)
   },
 
   addIcon(iconId, dataURL) {
@@ -301,8 +279,45 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
       cb()
     })
+  },
+  ///////////////////////////////////
+  // Icon & Poster Management Interface Ends
+  ///////////////////////////////////
+
+  ///////////////////////////////////
+  // Image Processing Util
+  ///////////////////////////////////
+  resizeImg(dataURL, width, height, cb) {
+    let img = new Image()
+    img.src = dataURL
+
+    let canvas = document.createElement("canvas")
+    let ctx = canvas.getContext("2d")
+    canvas.width = width
+    canvas.height = height
+
+    img.addEventListener('load', () => {
+      ctx.drawImage(img, 0, 0, width, height)
+      cb(canvas.toDataURL())
+    })
+  },
+
+  splitImg(dataURL, cropWidth, cropHeight, cb) {
+    let img = new Image()
+    img.src = dataURL
+
+    let canvas = document.createElement("canvas")
+    let ctx = canvas.getContext("2d")
+    canvas.width = cropWidth
+    canvas.height = cropHeight
+
+    img.addEventListener('load', () => {
+      for (let x = 0; x < img.width; x += cropWidth) {
+        for (let y = 0; y < img.height; y += cropHeight) {
+          ctx.drawImage(img, x, y, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
+          cb(canvas.toDataURL())
+        }
+      }
+    })
   }
-  ///////////////////////////////////
-  // Icon Management Interface Ends
-  ///////////////////////////////////
 }

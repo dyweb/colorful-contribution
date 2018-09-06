@@ -13,11 +13,13 @@
     "activeTab",
     "storage"
   ],
-  "content_scripts": [{
-    "matches": ["https://github.com/*"],
-    "js": ["content.js"],
-    "css": ["content.css"]
-  }],
+  "content_scripts": [
+    {
+      // "matches": ["http://github.com/*"],
+      "matches": ["file://*"],
+      "js": ["theme.js"]
+    }
+  ],
   "options_page": "gallery.html",
   "web_accessible_resources": [
     "icons/*.png"

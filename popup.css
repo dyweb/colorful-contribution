@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 20:02:58
+* @Last Modified time: 2018-09-04 22:19:59
 */
 
 body {
@@ -72,7 +72,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 /*****************
  * Color Blocks
  *****************/
-.theme-colors {
+.theme-patterns {
   flex-grow: 1;
   height: 32px;
 
@@ -85,11 +85,11 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   transition: margin-top .2s;
 }
 
-.theme-block.editing .theme-colors {
+.theme-block.editing .theme-patterns {
   margin-top: -10px;  /* a stop-gap to counteract the veritically middle alignment effect of flex*/ 
 }
 
-.color-block {
+.pattern-block {
   width: 20%;
   height: 100%;
 
@@ -100,7 +100,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   transition: transform .2s, box-shadow .2s;
 }
 
-.theme-block.editing .color-block:hover {
+.theme-block.editing .pattern-block:hover {
   box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
   transform: scale(1.1)
 }

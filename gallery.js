@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 10:55:42
+* @Last Modified time: 2018-05-08 11:22:43
 */
 
 /*
@@ -41,21 +41,6 @@ let addIconBtn = gallery.children[0]
   function removeIcon(elem, iconId) {
     CGC.removeIcon(iconId, () => elem.parentNode.removeChild(elem))
   }
-
-  function resizeImg(dataURL, width, height, cb) {
-      let img = new Image()
-      img.src = dataURL
-
-      let canvas = document.createElement("canvas")
-      let ctx = canvas.getContext("2d")
-      canvas.width = width
-      canvas.height = height
-
-      img.addEventListener('load', () => {
-        ctx.drawImage(img, 0, 0, width, height)
-        cb(canvas.toDataURL())
-      })
-  }
   // util functions end
   /////////////////////
 
@@ -66,7 +51,7 @@ let addIconBtn = gallery.children[0]
     if (!input.files[0]) return
 
     CGC.readFileAsDataURL(input.files[0], event => {
-      resizeImg(event.target.result, 16, 16, dataURL => {
+      CGC.resizeImg(event.target.result, 16, 16, dataURL => {
         let iconId = Date.now()
         appendIcon(dataURL, iconId, true)
         CGC.addIcon(iconId, dataURL)
