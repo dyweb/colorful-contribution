@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-09-06 14:07:46
+ * @Last Modified time: 2018-09-13 14:04:13
  *
  * This file is intended as content script for github contribution page
  *
@@ -40,9 +40,14 @@ chrome.storage.local.get('CGC', (theme) => {
   if (!theme) return
   theme = Theme.fromObject(theme)
 
-  let contribChart = document.querySelector('.js-yearly-contributions')
+  let contrib = document.querySelector('.js-yearly-contributions')
 
-  theme.setHTMLLegends(contribChart)
+  // clean old theme
+  window._CGC_themeToBeCleaned && Theme.clean(contrib, window._CGC_themeToBeCleaned, window._CGC_themeToBeCleaned === theme.type)
 
-  theme.setHTMLDayBlocks(contribChart)
+  theme.setHTMLLegends(contrib)
+
+  theme.setHTMLDayBlocks(contrib)
+
+  window._CGC_themeToBeCleaned = theme.type
 })

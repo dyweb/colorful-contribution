@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-06 13:37:04
+* @Last Modified time: 2018-09-13 15:07:47
 */
 
 // CGC means colorful github contributino
@@ -26,24 +26,24 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
   // built-in themes
   defaultThemes: [
-    new ChromaTheme('Primal', ['#eee'   , '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
-    new ChromaTheme('Cherry', ['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
-    new ChromaTheme('Tide',   ['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
-    new ChromaTheme('Solemn', ['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
-    new ChromaTheme('Olympic',['#ff0000', '#096600', '#000000', '#fff000', '#0000ff']),
-    new ChromaTheme('Oreo',   ['#222'   , '#fff'   , '#222'   , '#fff'   , '#222'   ]),
-    new ChromaTheme('Flower', ['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
-    new ChromaTheme('Mario',  ['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
-    new PosterTheme('Comet', 'posters/name.jpg',),
+    new Theme('Primal',  'chroma').setPatterns(['#eee'   , '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
+    new Theme('Cherry',  'chroma').setPatterns(['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
+    new Theme('Tide',    'chroma').setPatterns(['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
+    new Theme('Solemn',  'chroma').setPatterns(['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
+    new Theme('Olympic', 'chroma').setPatterns(['#ff0000', '#096600', '#000000', '#fff000', '#0000ff']),
+    new Theme('Oreo',    'chroma').setPatterns(['#222'   , '#fff'   , '#222'   , '#fff'   , '#222'   ]),
+    new Theme('Flower',  'chroma').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
+    new Theme('Mario',   'chroma').setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
+    new Theme('Comet',   'poster').setPoster('posters/qmsht.jpg'),
   ],
 
   // the default theme when creating new ones
-  defaultTheme: new ChromaTheme('Newbie', ['#aae', '#acc', '#aea', '#cca', '#eaa']),
+  defaultTheme: new Theme('Newbie', 'chroma').setPatterns(['#aae', '#acc', '#aea', '#cca', '#eaa']),
 
   //////////////////////////////
   // Themes Management Interface
   //////////////////////////////
-  allThemes: null, // globally accessible variable, initialized from storage instantly after bootup
+  allThemes: null, // globally accessible variable, should be initialized from storage instantly after bootup
 
   /*
    * Send a theme object to `chrome.storage.local` and carry out content script `content.js`
@@ -54,6 +54,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    *     will be sent according to `chrome.storage.sync`
    */
   sendTheme(theme) {
+    function checkTheme() {
+      return (theme.type == Theme.CHROMA_TYPE && theme.patterns && theme.patterns.length > 0) ||
+             (theme.type == Theme.POSTER_TYPE && theme.poster)
+    }
+
     if (theme === null) {
       chrome.storage.sync.get('CGC_selected', obj => {
         let name = obj['CGC_selected']
@@ -62,14 +67,13 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       })
     } else {
 
+      if (!checkTheme()) return
       if (!theme.thresholds) theme.thresholds = CGC.defaultThresholds
 
       chrome.storage.local.set({
         'CGC': theme
       }, () => {
-        chrome.tabs.executeScript({
-          file: 'content.js'
-        })
+        chrome.tabs.executeScript({file: 'content.js'})
       })
     }
   },
@@ -210,42 +214,30 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     })
   },
 
-  /*
-   * Read a file as dataurl, intended for images
-   * @params file { File }
-   * @params cb { Function }
-   *         @param: event, where `event.target.result` is the dataurl
-   */
-  readFileAsDataURL(file, cb) {
-    let reader = new FileReader()
-    reader.addEventListener('load', cb)
-    reader.readAsDataURL(file)
+  dataURLToImg(dataURL) {
+    let img = document.createElement('div')
+    img.style = `background-image: url(${dataURL})`
+    return img
   },
 
-  /*
-   * Load all icons, include predefined ones and user-defined ones
-   *
-   * @params predCb { Function }  -  callback for predefined icons
-   *         @params dataURL { String } the dataURL of the image,
-   *         @params fileName { String } the name of the file, used as identifier
-   * @params userCb { Function }  -  callback for user-defined icons
-   *         @params dataURL { String } the dataURL of the image,
-   *         @params date { Int } the timestamp of the icon, used as identifier
-   *
-   * userCb will only be called after all predefined icons have been called with,
-   *   so that they do not mix up
-   */
-  getIcons(predCb, userCb) {
+  pathToImg(path) {
+    let img = document.createElement('div')
+    img.style = `background-image: url(${chrome.extension.getURL(path)})`
+    return img
+  },
+
+  _getImgs(predDir, userKey, predCb, userCb) {
+    userCb = userCb || predCb
+    if (predDir.endsWith('/')) predDir = predDir.slice(0, -1)
+
     function loadPredefinedIcons(then) {
-      CGC.traverseDir('icons',
+      CGC.traverseDir(predDir,
           file => file.name.match(/png|jpg|jpeg|ico$/),
-          (file, is_last_file) => {
+          (file, is_last) => {
             if (file === null) then()   // empty folder
             else {
-              CGC.readFileAsDataURL(file, event => {
-                predCb(event.target.result, file.name)
-                if (is_last_file) then()
-              })
+              predCb(file.name, CGC.pathToImg(`${predDir}/${file.name}`))
+              if (is_last) then()
             }
           }
         )
@@ -253,9 +245,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
     // Display all user icon files
     function loadUserIcons(){
-      chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
-        for (let [date, dataURL] of obj['CGC_user_icons']) {
-          userCb(dataURL, date)
+      let _query = {}; _query[userKey] = []
+      chrome.storage.local.get(_query, obj => {
+        for (let [id, dataURL] of obj[userKey]) {
+          userCb(id, CGC.dataURLToImg(dataURL))
         }
       })
     }
@@ -264,60 +257,81 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     loadPredefinedIcons(loadUserIcons)
   },
 
-  addIcon(iconId, dataURL) {
-    chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
-      obj['CGC_user_icons'].push([iconId, dataURL])
-      chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
+  /*
+   * Load all icons, include predefined ones and user-defined ones.
+   * For predefined ones, they are loaded as file names.
+   * For user-uploaded ones, they are loaded as dataURL.
+   * But anyway, a <img> element will be returned regardless of the type
+   *
+   * userCb will only be called after all predefined icons have been called with,
+   *   so that they do not mix up
+   *
+   * if userCb is not given, predCb will be called on user-uploaded icons
+   *
+   * @params predCb { Function }  -  callback for predefined icons
+   *         @params iconId { String }
+   *         @params imgElem { HTMLElement }
+   * @params userCb { Function | null }  -  callback for user-defined icons
+   *         @params iconId { String }
+   *         @params imgElem { HTMLElement }
+   */
+  getIconAsImgs(predCb, userCb) {
+    CGC._getImgs('icons', 'CGC_upload_icons', predCb, userCb)
+  },
+
+  getPosterAsImgs(predCb, userCb) {
+    CGC._getImgs('posters', 'CGC_upload_posters', predCb, userCb)
+  },
+
+  uploadIcon(file, cb) {
+    CGC.readFileAsDataURL(file, event => {
+      CGC.resizeImg(event.target.result, 16, 16, dataURL => {
+        let id = Date.now()
+        CGC._addToDataset('CGC_upload_icons', [id, dataURL])
+        cb(id, dataURL)
+      })
     })
   },
 
-  removeIcon(iconId, cb) {
-    chrome.storage.sync.get({'CGC_user_icons': []}, obj => {
-      let ind = obj['CGC_user_icons'].findIndex(icon => icon[0] == iconId)
+  removeIcon(id) {
+    CGC._removeFromDataset('CGC_upload_icons', icon => icon[0] == id)
+  },
+
+  uploadPoster(file, cb) {
+    CGC.readFileAsDataURL(file, event => {
+      CGC.resizeAndCropImg(event.target.result, 52*16, 7*16, dataURL => {
+        let id = Date.now()
+        CGC._addToDataset('CGC_upload_posters', [id, dataURL])
+        cb(id, dataURL)
+      })
+    })
+  },
+
+  removePoster(id) {
+    CGC._removeFromDataset('CGC_upload_posters', poster => poster[0] == id)
+  },
+
+  _addToDataset(key, data) {
+    let query = {}; query[key] = []
+    chrome.storage.local.get(query, obj => {
+      obj[key].push(data)
+      let newData = {}; newData[key] = obj[key]
+      chrome.storage.local.set(newData)
+    })
+  },
+
+  _removeFromDataset(key, pred, cb) {
+    let query = {}; query[key] = []
+    chrome.storage.local.get(query, obj => {
+      let ind = obj[key].findIndex(pred)
       if (ind === -1) return
-      obj['CGC_user_icons'].splice(ind, 1)
-      chrome.storage.sync.set({'CGC_user_icons': obj['CGC_user_icons']})
-      cb()
+      obj[key].splice(ind, 1)
+      let newData = {}; newData[key] = obj[key]
+      chrome.storage.local.set(newData)
+      cb && cb()
     })
   },
   ///////////////////////////////////
   // Icon & Poster Management Interface Ends
   ///////////////////////////////////
-
-  ///////////////////////////////////
-  // Image Processing Util
-  ///////////////////////////////////
-  resizeImg(dataURL, width, height, cb) {
-    let img = new Image()
-    img.src = dataURL
-
-    let canvas = document.createElement("canvas")
-    let ctx = canvas.getContext("2d")
-    canvas.width = width
-    canvas.height = height
-
-    img.addEventListener('load', () => {
-      ctx.drawImage(img, 0, 0, width, height)
-      cb(canvas.toDataURL())
-    })
-  },
-
-  splitImg(dataURL, cropWidth, cropHeight, cb) {
-    let img = new Image()
-    img.src = dataURL
-
-    let canvas = document.createElement("canvas")
-    let ctx = canvas.getContext("2d")
-    canvas.width = cropWidth
-    canvas.height = cropHeight
-
-    img.addEventListener('load', () => {
-      for (let x = 0; x < img.width; x += cropWidth) {
-        for (let y = 0; y < img.height; y += cropHeight) {
-          ctx.drawImage(img, x, y, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
-          cb(canvas.toDataURL())
-        }
-      }
-    })
-  }
 }

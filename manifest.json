@@ -15,14 +15,15 @@
   ],
   "content_scripts": [
     {
-      // "matches": ["http://github.com/*"],
-      "matches": ["file://*"],
-      "js": ["theme.js"]
+      "matches": ["http://github.com/*"],
+      "js": ["theme.js", "util.js", "content.js"],
+      "css": ["content.css"]
     }
   ],
   "options_page": "gallery.html",
   "web_accessible_resources": [
-    "icons/*.png"
+    "icons/*.png",
+    "posters/*.jpg"
   ],
   "icons": {"128": "icon.png"},
   "homepage_url": "https://github.com/dyweb/colorful-contribution"

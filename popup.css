@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-04 22:19:59
+* @Last Modified time: 2018-09-13 15:24:03
 */
 
 body {
@@ -28,12 +28,18 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 .theme-block {
   background-color: #eee;
   width: 200px;
+  /* minimal width is given to editor (on the right) and theme name (on the left) stuff
+   * and then all the remaining is given to the theme-poster or theme-patterns in the middle
+   * This is done by flex and justify-content */
+
   height: 40px;
   padding: 5px 5px;
   margin-bottom: 5px;
+  position: relative;
 
   display: flex;
   align-items: center;
+  justify-content: space-around;
 
   transition: background-color .2s, border .2s, height .2s, padding .2s, margin .2s;
   border: 2px solid transparent;
@@ -51,6 +57,21 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   margin: 0;
   border: none;
   overflow-y: hidden;
+}
+
+/*****************
+ * Them Type Blocks
+ *****************/
+.theme-type {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  font-size: 8px;
+  visibility: hidden;
+}
+
+.theme-block.editing .theme-type {
+  visibility: visible;
 }
 
 /*****************
@@ -103,6 +124,48 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 .theme-block.editing .pattern-block:hover {
   box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
   transform: scale(1.1)
+}
+
+/* color blocks are replaced by poster block when in poster theme mode */
+.theme-block[data-type-name|=poster] .theme-patterns {
+  display: none;
+}
+
+/*****************
+ * Poster Blocks
+ *****************/
+.theme-poster {
+  /* same size as .theme-patterns */
+  flex-grow: 1;
+  height: 32px;
+  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
+  margin-right: 10px;
+
+  /* invisible when not in poster-theme-mode */
+  display: none;
+
+  /* for text display when there is no poster selected */
+  line-height: 32px; /* same as height */
+  vertical-align: middle;
+  text-align: center;
+  color: #777;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-shadow: 0px 0px 0.5px #555;
+}
+
+.theme-poster div {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* background-image: <will be set by popup.js> */
+}
+
+.theme-block[data-type-name|=poster] .theme-poster {
+  display: block;
 }
 
 /*****************
@@ -169,6 +232,17 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 }
 .theme-block.editing .color-edit-box > input {
   height: auto;
+}
+
+/* flip btn is only visible in editor mode */
+.theme-block .flip-btn {
+  max-height: 0;
+  transition: max-height .2s;
+  overflow-y: hidden;
+}
+
+.theme-block.editing .flip-btn {
+  max-height: none;
 }
 
 /*****************
@@ -276,6 +350,8 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 }
 
 #icon-gallery .icon {
+  display: inline-block;
+
   width: 16px;
   height: 16px;
 
@@ -288,9 +364,42 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 
   user-select: none;
   cursor: pointer;
+
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 #icon-gallery .icon:hover {
   border: 2px #ddd solid;
 }
 
+/*****************
+ * Poster Gallery
+ *****************/
+/* TODO */
+
+
+/*****************
+ * Theme Type Changement
+ *****************/
+.theme-block[data-type-name|=poster] {
+
+}
+
+.theme-block.show-flip-down {
+  animation: flipdown 0.5s ease-in forwards;
+}
+
+.theme-block.show-flip-up {
+  animation: flipup 0.5s ease-out forwards;
+}
+
+@keyframes flipdown {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(90deg); }
+}
+
+@keyframes flipup {
+  0% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}

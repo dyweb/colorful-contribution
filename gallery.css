@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 16:31:02
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-03-29 20:13:31
+* @Last Modified time: 2018-09-07 12:26:31
 */
 
 body {
@@ -13,40 +13,69 @@ h1 {
   text-align: center;
 }
 
-#icon-gallery {
+#icon-gallery,
+#poster-gallery {
   width: 60%;
+  min-width: 1000px;
   margin: 10px auto;
   padding: 30px;
   background-color: #f0f0f3;
 }
 
-#icon-gallery .icon {
-  display: inline-block;
-  vertical-align: middle;
-  position: relative;
+#poster-gallery {
+  margin-top: 30px;
+}
 
+.icon {
   margin: 10px;
   width: 32px;
   height: 32px;
+
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
   user-select: none;
 }
 
-#icon-gallery .icon img{
+.poster {
+  margin: 30px auto;
+  width: 832px;
+  height: 112px;
+  user-select: none;
+  position: relative;
+}
+
+.icon div.img,
+.poster div.img {
   width: 100%;
   height: 100%;
   transition: transform .2s;
+  background-repeat: no-repeat;
 }
 
-#icon-gallery .icon:hover img {
+.icon div.img {
+  background-size: contain;
+}
+
+.poster div.img {
+  background-size: cover;
+  background-position: center;
+}
+
+.icon:hover div.img {
   transform: scale(1.1)
 }
 
-#icon-btn-add {
+.poster:hover div.img {
+  transform: scale(1.05)
+}
+
+.add-btn {
   cursor: pointer;
 }
 
-#icon-btn-add:before,
-#icon-btn-add:after {
+.add-btn:before,
+.add-btn:after {
   content: '';
   display: block;
   position: absolute;
@@ -54,14 +83,14 @@ h1 {
   border-radius: 3px; 
 }
 
-#icon-btn-add:before {
+.add-btn:before {
   left: 5%;
   top: 35%;
   width: 90%;
   height: 30%;
 }
 
-#icon-btn-add:after {
+.add-btn:after {
   left: 35%;
   top: 5%;
   width: 30%;
@@ -87,7 +116,8 @@ h1 {
   background-color: #e93330;
 }
 
-.icon:hover .del-btn {
+.icon:hover .del-btn,
+.poster:hover .del-btn {
   transform: rotate(45deg);
   opacity: 1;
 }

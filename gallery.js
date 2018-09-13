@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-05-08 11:22:43
+* @Last Modified time: 2018-09-13 15:10:03
 */
 
 /*
@@ -10,59 +10,98 @@
  *   rather than a real file in extension directory to avoid all the file creation/deletion code
  */
 
-let input = document.getElementById("icon-form").children[0]
-let gallery = document.getElementById("icon-gallery")
-let addIconBtn = gallery.children[0]
+// TODO: display storage usage
+
+let galleries = {
+  icon: {
+    input: document.getElementById("icon-form").children[0],
+    gallery: document.getElementById("icon-gallery"),
+    addBtn: document.getElementById("icon-gallery").children[0]
+  },
+  poster: {
+    input: document.getElementById("poster-form").children[0],
+    gallery: document.getElementById("poster-gallery"),
+    addBtn: document.getElementById("poster-gallery").children[0]
+  },
+}
 
 !function(){
   /////////////////////
   // util funtions 
-  function appendIcon(imgSrc, iconId, deleteable){
-      let div = document.createElement('div')
-      div.classList.add('icon')
-
-      let img = document.createElement('img')
-      img.src = imgSrc
-      div.appendChild(img)
+  function appendIcon(id, imgElem, deleteable=true){
+      let container = document.createElement('div')
+      container.classList.add('icon')
+      container.appendChild(imgElem)
+      imgElem.classList.add('img')
 
       if (deleteable) {
         let delBtn = document.createElement('div')
         delBtn.classList.add('del-btn')
         delBtn.classList.add('cross')
-        delBtn.addEventListener('click', event => removeIcon(div, iconId))
-        div.appendChild(delBtn)
+        delBtn.addEventListener('click', event => {
+          CGC.removeIcon(id)
+          container.parentNode.removeChild(container)
+        })
+        container.appendChild(delBtn)
       }
 
-      div.setAttribute('data-id', iconId)
-      gallery.insertBefore(div, addIconBtn)
-      return img
+      container.setAttribute('data-id', id)
+      galleries.icon.gallery.insertBefore(container, galleries.icon.addBtn)
   }
 
-  function removeIcon(elem, iconId) {
-    CGC.removeIcon(iconId, () => elem.parentNode.removeChild(elem))
+  function appendPoster(id, imgElem, deleteable=true){
+      let container = document.createElement('div')
+      container.classList.add('poster')
+      container.appendChild(imgElem)
+      imgElem.classList.add('img')
+
+      if (deleteable) {
+        let delBtn = document.createElement('div')
+        delBtn.classList.add('del-btn')
+        delBtn.classList.add('cross')
+        delBtn.addEventListener('click', event => {
+          CGC.removePoster(id)
+          container.parentNode.removeChild(container)
+        })
+        container.appendChild(delBtn)
+      }
+
+      container.setAttribute('data-id', id)
+      galleries.poster.gallery.insertBefore(container, galleries.poster.addBtn)
   }
   // util functions end
   /////////////////////
 
   /////////////////////
   // event listeners
-  addIconBtn.addEventListener('click', event => input.click())
-  input.addEventListener('change', event => {
-    if (!input.files[0]) return
+  for (let key in galleries) {
 
-    CGC.readFileAsDataURL(input.files[0], event => {
-      CGC.resizeImg(event.target.result, 16, 16, dataURL => {
-        let iconId = Date.now()
-        appendIcon(dataURL, iconId, true)
-        CGC.addIcon(iconId, dataURL)
+    !function(){
+      let uploadFunc = CGC['upload' + {icon: 'Icon', poster: 'Poster'}[key]]
+      let appendFunc = {icon: appendIcon, poster: appendPoster}[key]
+
+      let addBtn = galleries[key].addBtn
+      let input = galleries[key].input
+
+      addBtn.addEventListener('click', event => input.click())
+      input.addEventListener('change', event => {
+        if (!input.files[0]) return
+        uploadFunc(input.files[0], (id, dataURL) => appendFunc(id, CGC.dataURLToImg(dataURL)))
       })
-    })
-  })
+    }()
+  }
   // event listeners end
   /////////////////////
 
-  CGC.getIcons(
-    (dataURL, fileName) => appendIcon(dataURL, fileName, false), // predefined icons are not deleteable
-    (dataURL, date) => appendIcon(dataURL, date, true),
+  // Add icons & posters to gallery
+
+  CGC.getIconAsImgs(
+    (id, imgElem) => appendIcon(id, imgElem, false), // predefined icons are not deleteable
+    (id, imgElem) => appendIcon(id, imgElem),
+  )
+
+  CGC.getPosterAsImgs(
+    (id, imgElem) => appendPoster(id, imgElem, false), // predefined icons are not deleteable
+    (id, imgElem) => appendPoster(id, imgElem),
   )
 }()
