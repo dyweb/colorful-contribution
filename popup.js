@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-09-13 15:01:11
+ * @Last Modified time: 2018-09-26 19:38:36
  */
 
 /*
@@ -292,7 +292,7 @@ function setEditMode(themeBlock, val) {
   if (!themeBlock || !themeBlock.classList.contains('theme-block')) return
 
   if (val !== false) { val = true }
-  let btn = themeBlock.querySelector('.edit-btn'),
+  let editBtn = themeBlock.querySelector('.edit-btn'),
     nameInput = themeBlock.querySelector('.theme-name input'),
     colorInput = themeBlock.querySelector('.color-edit-box input')
   let gallery = document.getElementById('icon-gallery')
@@ -305,19 +305,23 @@ function setEditMode(themeBlock, val) {
       setEditMode(b, false)
     }
 
-    btn.classList.remove('fa-pencil')
-    btn.classList.add('fa-check')
+    // now edit btn means the completion of editing
+    editBtn.classList.remove('fa-pencil')
+    editBtn.classList.add('fa-check')
+
     themeBlock.classList.add('editing')
     colorInput.disabled = nameInput.disabled = false  // editable
     nameInput.focus()
 
+    // move icon gallery right below the theme block
     themeBlock.insertAdjacentElement('afterend', gallery)
-    gallery.classList.remove('hidden')
+    window.setTimeout(() => gallery.classList.remove('hidden'), 0) // 0 timeout to smooth the animation
 
   } else {
     // leave edit mode
-    btn.classList.add('fa-pencil')
-    btn.classList.remove('fa-check')
+    editBtn.classList.add('fa-pencil')
+    editBtn.classList.remove('fa-check')
+
     themeBlock.classList.remove('editing')
     colorInput.disabled = nameInput.disabled = true // non-editable
 
