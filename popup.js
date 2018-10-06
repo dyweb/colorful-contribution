@@ -2,15 +2,13 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-09-26 19:38:36
+ * @Last Modified time: 2018-10-06 22:53:52
  */
 
 /*
  * Save the selected `theme` into `chrome.storage.local` so that
  * content script `colorful.js` can find it.
  */
-
-// TODO: shading on icon gallery
 
 let CGC = window.CGC // defined in `CGC.js`. Explict announcement to avoid ambiguity
 const COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/ // e.g. '#11AAdd'
@@ -183,6 +181,8 @@ function bindEditBtn(editBtn, theme) {
 }
 
 function bindFlipBtn(flipBtn, theme) {
+  let galleries = document.getElementById('galleries')
+
   flipBtn.addEventListener('click', event => {
     // Toggling theme type (chroma/poster) when click on the flip button
     let block = findAncestor(event.target, 'theme-block')
@@ -191,21 +191,23 @@ function bindFlipBtn(flipBtn, theme) {
     block.classList.add('show-flip-down')
 
     function _flip() {
-      if (block.dataset.typeName === Theme.CHROMA_TYPE) {
-        // flip to poster theme
-        theme.type = Theme.POSTER_TYPE
-        setThemeType(block, Theme.POSTER_TYPE)
-        CGC.sendTheme(theme)
-      } else {
-        // flip to chroma theme
-        theme.type = Theme.CHROMA_TYPE
-        setThemeType(block, Theme.CHROMA_TYPE)
-        CGC.sendTheme(theme)
-      }
-
+      // display the second half of the animation
       block.classList.remove('show-flip-down')
       block.classList.add('show-flip-up')
+
+      // modify the data
+      let targetType = block.dataset.typeName === Theme.CHROMA_TYPE ? Theme.POSTER_TYPE : Theme.CHROMA_TYPE
+      theme.type = targetType
+      setThemeType(block, targetType)
+
+      // change the theme on the page if the block is selected
+      let selected = block.classList.contains('selected')
+      if (selected) CGC.sendTheme(theme)
+
+      // flip the gallery (will show animation)
+      galleries.dataset['typeName'] = targetType
     }
+
     window.setTimeout(_flip, 600) // slightly longer than the animation duration (500ms)
   })
 }
@@ -219,7 +221,7 @@ function bindPatternBlock(patternBlock, theme) {
 
     if (isEditing) {
       editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
-      editBox.dataset.idx = cb.offsetLeft / cb.offsetWidth
+      editBox.dataset.idx = Math.floor(cb.offsetLeft / cb.offsetWidth)
 
       let patternStr = theme.patterns[editBox.dataset.idx]
       editBox.querySelector('input').value = patternStr.match(COLOR_REG) ? patternStr : '<icon>'
@@ -227,15 +229,16 @@ function bindPatternBlock(patternBlock, theme) {
   })
 }
 
-function bindGallery(gallery) {
+function bindIconGallery(gallery) {
   gallery.addEventListener('click', event => {
+    // when clicking on the gallery, jump to option page
     if (!event.target.classList.contains('icon')) {
       chrome.runtime.openOptionsPage()
       return
     }
 
     let icon = event.target,
-      themeBlock = gallery.previousSibling,  // gallery will be moved to be after of the theme block being edited
+      themeBlock = getEditingThemeBlock(),
       theme = CGC.getTheme(themeBlock.dataset.name)
 
     // set the content of patternBlock to icon
@@ -243,12 +246,35 @@ function bindGallery(gallery) {
       idx = colorInput.dataset.idx,
       patternBlock = themeBlock.querySelectorAll('.theme-patterns .pattern-block')[idx]
 
-    patternBlock.style = `background-image: url(${icon.src})`
+    patternBlock.style = `background-image: url(${icon.dataset.src})`
     colorInput.querySelector('input').value = '<icon>'
 
-    theme.patterns[idx] = icon.src
+    theme.setThemeType('icon')
+    theme.setPattern(idx, icon.dataset.src)
     CGC.saveThemes()
-    CGC.sendTheme(theme)
+    if (themeBlock.classList.contains('selected')) CGC.sendTheme(theme)
+  })
+}
+
+function bindPosterGallery(gallery) {
+  gallery.addEventListener('click', event => {
+    // when clicking on the gallery, jump to option page
+    if (!event.target.classList.contains('poster')) {
+      chrome.runtime.openOptionsPage()
+      return
+    }
+
+    let poster = event.target,
+      themeBlock = getEditingThemeBlock(),  // gallery will be moved to be after of the theme block being edited
+      theme = CGC.getTheme(themeBlock.dataset.name)
+
+    let posterBlock = themeBlock.querySelector('.theme-poster')
+    posterBlock.innerHTML = `<div style="background-image: url(${poster.dataset.src})"></div>`
+
+    theme.setThemeType('poster')
+    theme.setPoster(poster.dataset.src)
+    CGC.saveThemes()
+    if (themeBlock.classList.contains('selected')) CGC.sendTheme(theme)
   })
 }
 
@@ -295,7 +321,8 @@ function setEditMode(themeBlock, val) {
   let editBtn = themeBlock.querySelector('.edit-btn'),
     nameInput = themeBlock.querySelector('.theme-name input'),
     colorInput = themeBlock.querySelector('.color-edit-box input')
-  let gallery = document.getElementById('icon-gallery')
+
+  let galleries = document.getElementById('galleries')
 
   if (val) {
     // entering edit mode
@@ -313,9 +340,9 @@ function setEditMode(themeBlock, val) {
     colorInput.disabled = nameInput.disabled = false  // editable
     nameInput.focus()
 
-    // move icon gallery right below the theme block
-    themeBlock.insertAdjacentElement('afterend', gallery)
-    window.setTimeout(() => gallery.classList.remove('hidden'), 0) // 0 timeout to smooth the animation
+    // move galleries right below the theme block
+    themeBlock.insertAdjacentElement('afterend', galleries)
+    window.setTimeout(() => galleries.classList.remove('hidden'), 0) // 0 timeout to smooth the animation
 
   } else {
     // leave edit mode
@@ -325,9 +352,15 @@ function setEditMode(themeBlock, val) {
     themeBlock.classList.remove('editing')
     colorInput.disabled = nameInput.disabled = true // non-editable
 
-    gallery.classList.add('hidden')
+    galleries.classList.add('hidden')
   }
 }
+
+
+function getEditingThemeBlock() {
+  return document.querySelector('.theme-block.editing')
+}
+
 
 /*
  *  Theme type will be displayed on the theme block when in editor mode.
@@ -383,15 +416,26 @@ function initPopup() {
   themePanel.appendChild(fragment)
 
   // Icon gallery
-  let gallery = document.getElementById('icon-gallery')
-  function appendIcon(iconId, imgElem) {
+  let iconGallery = document.getElementById('icon-gallery')
+  function appendIcon(id, imgElem) {
     imgElem.classList.add('icon')
-    gallery.appendChild(imgElem)
+    iconGallery.appendChild(imgElem)
   }
 
-  CGC.getIconAsImgs((iconId, imgElem) => appendIcon(iconId, imgElem))
+  CGC.getIconAsImgs((id, imgElem) => appendIcon(id, imgElem))
 
-  bindGallery(gallery)
+  bindIconGallery(iconGallery)
+
+  // Poster gallery
+  let posterGallery = document.getElementById('poster-gallery')
+  function appendPoster(id, imgElem) {
+    imgElem.classList.add('poster')
+    posterGallery.appendChild(imgElem)
+  }
+
+  CGC.getPosterAsImgs((id, imgElem) => appendPoster(id, imgElem))
+
+  bindPosterGallery(posterGallery)
 
   // Foot Panel
   let footPanel = document.getElementById('foot-panel')

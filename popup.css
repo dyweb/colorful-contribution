@@ -2,12 +2,13 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-26 19:46:09
+* @Last Modified time: 2018-10-06 21:00:51
 */
 
 body {
   background-color: #ddd;
-  margin: 0 0 -10px;
+  margin: 0 0 -10px; /* -10px for foot panel */
+  width: 215px;
 }
 
 input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
@@ -27,7 +28,6 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
  *****************/
 .theme-block {
   background-color: #eee;
-  width: 215px;
   /* minimal width is given to editor (on the right) and theme name (on the left) stuff
    * and then all the remaining is given to the theme-poster or theme-patterns in the middle
    * This is done by flex and justify-content */
@@ -118,13 +118,11 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-
-  transition: transform .2s, box-shadow .2s;
 }
 
 .theme-block.editing .pattern-block:hover {
   box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
-  transform: scale(1.1)
+  transform: scale(1.1);
 }
 
 /* color blocks are replaced by poster block when in poster theme mode */
@@ -321,39 +319,49 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 }
 
 /*****************
- * Icon Gallery
+ * Galleries
  *****************/
-#icon-gallery {
-  background-color: #eaeaea;
-  border-top: 2px solid #ccc;
-  border-bottom: 2px solid #ccc;
-
+#galleries {
   height: 40px;
-  width: 215px; /* same as .theme-block */
-  box-sizing: border-box;
+  width: 100%;
 
-  line-height: 40px;
-  max-height: 40px;
-  vertical-align: middle;
-
-  overflow-x: scroll;
-  overflow-y: hidden;
-  white-space: nowrap;
-
+  max-height: 40px; /* max-height for animation */
   margin-bottom: 5px;
-  padding: 0 7px;
 
-  /*transition: max-height .2s ease .s; /* no delay  */
-  cursor: pointer;
-
-  position: relative;
+  white-space: nowrap; /* make all the sub galleries in the same line (since they are inline blocks) */
+  word-spacing: -0.5em; /* remove the whitespace between inline blocks */
+  transform: translateX(0); /* translateX(0) -> show 1st, translateX(-100%) -> show 2nd, etc. */
+  transition: transform .5s;
 }
 
-#icon-gallery.hidden {
+#galleries[data-type-name|=icon]   { transform: translateX(0); }
+#galleries[data-type-name|=poster] { transform: translateX(-100%); }
+
+#galleries.hidden {
   max-height: 0;
   margin-bottom: 0;
-  /*transition: max-height .2s ease .5s, margin-bottom .2s ease .5s;*/
-  border: none;
+  transition: max-height .2s;
+}
+
+#galleries > .gallery {
+  display: inline-block;
+  background-color: #eaeaea;
+
+  height: 100%; /* size decided by #galleries */
+  width: 100%;
+
+  box-sizing: border-box;
+  padding: 0 7px;
+  cursor: pointer;
+}
+
+#icon-gallery {
+  overflow-x: scroll;
+  overflow-y: hidden;
+
+  white-space: nowrap;  /* because icons inside will be displayed as inline blocks */
+  line-height: 40px;    /* same as the height as .gallery */
+  vertical-align: middle;
 }
 
 #icon-gallery .icon {
@@ -380,27 +388,35 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   border: 2px #ddd solid;
 }
 
-/*#icon-gallery:before {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  content: '';
+#poster-gallery {
+  overflow-x: scroll;
+  overflow-y: hidden;
 
-  height: 100%;
-  width: 100%;
-
-  background-image: linear-gradient(90deg, white, transparent 20%, transparent 80%, white);
+  white-space: nowrap;  /* because posters inside will be displayed as inline blocks */
+  line-height: 40px;
+  vertical-align: middle;
 }
-*/
-/*****************
- * Poster Gallery
- *****************/
-/* TODO */
+
+#poster-gallery .poster {
+  /* this elem will be added by `CGC.getPosterAsImgs`
+    which will give an div elem with its background image set to the poster */
+  display: inline-block;
+
+  width: 90%;
+  height: 40px;
+    /* same as the height .gallery
+    can not use 100% because the inner poster's height
+    would also be animated in that case */
+  margin: auto 10px;
+
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
 
 
 /*****************
- * Theme Type Changement
+ * Theme Type Switching
  *****************/
 .theme-block[data-type-name|=poster] {
 

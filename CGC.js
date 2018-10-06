@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-13 15:07:47
+* @Last Modified time: 2018-10-06 22:35:48
 */
 
 // CGC means colorful github contributino
@@ -223,6 +223,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   pathToImg(path) {
     let img = document.createElement('div')
     img.style = `background-image: url(${chrome.extension.getURL(path)})`
+    img.dataset.src = path
     return img
   },
 

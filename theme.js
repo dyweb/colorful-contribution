@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-13 15:26:45
+* @Last Modified time: 2018-10-06 22:43:55
 */
 
 class Theme {
@@ -19,7 +19,11 @@ class Theme {
   }
 
   setThresholds(thresholds) { this.thresholds = thresholds; return this }
-
+  setPattern(ind, pattern) {
+    if (!this.patterns) this.patterns = []
+    this.patterns[ind] = pattern
+    return this
+  }
   setPatterns(patterns) { this.patterns = patterns; return this }
   setPoster(poster) { this.poster = poster; return this }
 
