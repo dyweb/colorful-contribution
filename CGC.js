@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-06 22:35:48
+* @Last Modified time: 2018-10-07 11:27:14
 */
 
 // CGC means colorful github contributino
@@ -30,8 +30,6 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     new Theme('Cherry',  'chroma').setPatterns(['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
     new Theme('Tide',    'chroma').setPatterns(['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
     new Theme('Solemn',  'chroma').setPatterns(['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
-    new Theme('Olympic', 'chroma').setPatterns(['#ff0000', '#096600', '#000000', '#fff000', '#0000ff']),
-    new Theme('Oreo',    'chroma').setPatterns(['#222'   , '#fff'   , '#222'   , '#fff'   , '#222'   ]),
     new Theme('Flower',  'chroma').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
     new Theme('Mario',   'chroma').setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
     new Theme('Comet',   'poster').setPoster('posters/qmsht.jpg'),
