@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-06 22:43:55
+* @Last Modified time: 2018-10-07 11:41:36
 */
 
 class Theme {
@@ -14,7 +14,7 @@ class Theme {
 
   setThemeType(type) {
     type = type.toLowerCase()
-    console.assert([Theme.CHROMA_TYPE, Theme.POSTER_TYPE].includes(type))
+    console.assert([Theme.CHROMA_TYPE, Theme.POSTER_TYPE].includes(type), "Unknown theme type: " + type)
     this.type = type
   }
 
@@ -224,13 +224,13 @@ class _PosterTheme extends Theme {
 
     for (let ind = 0; ind < legends.length; ++ind) {
       let [leg, alpha] = [ legends[ind], _PosterTheme.poster_mask_alphas[ind] ]
-      let x = ind * 10
+      let x = ind * 15
 
       let css = {
         'opacity': `${alpha}`,
         'background-image': `url(${chrome.extension.getURL(this.poster)})`,
         'background-position': `${x}% center`,
-        'background-size': `auto 200%`
+        'background-size': `auto 200%`  // twice the height of the legend
       }
       for (let key in css) {
         leg.style[key] = css[key]

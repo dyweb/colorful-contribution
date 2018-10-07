@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-06 22:53:52
+ * @Last Modified time: 2018-10-07 12:03:21
  */
 
 /*
@@ -52,19 +52,17 @@ function getThemeBlock(theme) {
   console.assert(theme instanceof Theme, "invalid theme: " + theme)
 
   let [patternBlocksStr, posterBlockStr, typeStr] = function() {
-    let pat, patStr, posStr, typeStr;
+    let pat = theme.patterns || CGC.defaultTheme.patterns;
+    let posStr = theme.poster ? `<div style="background-image: url(${theme.poster})"></div>` : '<span>NONE</span>' // other css propoerties will be handled by popup.css
 
+    let typeStr;
     if (theme.type == Theme.CHROMA_TYPE) {
-      pat = theme.patterns
-      posStr = '<span>NONE</span>'
       typeStr = 'Type: Chroma'
     } else if (theme.type == Theme.POSTER_TYPE) {
-      pat = CGC.defaultTheme.patterns
-      posStr = `<div style="background-image: url(${theme.poster})"></div>` // other css propoerties will be handled by popup.css
       typeStr = 'Type: Poster'
     }
 
-    patStr = pat.reduce((acc, cur) => acc + getPatternBlockStr(cur), '')
+    let patStr = pat.reduce((acc, cur) => acc + getPatternBlockStr(cur), '')
     patStr = `
       ${patStr}
       <div class="color-edit-box underline hidden" data-idx="0">
@@ -197,15 +195,15 @@ function bindFlipBtn(flipBtn, theme) {
 
       // modify the data
       let targetType = block.dataset.typeName === Theme.CHROMA_TYPE ? Theme.POSTER_TYPE : Theme.CHROMA_TYPE
-      theme.type = targetType
-      setThemeType(block, targetType)
+      theme.setThemeType(targetType)
+      setThemeTypeTxt(block, targetType)
 
       // change the theme on the page if the block is selected
       let selected = block.classList.contains('selected')
       if (selected) CGC.sendTheme(theme)
 
       // flip the gallery (will show animation)
-      galleries.dataset['typeName'] = targetType
+      galleries.dataset.typeName = targetType
     }
 
     window.setTimeout(_flip, 600) // slightly longer than the animation duration (500ms)
@@ -249,7 +247,7 @@ function bindIconGallery(gallery) {
     patternBlock.style = `background-image: url(${icon.dataset.src})`
     colorInput.querySelector('input').value = '<icon>'
 
-    theme.setThemeType('icon')
+    theme.setThemeType('chroma')
     theme.setPattern(idx, icon.dataset.src)
     CGC.saveThemes()
     if (themeBlock.classList.contains('selected')) CGC.sendTheme(theme)
@@ -341,6 +339,7 @@ function setEditMode(themeBlock, val) {
     nameInput.focus()
 
     // move galleries right below the theme block
+    galleries.dataset.typeName = themeBlock.dataset.typeName
     themeBlock.insertAdjacentElement('afterend', galleries)
     window.setTimeout(() => galleries.classList.remove('hidden'), 0) // 0 timeout to smooth the animation
 
@@ -367,7 +366,7 @@ function getEditingThemeBlock() {
  *  @param: themeType { string }
  *    one of [ Theme.POSTER_TYPE, Theme.CHROMA_TYPE, ...]
  */
-function setThemeType(themeBlock, themeType) {
+function setThemeTypeTxt(themeBlock, themeType) {
   themeBlock.dataset.typeName = themeType
   switch (themeType) {
     case Theme.CHROMA_TYPE:
@@ -405,7 +404,6 @@ function resetAllThemeBlocks(except) {
  * initialize popup html
  */
 function initPopup() {
-
   // Theme panel
   let themePanel = document.getElementById('theme-panel')
   let fragment = document.createDocumentFragment()
@@ -436,14 +434,15 @@ function initPopup() {
   CGC.getPosterAsImgs((id, imgElem) => appendPoster(id, imgElem))
 
   bindPosterGallery(posterGallery)
-
-  // Foot Panel
-  let footPanel = document.getElementById('foot-panel')
-  bindFootPanel(footPanel, themePanel)
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   let themePanel = document.getElementById('theme-panel')
+
+  // Foot Panel ( bind foot panel first to ensure the functionality of resetting )
+  // other components are set in `initPopup`
+  let footPanel = document.getElementById('foot-panel')
+  bindFootPanel(footPanel, themePanel)
 
   chrome.storage.sync.get('CGC_all', (obj) => {
     if (!obj['CGC_all']) {
@@ -455,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initPopup()
 
-    function setTheme(themeName) {
+    function _setTheme(themeName) {
       if (!themeName) return
       CGC.setTheme(themeName)
       themePanel.dataset.selected = themeName
@@ -465,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reload selected theme
     chrome.storage.sync.get('CGC_selected', (obj) => {
       if (!chrome.runtime.lastError) {
-        setTheme(obj['CGC_selected'])
+        _setTheme(obj['CGC_selected'])
       }
     })
 
@@ -491,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (inBlockArea && !inEditorArea && !isEditing && !isSelected) {
         // will not select a theme by clicking on its editor area
         resetAllThemeBlocks(elem.dataset.name)
-        setTheme(elem.dataset.name) // every .theme-block should have a data-name field
+        _setTheme(elem.dataset.name) // every .theme-block should have a data-name field
       }
     })
   })
