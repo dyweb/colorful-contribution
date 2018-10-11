@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-07 11:27:14
+* @Last Modified time: 2018-10-11 12:09:29
 */
 
 // CGC means colorful github contributino
@@ -13,6 +13,7 @@
 // gallery.js  -- Icon Management Interface -/
 
 console.assert(typeof Theme !== 'undefined', "`Theme` not found, include `theme.js` before `CGC.js`")
+console.assert(typeof CGC_util !== 'undefined', "`CGC_util` not found, include `util.js` before `CGC.js`")
 
 Theme.DEFAULT_THRESHOLDS = [0, 3, 5, 8, 10] // 0 => patterns[0], 1,2,3 => patterns[1], etc.
 
@@ -69,7 +70,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       if (!theme.thresholds) theme.thresholds = CGC.defaultThresholds
 
       chrome.storage.local.set({
-        'CGC': theme
+        'CGC': theme.toObject()
       }, () => {
         chrome.tabs.executeScript({file: 'content.js'})
       })
@@ -212,9 +213,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     })
   },
 
-  dataURLToImg(dataURL) {
+  // url may be dataURL or web url
+  urlToImg(url) {
     let img = document.createElement('div')
-    img.style = `background-image: url(${dataURL})`
+    img.style = `background-image: url(${url})`
     return img
   },
 
@@ -229,38 +231,50 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     userCb = userCb || predCb
     if (predDir.endsWith('/')) predDir = predDir.slice(0, -1)
 
-    function loadPredefinedIcons(then) {
+    // Display all predefined images according to `predDir`
+    function loadPredefinedImgs(then) {
       CGC.traverseDir(predDir,
           file => file.name.match(/png|jpg|jpeg|ico$/),
           (file, is_last) => {
             if (file === null) then()   // empty folder
             else {
-              predCb(file.name, CGC.pathToImg(`${predDir}/${file.name}`))
+              let path = `${predDir}/${file.name}`,
+                  img = CGC.pathToImg(path)
+              // add dataset for content script
+              img.dataset.src = path
+              predCb(file.name, img)
               if (is_last) then()
             }
           }
         )
     }
 
-    // Display all user icon files
-    function loadUserIcons(){
+    // Display all user images according to `userKey`
+    // there may be two types of images stored: dataURL or (web) url
+    function loadUserImgs(){
       let _query = {}; _query[userKey] = []
       chrome.storage.local.get(_query, obj => {
-        for (let [id, dataURL] of obj[userKey]) {
-          userCb(id, CGC.dataURLToImg(dataURL))
+        for (let [id, url] of obj[userKey]) {
+          let img = CGC.urlToImg(url)
+          // add dataset for content script
+          // do not save url directly because that may be very long
+          img.dataset.src = 'url:' + id
+          userCb(id, img)
         }
       })
     }
 
-    // put all user icons after predefined ones, so that they do not mix up
-    loadPredefinedIcons(loadUserIcons)
+    // put all user images after predefined ones, so that they do not mix up
+    // (but they may mix up inside each group because file reading is async)
+    loadPredefinedImgs(loadUserImgs)
   },
 
   /*
    * Load all icons, include predefined ones and user-defined ones.
    * For predefined ones, they are loaded as file names.
    * For user-uploaded ones, they are loaded as dataURL.
-   * But anyway, a <img> element will be returned regardless of the type
+   * But anyway, a <div> element whose background image is set to the image
+   *   will be returned regardless of the type
    *
    * userCb will only be called after all predefined icons have been called with,
    *   so that they do not mix up
@@ -283,8 +297,8 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   uploadIcon(file, cb) {
-    CGC.readFileAsDataURL(file, event => {
-      CGC.resizeImg(event.target.result, 16, 16, dataURL => {
+    CGC_util.readFileAsDataURL(file, event => {
+      CGC_util.resizeImg(event.target.result, 16, 16, dataURL => {
         let id = Date.now()
         CGC._addToDataset('CGC_upload_icons', [id, dataURL])
         cb(id, dataURL)
@@ -297,13 +311,18 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   uploadPoster(file, cb) {
-    CGC.readFileAsDataURL(file, event => {
-      CGC.resizeAndCropImg(event.target.result, 52*16, 7*16, dataURL => {
+    CGC_util.readFileAsDataURL(file, event => {
+      CGC_util.resizeAndCropImg(event.target.result, 52*16, 7*16, dataURL => {
         let id = Date.now()
         CGC._addToDataset('CGC_upload_posters', [id, dataURL])
         cb(id, dataURL)
       })
     })
+  },
+
+  uploadPosterURL(url, id) {
+    id = id || Data.now()
+    CGC._addToDataset('CGC_upload_posters', [id, url])
   },
 
   removePoster(id) {

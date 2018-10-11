@@ -2,9 +2,17 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-07 11:41:36
+* @Last Modified time: 2018-10-11 12:18:18
 */
 
+/*
+ * There are two types of theme for now: ChromaTheme (those of colors and icons) and PosterTheme (those of a poster)
+ * The fact that the we need to shift from one type to another type
+ *   leads me to write this awesome subclass system (in the sense of the degree of stink).
+ * In short, every instance is of `Theme` class, with `this.type` to denote its type.
+ * We have distinct methods in subclasses `_ChromaTheme` and `_PosterTheme`,
+ *   but they are all static and should be called by e.g. `_ChromaTheme.somemethod.call(theme, ...args)`
+ */
 class Theme {
   constructor(name, type) {
     this.name = name
@@ -39,6 +47,20 @@ class Theme {
 
   copy() {
     return new Theme(this.name, this.type).setPatterns(this.patterns).setPoster(this.poster)
+  }
+
+  /*
+   * Used when being injected with content script
+   */
+  toObject() {
+    let ret = {
+      name: this.name,
+      type: this.type,
+      thresholds: this.thresholds,
+    }
+    if (this.type == Theme.CHROMA_TYPE) ret['patterns'] = this.patterns
+    if (this.type == Theme.POSTER_TYPE) ret['poster'] = this.poster
+    return ret
   }
 
   static fromObject(obj) {
@@ -121,7 +143,7 @@ class _ChromaTheme extends Theme {
     }
   }
 
-  static setHTMLLegends(contribChart) {
+  static setHTMLLegends(/* this, */ contribChart) {
     let legends = contribChart.querySelectorAll('.contrib-legend ul.legend > li')
 
     // Check for the number of legends
@@ -219,7 +241,64 @@ class _ChromaTheme extends Theme {
 }
 
 class _PosterTheme extends Theme {
-  static setHTMLLegends(contribChart) {
+  /*
+   * There are three types of posters which we can put into a day block:
+   * 1. an image file from extension folder
+   *   e.g. posters/foo.png
+   * 2. url, either from network or dataurl (this tends to be very large)
+   *   we only store the id in the property, need to be retrieved from storage when using
+   *   e.g. url:<some_id>
+   * This function will parse the pattern string and return the type constant
+   */
+  static getPosterType(poster) {
+    if (!_PosterTheme.POSTER_TYPE_DEFINED) {
+      _PosterTheme.POSTER_TYPE_IMG = 'image'
+      _PosterTheme.POSTER_TYPE_URL = 'url' // may be web url or dataURL
+      _PosterTheme.POSTER_TYPE_DEFINED = true
+    }
+
+    if (poster.startsWith('posters/')) {
+      return _PosterTheme.POSTER_TYPE_IMG
+    } else if (poster.startsWith('url:')) { // this special header should be given by the code from the gallery part
+      return _PosterTheme.POSTER_TYPE_URL
+    }
+  }
+
+  static getPosterUrl(/* this, */) {
+    switch (_PosterTheme.getPosterType(this.poster)) {
+      case _PosterTheme.POSTER_TYPE_IMG: return chrome.extension.getURL(this.poster)
+      case _PosterTheme.POSTER_TYPE_URL: return this._retrieved_poster_url
+        // will be null if `waitForStorageCallback` haven't been called
+      default: console.error("Can not parse poster: " + this.poster)
+    }
+  }
+
+  static waitForStorageCallback(/* this, */ cb) {
+    if (_PosterTheme.getPosterType(this.poster) != _PosterTheme.POSTER_TYPE_URL || this._retrieved_poster_url) {
+      return false // do not need to wait
+    }
+
+    let fileId = this.poster.slice(4) // remove leading 'url:'
+    chrome.storage.local.get({'CGC_upload_posters': []}, obj => {
+      let uploaded = obj['CGC_upload_posters'] // something like [[<id>, <dataurl>], [<id>, <dataurl>], ...]
+      let result = uploaded.find(([id, url]) => id == fileId)
+      if (!result) console.warn("Unknown poster: " + this.poster)
+
+      this._retrieved_poster_url = result[1] // will be used by `getPosterUrl`
+      cb()
+    })
+
+    return true
+  }
+
+
+  /* This is (not really) static because it is delegated by `Theme` class */
+  static setHTMLLegends(/* this, */ contribChart) {
+    let cb = _PosterTheme.setHTMLLegends.bind(this, contribChart) // call itself again
+    if (_PosterTheme.waitForStorageCallback.call(this, cb)) return
+      // wait for storage retrieval, which happens when `this.poster` is an identifier pointing to the storage
+      // this function will be called again when that is ready
+
     let legends = contribChart.querySelectorAll('.contrib-legend ul.legend > li')
 
     for (let ind = 0; ind < legends.length; ++ind) {
@@ -228,7 +307,7 @@ class _PosterTheme extends Theme {
 
       let css = {
         'opacity': `${alpha}`,
-        'background-image': `url(${chrome.extension.getURL(this.poster)})`,
+        'background-image': `url(${_PosterTheme.getPosterUrl.call(this)})`,
         'background-position': `${x}% center`,
         'background-size': `auto 200%`  // twice the height of the legend
       }
@@ -238,7 +317,13 @@ class _PosterTheme extends Theme {
     }
   }
 
-  static setHTMLDayBlocks(contribChart) {
+  /* This is (not really) static because it is delegated by `Theme` class */
+  static setHTMLDayBlocks(/* this, */ contribChart) {
+    let cb = _PosterTheme.setHTMLDayBlocks.bind(this, contribChart) // call itself again
+    if (_PosterTheme.waitForStorageCallback.call(this, cb)) return
+      // wait for storage retrieval, which happens when `this.poster` is an identifier pointing to the storage
+      // this function will be called again when that is ready
+
     let svg = contribChart.querySelector('svg.js-calendar-graph-svg')
 
     // insert our poster
@@ -252,7 +337,7 @@ class _PosterTheme extends Theme {
     posterGroup.innerHTML = `
       <mask id="${_PosterTheme.maskId}"></mask>
       <image
-        href="${chrome.extension.getURL(this.poster)}"
+        href="${_PosterTheme.getPosterUrl.call(this)}"
         transform="translate(${transW}, ${transH})"
         width="${svgW-transW}" height="${svgH-transH}"
         mask="url(#${_PosterTheme.maskId})" preserveAspectRatio="xMidYMid slice"
@@ -295,3 +380,4 @@ _PosterTheme.posterId = "_CGC-poster", // use leading underscore to denote priva
 _PosterTheme.maskId = "_CGC-poster-mask"
 _PosterTheme.poster_mask_colors = ['#333', '#666', '#999', '#ccc','#fff'] // white -> visible for html blocks
 _PosterTheme.poster_mask_alphas = [ 0.2, 0.4, 0.6, 0.8, 1.0 ] // transparency for legends
+_PosterTheme.poster_web_url_reg = /.*\.(?:png|jpg|jpeg|webp|bmp)/i

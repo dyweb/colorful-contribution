@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 16:31:02
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-07 12:26:31
+* @Last Modified time: 2018-10-09 10:37:28
 */
 
 body {
@@ -43,14 +43,16 @@ h1 {
   height: 112px;
   user-select: none;
   position: relative;
+  box-shadow: 0 0 3px #aaa;
+  transition: transform .2s;
 }
 
 .icon div.img,
 .poster div.img {
   width: 100%;
   height: 100%;
-  transition: transform .2s;
   background-repeat: no-repeat;
+  transition: transform .2s;
 }
 
 .icon div.img {
@@ -66,11 +68,11 @@ h1 {
   transform: scale(1.1)
 }
 
-.poster:hover div.img {
-  transform: scale(1.05)
+.poster:hover {
+  transform: scale(1.02)
 }
 
-.add-btn {
+.js-add-file-btn { /* class for js */
   cursor: pointer;
 }
 
@@ -143,4 +145,94 @@ h1 {
   top: 15%;
   width: 20%;
   height: 70%;
+}
+
+/* ***********************
+  poster specific buttons
+ ************************/
+ #poster-gallery .fa { /* fa -> font awesome icons */
+  font-size: 32px;
+  color: #aaa;
+}
+
+#poster-gallery .btn-group {
+  height: 32px;
+}
+
+#poster-gallery .btn-group div {
+  float: left;
+}
+
+#poster-gallery .url-input-box {
+  width: 0;
+  height: 100%;
+  line-height: 100%;
+
+  margin: 0 32px;
+
+  vertical-align: middle;
+  position: relative;
+  transition: width 0.3s ease-out;
+}
+
+#poster-gallery .btn-group.editing .url-input-box {
+  width: 70%;
+}
+
+#poster-gallery .btn-group .js-add-file-btn,
+#poster-gallery .btn-group .js-ok-btn {
+  display: none;
+  cursor: pointer;
+}
+
+#poster-gallery .btn-group.editing .js-add-file-btn,
+#poster-gallery .btn-group.editing .js-ok-btn {
+  display: block;
+}
+
+#poster-gallery .url-input-box input {
+  font-size: 2em;
+  color: rgb(84, 84, 84);
+}
+
+#poster-gallery .url-input-box.underline::before {
+  width: 100%;
+  left: 0;
+  bottom: -20%;
+  border-bottom: 3px solid rgba(0, 0, 0, 10);
+}
+
+#poster-gallery .add-btn[data-rotating|=right] { animation: rotatingRight .5s forwards; }
+#poster-gallery .add-btn[data-rotating|=left]  { animation: rotatingLeft  .5s forwards; }
+
+@keyframes rotatingRight {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(225deg); }
+}
+
+@keyframes rotatingLeft {
+  from { transform: rotate(225deg); }
+  to   { transform: rotate(0deg); }
+}
+
+/* utils */
+input.invisible-input{
+  background-color: transparent;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  cursor:default;
+  padding: 0;
+
+  width: 100%;
+  text-align: center;
+}
+
+.underline::before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-bottom: 3px solid rgba(0, 0, 0, 10);
 }

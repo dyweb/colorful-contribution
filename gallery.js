@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-09-13 15:10:03
+* @Last Modified time: 2018-10-09 10:56:53
 */
 
 /*
@@ -16,13 +16,21 @@ let galleries = {
   icon: {
     input: document.getElementById("icon-form").children[0],
     gallery: document.getElementById("icon-gallery"),
-    addBtn: document.getElementById("icon-gallery").children[0]
+    addBtn: document.getElementById("icon-gallery").querySelector(".js-add-file-btn")
   },
   poster: {
     input: document.getElementById("poster-form").children[0],
     gallery: document.getElementById("poster-gallery"),
-    addBtn: document.getElementById("poster-gallery").children[0]
+    addBtn: document.getElementById("poster-gallery").querySelector(".js-add-file-btn"),
   },
+}
+
+function insertBeforeLastChild(parent, elem) {
+  if (parent.lastElementChild) {
+    parent.insertBefore(elem, parent.lastElementChild)
+  } else {
+    parent.appendChild(elem)
+  }
 }
 
 !function(){
@@ -46,7 +54,7 @@ let galleries = {
       }
 
       container.setAttribute('data-id', id)
-      galleries.icon.gallery.insertBefore(container, galleries.icon.addBtn)
+      insertBeforeLastChild(galleries.icon.gallery, container)
   }
 
   function appendPoster(id, imgElem, deleteable=true){
@@ -67,7 +75,7 @@ let galleries = {
       }
 
       container.setAttribute('data-id', id)
-      galleries.poster.gallery.insertBefore(container, galleries.poster.addBtn)
+      insertBeforeLastChild(galleries.poster.gallery, container)
   }
   // util functions end
   /////////////////////
@@ -86,10 +94,51 @@ let galleries = {
       addBtn.addEventListener('click', event => input.click())
       input.addEventListener('change', event => {
         if (!input.files[0]) return
-        uploadFunc(input.files[0], (id, dataURL) => appendFunc(id, CGC.dataURLToImg(dataURL)))
+        uploadFunc(input.files[0], (id, dataURL) => appendFunc(id, CGC.urlToImg(dataURL)))
       })
     }()
   }
+
+  // alternate input for poster (we allow user to type an url for poster)
+  !function() {
+    let gal = galleries.poster.gallery,
+        btnGroup = gal.querySelector('.btn-group'),
+        toggleEditBtn = gal.querySelector('.add-btn'),
+        saveEditBtn = gal.querySelector('.js-ok-btn'),
+        urlInput = gal.querySelector('input'),
+        urlImage = gal.querySelector('.poster.url .img'), // may be null
+        urlImageId = null,
+        urlImageURL = null
+
+    function enterEditing() {
+      btnGroup.classList.add('editing')
+      toggleEditBtn.dataset['rotating'] = 'right'
+    }
+    function leaveEditing() {
+      btnGroup.classList.remove('editing')
+      toggleEditBtn.dataset['rotating'] = 'left'
+    }
+
+    toggleEditBtn.addEventListener('click', event => {
+      (btnGroup.classList.contains('editing') ? leaveEditing : enterEditing)()
+    })
+
+    saveEditBtn.addEventListener('click', event => {
+      leaveEditing()
+      CGC.uploadPosterURL(urlImageURL, urlImageId)
+    })
+
+    urlInput.addEventListener('input', event => {
+      if (!urlImage) {
+        urlImageId = 'web_img_' + Date.now()
+        urlImage = document.createElement('div')
+        appendPoster(urlImageId, urlImage, true)
+        urlImage.parentNode.classList.add('url')
+      }
+      urlImageURL = event.target.value
+      urlImage.style = `background-image: url(${event.target.value});`
+    })
+  }()
   // event listeners end
   /////////////////////
 

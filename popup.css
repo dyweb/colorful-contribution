@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-06 21:00:51
+* @Last Modified time: 2018-10-08 15:33:00
 */
 
 body {
@@ -208,7 +208,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   bottom: -20%;
   width: 0;
   height: 0;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid transparent; /* color and width is to be set by other css */
   transition: width .3s ease-out;
 }
 

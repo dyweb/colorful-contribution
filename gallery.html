@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Icon Gallery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="gallery.css" type="text/css" rel="stylesheet">
     <script src="util.js"></script>
     <script src="theme.js"></script>
@@ -14,19 +15,26 @@
 <hr>
 
 <div id="icon-gallery">
-  <div class="icon cross add-btn"></div>
+  <div class="icon add-btn js-add-file-btn"></div>
 </div>
 
 <form id="icon-form" hidden>
-    <input type='file' />
+    <input type='file' accept="image/*"/>
 </form>
 
 <div id="poster-gallery">
-  <div class="icon cross add-btn"></div>
+  <div class="btn-group">
+    <div class="icon add-btn"></div>
+    <div class="url-input-box underline">
+        <input class="invisible-input" type="text" placeholder="https://example.com/test.png" autocomplete="off">
+    </div>
+    <div class="icon fa fa-check js-ok-btn"></div>
+    <div class="icon fa fa-folder-open-o js-add-file-btn"></div>
+  </div>
 </div>
 
 <form id="poster-form" hidden>
-    <input type='file' />
+    <input type='file' accept="image/*"/>
 </form>
 
 

@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-07 12:03:21
+ * @Last Modified time: 2018-10-11 11:52:30
  */
 
 /*
@@ -94,6 +94,18 @@ function getThemeBlock(theme) {
   let themeBlock = document.createElement('div')
   themeBlock.innerHTML = themeBlockHTML
   themeBlock = themeBlock.childNodes[1]
+
+  // NOTE: theme.poster may be just an label pointing into the storage, instead of the url itself
+  // Thanks to storage retrieval being asynchronous, we have to rewrite the url afterwards
+  // I have to expose the supposedly inner class _PosterTheme to this file, which is stink.
+  // Also, _PosterTheme being a fake subclass (see theme.js) add to the illness (see all the `call`s)
+  // Need reconstructing someday.
+  if (!posterBlockStr.includes("NONE")) {
+    _PosterTheme.waitForStorageCallback.call(theme, () => {
+      let url = _PosterTheme.getPosterUrl.call(theme)
+      themeBlock.querySelector('.theme-poster div').style = `background-image: url(${url})`
+    })
+  }
 
   // Bind events
 
@@ -267,7 +279,8 @@ function bindPosterGallery(gallery) {
       theme = CGC.getTheme(themeBlock.dataset.name)
 
     let posterBlock = themeBlock.querySelector('.theme-poster')
-    posterBlock.innerHTML = `<div style="background-image: url(${poster.dataset.src})"></div>`
+    console.log(poster.style['background-image'])
+    posterBlock.firstElementChild.style = `background-image: ${poster.style['background-image']}`
 
     theme.setThemeType('poster')
     theme.setPoster(poster.dataset.src)
@@ -404,8 +417,13 @@ function resetAllThemeBlocks(except) {
  * initialize popup html
  */
 function initPopup() {
-  // Theme panel
   let themePanel = document.getElementById('theme-panel')
+
+  // Foot Panel ( bind foot panel first to ensure the functionality of resetting )
+  let footPanel = document.getElementById('foot-panel')
+  bindFootPanel(footPanel, themePanel)
+
+  // Theme panel
   let fragment = document.createDocumentFragment()
   for (let theme of CGC.allThemes) {
     let themeBlock = getThemeBlock(theme)
@@ -439,11 +457,6 @@ function initPopup() {
 document.addEventListener('DOMContentLoaded', () => {
   let themePanel = document.getElementById('theme-panel')
 
-  // Foot Panel ( bind foot panel first to ensure the functionality of resetting )
-  // other components are set in `initPopup`
-  let footPanel = document.getElementById('foot-panel')
-  bindFootPanel(footPanel, themePanel)
-
   chrome.storage.sync.get('CGC_all', (obj) => {
     if (!obj['CGC_all']) {
       CGC.initStorage()
@@ -463,12 +476,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reload selected theme
     chrome.storage.sync.get('CGC_selected', (obj) => {
-      if (!chrome.runtime.lastError) {
-        _setTheme(obj['CGC_selected'])
-      }
+      _setTheme(obj['CGC_selected'])
     })
 
     // Add click event of setting themes
+    // TODO: move this into initPopup
     themePanel.addEventListener('click', (event) => {
       let elem = event.target
       let inEditorArea = false, inBlockArea = false, isEditing = false, isSelected = false
