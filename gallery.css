@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 16:31:02
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-09 10:37:28
+* @Last Modified time: 2018-10-18 11:35:55
 */
 
 body {
@@ -20,6 +20,10 @@ h1 {
   margin: 10px auto;
   padding: 30px;
   background-color: #f0f0f3;
+}
+
+#poster-gallery {
+  padding-bottom: 50px;
 }
 
 #poster-gallery {
@@ -44,7 +48,7 @@ h1 {
   user-select: none;
   position: relative;
   box-shadow: 0 0 3px #aaa;
-  transition: transform .2s;
+  transition: transform .2s, box-shadow .2s;
 }
 
 .icon div.img,
@@ -65,11 +69,11 @@ h1 {
 }
 
 .icon:hover div.img {
-  transform: scale(1.1)
+  transform: scale(1.1);
 }
 
 .poster:hover {
-  transform: scale(1.02)
+  transform: scale(1.005);
 }
 
 .js-add-file-btn { /* class for js */
@@ -124,6 +128,11 @@ h1 {
   opacity: 1;
 }
 
+.poster .del-btn {
+  top: -5px;
+  right: -5px;
+}
+
 .del-btn:before,
 .del-btn:after {
   content: '';
@@ -163,6 +172,9 @@ h1 {
   float: left;
 }
 
+#poster-gallery .btn-group .nonedit-hide { display: none; }
+#poster-gallery .btn-group.editing .nonedit-hide { display: block; }
+
 #poster-gallery .url-input-box {
   width: 0;
   height: 100%;
@@ -181,13 +193,7 @@ h1 {
 
 #poster-gallery .btn-group .js-add-file-btn,
 #poster-gallery .btn-group .js-ok-btn {
-  display: none;
   cursor: pointer;
-}
-
-#poster-gallery .btn-group.editing .js-add-file-btn,
-#poster-gallery .btn-group.editing .js-ok-btn {
-  display: block;
 }
 
 #poster-gallery .url-input-box input {
@@ -213,6 +219,30 @@ h1 {
 @keyframes rotatingLeft {
   from { transform: rotate(225deg); }
   to   { transform: rotate(0deg); }
+}
+
+#poster-gallery .poster.editing {
+  box-shadow: 0 0 8px #c92;
+  animation: scrollDown .5s forwards;
+}
+
+@keyframes scrollDown {
+  from { max-height: 0px; }
+  to   { max-height: 112px; }
+}
+
+#poster-gallery .poster.editing .del-btn { /* non-deletable when still editing */
+  display: none;
+}
+
+#poster-gallery .error-prompt {
+  color: #c22;
+
+  position: absolute;
+  bottom: -100%;
+
+  width: 100%;
+  text-align: center;
 }
 
 /* utils */

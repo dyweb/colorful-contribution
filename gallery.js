@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-09 10:56:53
+* @Last Modified time: 2018-10-18 11:37:26
 */
 
 /*
@@ -16,12 +16,12 @@ let galleries = {
   icon: {
     input: document.getElementById("icon-form").children[0],
     gallery: document.getElementById("icon-gallery"),
-    addBtn: document.getElementById("icon-gallery").querySelector(".js-add-file-btn")
+    addFileBtn: document.getElementById("icon-gallery").querySelector(".js-add-file-btn")
   },
   poster: {
     input: document.getElementById("poster-form").children[0],
     gallery: document.getElementById("poster-gallery"),
-    addBtn: document.getElementById("poster-gallery").querySelector(".js-add-file-btn"),
+    addFileBtn: document.getElementById("poster-gallery").querySelector(".js-add-file-btn"),
   },
 }
 
@@ -30,6 +30,41 @@ function insertBeforeLastChild(parent, elem) {
     parent.insertBefore(elem, parent.lastElementChild)
   } else {
     parent.appendChild(elem)
+  }
+}
+
+// Verify whether an image is valid by testing it on an Image elem
+let urlVerifier = new Image()
+function verifyImageURL(url, onload, onerror, ontimeout, timeout=1000) {
+  let verified = 'unknown'
+  let timer = window.setTimeout(function(){
+    if (verified == 'unknown') {
+      ontimeout()
+      urlVerifier.onload = urlVerifier.onerror = null
+    }
+  }, timeout)
+
+  urlVerifier.onload = function(){
+    onload()
+    verified = 'yes'
+    window.clearTimeout(timer)
+  }
+  urlVerifier.onerror = function() {
+    onerror()
+    verified = 'no'
+    window.clearTimeout(timer)
+  }
+
+  urlVerifier.src = url
+}
+
+// debounce the call of some function
+// all but the last one of consecutive calls in `idle` ms will be ignored
+function debounce(func, idleMs=1000) {
+  let timer = null
+  return function(...args) {
+    window.clearTimeout(timer)
+    timer = window.setTimeout(() => func(...args), idleMs)
   }
 }
 
@@ -88,10 +123,10 @@ function insertBeforeLastChild(parent, elem) {
       let uploadFunc = CGC['upload' + {icon: 'Icon', poster: 'Poster'}[key]]
       let appendFunc = {icon: appendIcon, poster: appendPoster}[key]
 
-      let addBtn = galleries[key].addBtn
+      let addFileBtn = galleries[key].addFileBtn
       let input = galleries[key].input
 
-      addBtn.addEventListener('click', event => input.click())
+      addFileBtn.addEventListener('click', event => input.click())
       input.addEventListener('change', event => {
         if (!input.files[0]) return
         uploadFunc(input.files[0], (id, dataURL) => appendFunc(id, CGC.urlToImg(dataURL)))
@@ -99,14 +134,14 @@ function insertBeforeLastChild(parent, elem) {
     }()
   }
 
-  // alternate input for poster (we allow user to type an url for poster)
+  // web url input logic for poster (we allow user to type an url for poster)
   !function() {
     let gal = galleries.poster.gallery,
         btnGroup = gal.querySelector('.btn-group'),
-        toggleEditBtn = gal.querySelector('.add-btn'),
-        saveEditBtn = gal.querySelector('.js-ok-btn'),
-        urlInput = gal.querySelector('input'),
-        urlImage = gal.querySelector('.poster.url .img'), // may be null
+        toggleEditBtn = btnGroup.querySelector('.add-btn'),
+        saveEditBtn = btnGroup.querySelector('.js-ok-btn'),
+        errorPrompt = btnGroup.querySelector('.error-prompt'),
+        urlInput = btnGroup.querySelector('input'),
         urlImageId = null,
         urlImageURL = null
 
@@ -117,10 +152,20 @@ function insertBeforeLastChild(parent, elem) {
     function leaveEditing() {
       btnGroup.classList.remove('editing')
       toggleEditBtn.dataset['rotating'] = 'left'
+      urlInput.value = ''
+      clearErrorPrompt()
+      let poster = gal.querySelector('.poster.editing')
+      if (poster) poster.classList.remove('editing')
     }
 
     toggleEditBtn.addEventListener('click', event => {
-      (btnGroup.classList.contains('editing') ? leaveEditing : enterEditing)()
+      if (!btnGroup.classList.contains('editing')){
+        enterEditing()
+      } else {
+        let urlImage = gal.querySelector('.poster.editing')
+        if (urlImage) gal.removeChild(urlImage)
+        leaveEditing()
+      }
     })
 
     saveEditBtn.addEventListener('click', event => {
@@ -128,16 +173,46 @@ function insertBeforeLastChild(parent, elem) {
       CGC.uploadPosterURL(urlImageURL, urlImageId)
     })
 
-    urlInput.addEventListener('input', event => {
+    // when clicking on the button to choose from directory
+    // save the current url
+    galleries['poster'].addFileBtn.addEventListener('click', event => {
+      if (!gal.querySelector('.poster.editing')) return
+      leaveEditing()
+      CGC.uploadPosterURL(urlImageURL, urlImageId)
+    })
+
+    function showErrorPrompt(prompt) { errorPrompt.innerHTML = prompt }
+    function clearErrorPrompt() { errorPrompt.innerHTML = '' }
+
+    function previewInputURL(url, checkFirst=true) {
+      if (checkFirst) {
+        showErrorPrompt('Loading...')
+        let onload = () => clearErrorPrompt() || previewInputURL(url, false) // show the image if the url is valid
+        let onerror = () => showErrorPrompt('Can not load the image...')     // do nothing when invalid
+        let ontimeout = onload     // ascribe timeout to network delay, show it anyway to notify the user that we are loading
+        verifyImageURL(url, onload, onerror, ontimeout)
+        return
+      }
+
+      // checked, the url is a valid image, we show the image
+      let urlImage = gal.querySelector('.poster.editing .img')
       if (!urlImage) {
         urlImageId = 'web_img_' + Date.now()
         urlImage = document.createElement('div')
         appendPoster(urlImageId, urlImage, true)
-        urlImage.parentNode.classList.add('url')
+        urlImage.parentNode.classList.add('editing')
       }
-      urlImageURL = event.target.value
-      urlImage.style = `background-image: url(${event.target.value});`
-    })
+      urlImageURL = url
+      urlImage.style = `background-image: url(${url});`
+    }
+
+    urlInput.addEventListener('input', debounce(event => {
+      clearErrorPrompt()
+      let url = event.target.value
+      if (!url) return
+      let prompt = _PosterTheme.checkWebURL(url)
+      prompt ? showErrorPrompt(prompt) : previewInputURL(url)
+    }))
   }()
   // event listeners end
   /////////////////////

@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-11 12:18:18
+* @Last Modified time: 2018-10-18 11:36:51
 */
 
 /*
@@ -374,10 +374,25 @@ class _PosterTheme extends Theme {
     let posterGroup = contribChart.querySelector(`#${_PosterTheme.posterId}`)
     if (posterGroup) posterGroup.parentNode.removeChild(posterGroup)
   }
+
+  /*
+   * Check whether a url is valid as poster image using regex
+   * @return: { Null | String }
+   *   return the prompt if invalid, other wise nothing
+   */
+  static checkWebURL(url) {
+    if (!['http://', 'https://'].some(str => url.startsWith(str))) {
+      return 'url should begin with "http://" or "https://'
+    } else if (!_PosterTheme.poster_web_valid_types.some(str => url.endsWith(str))) {
+      return `url should end with one of "${_PosterTheme.poster_web_valid_types.join('", "')}"`
+    }
+  }
 }
 
 _PosterTheme.posterId = "_CGC-poster", // use leading underscore to denote privateness
 _PosterTheme.maskId = "_CGC-poster-mask"
 _PosterTheme.poster_mask_colors = ['#333', '#666', '#999', '#ccc','#fff'] // white -> visible for html blocks
 _PosterTheme.poster_mask_alphas = [ 0.2, 0.4, 0.6, 0.8, 1.0 ] // transparency for legends
-_PosterTheme.poster_web_url_reg = /.*\.(?:png|jpg|jpeg|webp|bmp)/i
+_PosterTheme.poster_web_valid_types = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
+_PosterTheme.poster_web_url_reg = new RegExp('https?:\/\/.*\.(?:' + _PosterTheme.poster_web_valid_types.join('|') + ')', 'i')
+// _PosterTheme.poster_web_url_reg = /https?:\/\/.*\.(?:png|jpg|jpeg|webp|bmp)/i
