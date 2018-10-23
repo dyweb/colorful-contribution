@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-11 11:52:30
+ * @Last Modified time: 2018-10-23 22:01:47
  */
 
 /*
@@ -56,9 +56,9 @@ function getThemeBlock(theme) {
     let posStr = theme.poster ? `<div style="background-image: url(${theme.poster})"></div>` : '<span>NONE</span>' // other css propoerties will be handled by popup.css
 
     let typeStr;
-    if (theme.type == Theme.CHROMA_TYPE) {
+    if (theme instanceof ChromaTheme) {
       typeStr = 'Type: Chroma'
-    } else if (theme.type == Theme.POSTER_TYPE) {
+    } else if (theme instanceof PosterTheme) {
       typeStr = 'Type: Poster'
     }
 
@@ -97,12 +97,12 @@ function getThemeBlock(theme) {
 
   // NOTE: theme.poster may be just an label pointing into the storage, instead of the url itself
   // Thanks to storage retrieval being asynchronous, we have to rewrite the url afterwards
-  // I have to expose the supposedly inner class _PosterTheme to this file, which is stink.
-  // Also, _PosterTheme being a fake subclass (see theme.js) add to the illness (see all the `call`s)
+  // I have to expose the supposedly inner class PosterTheme to this file, which is stink.
+  // Also, PosterTheme being a fake subclass (see theme.js) add to the illness (see all the `call`s)
   // Need reconstructing someday.
   if (!posterBlockStr.includes("NONE")) {
-    _PosterTheme.waitForStorageCallback.call(theme, () => {
-      let url = _PosterTheme.getPosterUrl.call(theme)
+    theme.waitForStorageCallback(() => {
+      let url = theme.getPosterUrl()
       themeBlock.querySelector('.theme-poster div').style = `background-image: url(${url})`
     })
   }
@@ -193,6 +193,12 @@ function bindEditBtn(editBtn, theme) {
 function bindFlipBtn(flipBtn, theme) {
   let galleries = document.getElementById('galleries')
 
+  let types = Object.keys(Theme.TYPES)
+  let typeFilpMapping = {}
+  for (let ind in types) {
+    typeFilpMapping[types[ind]] = types[ (ind + 1) % types.length ]
+  }
+
   flipBtn.addEventListener('click', event => {
     // Toggling theme type (chroma/poster) when click on the flip button
     let block = findAncestor(event.target, 'theme-block')
@@ -206,7 +212,8 @@ function bindFlipBtn(flipBtn, theme) {
       block.classList.add('show-flip-up')
 
       // modify the data
-      let targetType = block.dataset.typeName === Theme.CHROMA_TYPE ? Theme.POSTER_TYPE : Theme.CHROMA_TYPE
+      let targetType = typeFilpMapping[block.dataset.typeName]
+      console.assert(targetType, "Unknown type: " + block.dataset.typeName)
       theme.setThemeType(targetType)
       setThemeTypeTxt(block, targetType)
 
@@ -377,19 +384,21 @@ function getEditingThemeBlock() {
 /*
  *  Theme type will be displayed on the theme block when in editor mode.
  *  @param: themeType { string }
- *    one of [ Theme.POSTER_TYPE, Theme.CHROMA_TYPE, ...]
+ *    one of the keys of Theme.TYPES
  */
 function setThemeTypeTxt(themeBlock, themeType) {
   themeBlock.dataset.typeName = themeType
-  switch (themeType) {
-    case Theme.CHROMA_TYPE:
+  let cls = Theme.getClass(themeType)
+
+  switch (cls) {
+    case ChromaTheme:
       themeBlock.querySelector('.theme-type').textContent = 'Type: Chroma'
       break
-    case Theme.POSTER_TYPE:
+    case PosterTheme:
       themeBlock.querySelector('.theme-type').textContent = 'Type: Poster'
       break
     default:
-      console.error(`Unknown theme type: '${themeType}', valid: 'chroma' | 'poster'`)
+      console.error(`Unknown theme type: '${themeType}'`)
   }
 }
 //////////////////////////////

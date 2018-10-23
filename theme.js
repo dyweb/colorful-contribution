@@ -2,77 +2,65 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-18 11:36:51
+* @Last Modified time: 2018-10-23 22:01:56
 */
 
 /*
  * There are two types of theme for now: ChromaTheme (those of colors and icons) and PosterTheme (those of a poster)
- * The fact that the we need to shift from one type to another type
- *   leads me to write this awesome subclass system (in the sense of the degree of stink).
- * In short, every instance is of `Theme` class, with `this.type` to denote its type.
- * We have distinct methods in subclasses `_ChromaTheme` and `_PosterTheme`,
- *   but they are all static and should be called by e.g. `_ChromaTheme.somemethod.call(theme, ...args)`
+ * Inheritance chain:
+ *   Theme --> ChromaTheme
+ *         \-> PosterTheme
+ * When Theme#setThemeType is called, the instance's `__proto__`
+ *   is redirected to the `prototype` of the corresponding subclass
  */
 class Theme {
+  // private
   constructor(name, type) {
     this.name = name
-    this.setThemeType(type)
+    this.type = type
     this.thresholds = Theme.DEFAULT_THRESHOLDS
   }
 
+  /*
+   * @parameter: type { String }
+   *   one of value stored in Theme.TYPES
+   * The `__proto__` of the instance will be changed
+   */
   setThemeType(type) {
-    type = type.toLowerCase()
-    console.assert([Theme.CHROMA_TYPE, Theme.POSTER_TYPE].includes(type), "Unknown theme type: " + type)
-    this.type = type
+    this.type = type.toLowerCase()
+    this.__proto__ = Theme.getClass(this.type).prototype
   }
 
   setThresholds(thresholds) { this.thresholds = thresholds; return this }
-  setPattern(ind, pattern) {
-    if (!this.patterns) this.patterns = []
-    this.patterns[ind] = pattern
-    return this
-  }
-  setPatterns(patterns) { this.patterns = patterns; return this }
-  setPoster(poster) { this.poster = poster; return this }
 
-  static _getClass(themeType) {
-    switch (themeType) {
-      case Theme.CHROMA_TYPE: return _ChromaTheme
-      case Theme.POSTER_TYPE: return _PosterTheme
-      default: console.error("Unknown theme type: " + themeType)
+  static getClass(themeType) {
+    if (Theme.TYPES.hasOwnProperty(themeType)) {
+      return Theme.TYPES[themeType]
+    } else {
+      console.error("Unknown theme type: " + themeType)
     }
   }
 
-  getClass() { return Theme._getClass(this.type) }
+  getClass() { return Theme.getClass(this.type) }
 
-  copy() {
-    return new Theme(this.name, this.type).setPatterns(this.patterns).setPoster(this.poster)
-  }
+  copy() { console.error('virtual function called') }
 
   /*
    * Used when being injected with content script
    */
-  toObject() {
-    let ret = {
-      name: this.name,
-      type: this.type,
-      thresholds: this.thresholds,
-    }
-    if (this.type == Theme.CHROMA_TYPE) ret['patterns'] = this.patterns
-    if (this.type == Theme.POSTER_TYPE) ret['poster'] = this.poster
-    return ret
-  }
+  toObject() { console.error('virtual function called') }
 
+  /*
+   * Convert an object into instance.
+   * This function will delegate to subclasses.
+   */
   static fromObject(obj) {
-    console.assert(obj.name, "Parsed failed. A theme obj is required to have `name` field. Given: ", obj)
-    console.assert(obj.thresholds && obj.thresholds.length > 0, "Parsed failed. A theme obj is required to have `thresholds` field. Given: ", obj)
-    console.assert(obj.poster || (obj.patterns && obj.patterns.length > 0), "Parsed failed. A theme obj is required to have `patterns` or `poster` field. Given: ", obj)
-    let type = obj.type || (obj.poster ? Theme.POSTER_TYPE : Theme.CHROMA_TYPE)
+    let _checkStr = field =>  `Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`
 
-    let theme = new Theme(obj.name, type).setThresholds(obj.thresholds)
-    if (obj.patterns) theme.setPatterns(obj.patterns)
-    if (obj.poster) theme.setPoster(obj.poster)
-    return theme
+    console.assert(obj.name, _checkStr('name'))
+    console.assert(obj.type, _checkStr('type'))
+    console.assert(obj.thresholds && obj.thresholds.length > 0, _checkStr('thresholds'))
+    return Theme.getClass(obj.type).fromObject(obj)
   }
 
   _contribCntToInd(cnt) {
@@ -81,15 +69,13 @@ class Theme {
     return ind
   }
 
-  _delegate(funcName, ...args) { return this.getClass()[funcName].call(this, ...args) }
-
   /*
    * Modify the legend elements accoding to the theme
    *
    * @param: contribChart: the whole contributiion chart svg element
    *   For now, it can be get by document.querySelector('.js-yearly-contributions')
    */
-  setHTMLLegends(contribChart) { return this._delegate('setHTMLLegends', contribChart) }
+  setHTMLLegends(contribChart) { console.error('virtual function called') }
 
   /*
    * Modify the day blocks accoding to the theme
@@ -97,24 +83,48 @@ class Theme {
    * @param: contribChart: the whole contributiion chart element
    *   For now, it can be get by document.querySelector('.js-yearly-contributions')
    */
-  setHTMLDayBlocks(contribChart) { return this._delegate('setHTMLDayBlocks', contribChart) }
+  setHTMLDayBlocks(contribChart) { console.error('virtual function called') }
 
   /*
    * Recover the html so that another theme can be inserted
    * @param: themeTypeUnchanged { bool }
    *   whether or not the html is cleaned for a theme of the same theme type
    *   possibly less clean work for same theme type
+   * This function will delegate to subclasses.
    */
   static clean(contribChart, themeType, themeTypeUnchanged) {
-    this._getClass(themeType).clean(contribChart, themeTypeUnchanged)
+    this.getClass(themeType).clean(contribChart, themeTypeUnchanged)
   }
 }
 
 Theme.DEFAULT_THRESHOLDS = null
-Theme.CHROMA_TYPE = 'chroma'
-Theme.POSTER_TYPE = 'poster'
 
-class _ChromaTheme extends Theme {
+class ChromaTheme extends Theme {
+  constructor(name) { super(name, ChromaTheme.TYPE_STR) }
+
+  setPattern(ind, pattern) {
+    if (!this.patterns) this.patterns = []
+    this.patterns[ind] = pattern
+    return this
+  }
+  setPatterns(patterns) { this.patterns = patterns; return this }
+
+  copy() { return new ChromaTheme(this.name).setThresholds(this.thresholds).setPatterns(this.patterns) }
+
+  toObject() {
+    return {
+      name: this.name,
+      type: this.type,
+      thresholds: this.thresholds,
+      patterns: this.patterns
+    }
+  }
+
+  static fromObject(obj) {
+    console.assert(obj.patterns && obj.patterns.length > 0, "Parsed failed. A chroma theme obj is required to have `patterns`. Given: ", obj)
+    return new ChromaTheme(obj.name).setThresholds(obj.thresholds).setPatterns(obj.patterns)
+  }
+
   /*
    * There are three type of patterns which we can put into a day block:
    * 1. solid color
@@ -127,23 +137,23 @@ class _ChromaTheme extends Theme {
    * This function will parse the pattern string and return the type constant
    */
   static getPatternType(pattern) {
-    if (!_ChromaTheme.PATTERN_TYPE_DEFINED) {
-      _ChromaTheme.PATTERN_TYPE_COL = 'color'
-      _ChromaTheme.PATTERN_TYPE_ICO = 'icon'
-      _ChromaTheme.PATTERN_TYPE_DAT = 'dataURL'
-      _ChromaTheme.PATTERN_TYPE_DEFINED = true
+    if (!ChromaTheme._PATTERN_TYPE_DEFINED) {
+      ChromaTheme.PATTERN_TYPE_COL = 'color'
+      ChromaTheme.PATTERN_TYPE_ICO = 'icon'
+      ChromaTheme.PATTERN_TYPE_DAT = 'dataURL'
+      ChromaTheme._PATTERN_TYPE_DEFINED = true
     }
 
     if (pattern.startsWith('#')) {
-      return _ChromaTheme.PATTERN_TYPE_COL
+      return ChromaTheme.PATTERN_TYPE_COL
     } else if (pattern.startsWith('icons/')) {
-      return _ChromaTheme.PATTERN_TYPE_ICO
+      return ChromaTheme.PATTERN_TYPE_ICO
     } else if (pattern.startsWith('data:image/')) {
-      return _ChromaTheme.PATTERN_TYPE_DAT
+      return ChromaTheme.PATTERN_TYPE_DAT
     }
   }
 
-  static setHTMLLegends(/* this, */ contribChart) {
+  setHTMLLegends(contribChart) {
     let legends = contribChart.querySelectorAll('.contrib-legend ul.legend > li')
 
     // Check for the number of legends
@@ -156,20 +166,20 @@ class _ChromaTheme extends Theme {
       let [pat, leg] = [ this.patterns[ind], legends[ind] ]
       let css = null
 
-      switch (_ChromaTheme.getPatternType(pat)) {
-        case _ChromaTheme.PATTERN_TYPE_COL:
+      switch (ChromaTheme.getPatternType(pat)) {
+        case ChromaTheme.PATTERN_TYPE_COL:
           css = {
             'background-color': pat,
             'background-image': ''
           }
           break
-        case _ChromaTheme.PATTERN_TYPE_ICO:
+        case ChromaTheme.PATTERN_TYPE_ICO:
           css = {
             'background-color': '',
             'background-image': `url(${chrome.extension.getURL(pat)})`,
           }
           break
-        case _ChromaTheme.PATTERN_TYPE_DAT:
+        case ChromaTheme.PATTERN_TYPE_DAT:
           css = {
             'background-color': '',
             'background-image': `url(${pat})`,
@@ -186,7 +196,7 @@ class _ChromaTheme extends Theme {
     }
   }
 
-  static setHTMLDayBlocks(contribChart) {
+  setHTMLDayBlocks(contribChart) {
     let days = contribChart.querySelectorAll('.calendar-graph rect.day')
 
     for (let rectElem of days) {
@@ -201,15 +211,15 @@ class _ChromaTheme extends Theme {
       // 2. <image></image><rect class="day"></rect>, 2 elements
       //  the upper layer `rect` is used to triggle events and should be set to transparent
       let _is_ico = false
-      switch (_ChromaTheme.getPatternType(pattern)) {
-        case _ChromaTheme.PATTERN_TYPE_COL:
+      switch (ChromaTheme.getPatternType(pattern)) {
+        case ChromaTheme.PATTERN_TYPE_COL:
           rectElem.setAttribute('fill', pattern)
           if (imgElem) rectElem.parentNode.removeChild(imgElem)  // remove useless image block
           break
 
-        case _ChromaTheme.PATTERN_TYPE_ICO:
+        case ChromaTheme.PATTERN_TYPE_ICO:
           _is_ico = true // no break
-        case _ChromaTheme.PATTERN_TYPE_DAT:
+        case ChromaTheme.PATTERN_TYPE_DAT:
           let href = _is_ico ? chrome.extension.getURL(pattern) : pattern
 
           rectElem.setAttribute('fill', 'transparent')
@@ -240,7 +250,27 @@ class _ChromaTheme extends Theme {
   }
 }
 
-class _PosterTheme extends Theme {
+class PosterTheme extends Theme {
+  constructor(name) { super(name, PosterTheme.TYPE_STR) }
+
+  setPoster(poster) { this.poster = poster; return this }
+
+  copy() { return new PosterTheme(this.name).setThresholds(obj.thresholds).setPoster(this.poster) }
+
+  toObject() {
+    return {
+      name: this.name,
+      type: this.type,
+      thresholds: this.thresholds,
+      poster: this.poster
+    }
+  }
+
+  static fromObject(obj) {
+    console.assert(obj.poster, "Parsed failed. A poster theme obj is required to have `poster`. Given: ", obj)
+    return new PosterTheme(obj.name).setThresholds(obj.thresholds).setPoster(obj.poster)
+  }
+
   /*
    * There are three types of posters which we can put into a day block:
    * 1. an image file from extension folder
@@ -251,30 +281,30 @@ class _PosterTheme extends Theme {
    * This function will parse the pattern string and return the type constant
    */
   static getPosterType(poster) {
-    if (!_PosterTheme.POSTER_TYPE_DEFINED) {
-      _PosterTheme.POSTER_TYPE_IMG = 'image'
-      _PosterTheme.POSTER_TYPE_URL = 'url' // may be web url or dataURL
-      _PosterTheme.POSTER_TYPE_DEFINED = true
+    if (!PosterTheme._POSTER_TYPE_DEFINED) {
+      PosterTheme.POSTER_TYPE_IMG = 'image'
+      PosterTheme.POSTER_TYPE_URL = 'url' // may be web url or dataURL
+      PosterTheme._POSTER_TYPE_DEFINED = true
     }
 
     if (poster.startsWith('posters/')) {
-      return _PosterTheme.POSTER_TYPE_IMG
+      return PosterTheme.POSTER_TYPE_IMG
     } else if (poster.startsWith('url:')) { // this special header should be given by the code from the gallery part
-      return _PosterTheme.POSTER_TYPE_URL
+      return PosterTheme.POSTER_TYPE_URL
     }
   }
 
-  static getPosterUrl(/* this, */) {
-    switch (_PosterTheme.getPosterType(this.poster)) {
-      case _PosterTheme.POSTER_TYPE_IMG: return chrome.extension.getURL(this.poster)
-      case _PosterTheme.POSTER_TYPE_URL: return this._retrieved_poster_url
+  getPosterUrl() {
+    switch (PosterTheme.getPosterType(this.poster)) {
+      case PosterTheme.POSTER_TYPE_IMG: return chrome.extension.getURL(this.poster)
+      case PosterTheme.POSTER_TYPE_URL: return this._retrieved_poster_url
         // will be null if `waitForStorageCallback` haven't been called
       default: console.error("Can not parse poster: " + this.poster)
     }
   }
 
-  static waitForStorageCallback(/* this, */ cb) {
-    if (_PosterTheme.getPosterType(this.poster) != _PosterTheme.POSTER_TYPE_URL || this._retrieved_poster_url) {
+  waitForStorageCallback(cb) {
+    if (PosterTheme.getPosterType(this.poster) != PosterTheme.POSTER_TYPE_URL || this._retrieved_poster_url) {
       return false // do not need to wait
     }
 
@@ -292,22 +322,21 @@ class _PosterTheme extends Theme {
   }
 
 
-  /* This is (not really) static because it is delegated by `Theme` class */
-  static setHTMLLegends(/* this, */ contribChart) {
-    let cb = _PosterTheme.setHTMLLegends.bind(this, contribChart) // call itself again
-    if (_PosterTheme.waitForStorageCallback.call(this, cb)) return
+  setHTMLLegends(contribChart) {
+    let cb = this.setHTMLLegends.bind(this, contribChart) // call itself again
+    if (this.waitForStorageCallback(cb)) return
       // wait for storage retrieval, which happens when `this.poster` is an identifier pointing to the storage
       // this function will be called again when that is ready
 
     let legends = contribChart.querySelectorAll('.contrib-legend ul.legend > li')
 
     for (let ind = 0; ind < legends.length; ++ind) {
-      let [leg, alpha] = [ legends[ind], _PosterTheme.poster_mask_alphas[ind] ]
+      let [leg, alpha] = [ legends[ind], PosterTheme._LEGEND_ALPHAS[ind] ]
       let x = ind * 15
 
       let css = {
         'opacity': `${alpha}`,
-        'background-image': `url(${_PosterTheme.getPosterUrl.call(this)})`,
+        'background-image': `url(${this.getPosterUrl()})`,
         'background-position': `${x}% center`,
         'background-size': `auto 200%`  // twice the height of the legend
       }
@@ -317,10 +346,9 @@ class _PosterTheme extends Theme {
     }
   }
 
-  /* This is (not really) static because it is delegated by `Theme` class */
-  static setHTMLDayBlocks(/* this, */ contribChart) {
-    let cb = _PosterTheme.setHTMLDayBlocks.bind(this, contribChart) // call itself again
-    if (_PosterTheme.waitForStorageCallback.call(this, cb)) return
+  setHTMLDayBlocks(contribChart) {
+    let cb = this.setHTMLDayBlocks.bind(this, contribChart) // call itself again
+    if (this.waitForStorageCallback(cb)) return
       // wait for storage retrieval, which happens when `this.poster` is an identifier pointing to the storage
       // this function will be called again when that is ready
 
@@ -333,14 +361,14 @@ class _PosterTheme extends Theme {
     let [transW, transH] = blockGroup.getAttribute('transform').split(/[(,)\s]/).filter(x => x.match(/[0-9]+/)) // "translate(16, 20)" => [16, 20]
 
     let posterGroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
-    posterGroup.id = _PosterTheme.posterId
+    posterGroup.id = PosterTheme._POSTERID
     posterGroup.innerHTML = `
-      <mask id="${_PosterTheme.maskId}"></mask>
+      <mask id="${PosterTheme._MASKID}"></mask>
       <image
-        href="${_PosterTheme.getPosterUrl.call(this)}"
+        href="${this.getPosterUrl()}"
         transform="translate(${transW}, ${transH})"
         width="${svgW-transW}" height="${svgH-transH}"
-        mask="url(#${_PosterTheme.maskId})" preserveAspectRatio="xMidYMid slice"
+        mask="url(#${PosterTheme._MASKID})" preserveAspectRatio="xMidYMid slice"
       >
       </image>
     `
@@ -365,13 +393,13 @@ class _PosterTheme extends Theme {
     let maskDays = maskGroup.querySelectorAll('.calendar-graph rect.day')
     for (let rectElem of maskDays) {
       let ind = this._contribCntToInd(rectElem.dataset.count)
-      rectElem.setAttribute('fill', _PosterTheme.poster_mask_colors[ind])
+      rectElem.setAttribute('fill', PosterTheme._MASK_COLORS[ind])
     }
 
   }
 
   static clean(contribChart, themeTypeUnchanged) {
-    let posterGroup = contribChart.querySelector(`#${_PosterTheme.posterId}`)
+    let posterGroup = contribChart.querySelector(`#${PosterTheme._POSTERID}`)
     if (posterGroup) posterGroup.parentNode.removeChild(posterGroup)
   }
 
@@ -383,16 +411,23 @@ class _PosterTheme extends Theme {
   static checkWebURL(url) {
     if (!['http://', 'https://'].some(str => url.startsWith(str))) {
       return 'url should begin with "http://" or "https://'
-    } else if (!_PosterTheme.poster_web_valid_types.some(str => url.endsWith(str))) {
-      return `url should end with one of "${_PosterTheme.poster_web_valid_types.join('", "')}"`
+    } else if (!PosterTheme._WEB_SUFFIXES.some(str => url.endsWith(str))) {
+      return `url should end with one of "${PosterTheme._WEB_SUFFIXES.join('", "')}"`
     }
   }
 }
 
-_PosterTheme.posterId = "_CGC-poster", // use leading underscore to denote privateness
-_PosterTheme.maskId = "_CGC-poster-mask"
-_PosterTheme.poster_mask_colors = ['#333', '#666', '#999', '#ccc','#fff'] // white -> visible for html blocks
-_PosterTheme.poster_mask_alphas = [ 0.2, 0.4, 0.6, 0.8, 1.0 ] // transparency for legends
-_PosterTheme.poster_web_valid_types = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
-_PosterTheme.poster_web_url_reg = new RegExp('https?:\/\/.*\.(?:' + _PosterTheme.poster_web_valid_types.join('|') + ')', 'i')
-// _PosterTheme.poster_web_url_reg = /https?:\/\/.*\.(?:png|jpg|jpeg|webp|bmp)/i
+PosterTheme._POSTERID = "_CGC-poster", // use leading underscore to denote privateness
+PosterTheme._MASKID = "_CGC-poster-mask"
+PosterTheme._MASK_COLORS = ['#333', '#666', '#999', '#ccc','#fff'] // white -> visible for html blocks
+PosterTheme._LEGEND_ALPHAS = [ 0.2, 0.4, 0.6, 0.8, 1.0 ] // transparency for legends
+PosterTheme._WEB_SUFFIXES = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
+PosterTheme._WEB_URL_REG = new RegExp('https?:\/\/.*\.(?:' + PosterTheme._WEB_SUFFIXES.join('|') + ')', 'i')
+
+ChromaTheme.TYPE_STR = 'chroma'
+PosterTheme.TYPE_STR = 'poster'
+
+Theme.TYPES = {
+  [ChromaTheme.TYPE_STR]: ChromaTheme,
+  [PosterTheme.TYPE_STR]: PosterTheme,
+}

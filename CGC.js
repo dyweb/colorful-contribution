@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-11 12:09:29
+* @Last Modified time: 2018-10-23 22:08:44
 */
 
 // CGC means colorful github contributino
@@ -27,17 +27,17 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
   // built-in themes
   defaultThemes: [
-    new Theme('Primal',  'chroma').setPatterns(['#eee'   , '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
-    new Theme('Cherry',  'chroma').setPatterns(['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
-    new Theme('Tide',    'chroma').setPatterns(['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
-    new Theme('Solemn',  'chroma').setPatterns(['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
-    new Theme('Flower',  'chroma').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
-    new Theme('Mario',   'chroma').setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
-    new Theme('Comet',   'poster').setPoster('posters/qmsht.jpg'),
+    new ChromaTheme('Primal').setPatterns(['#eee'   , '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
+    new ChromaTheme('Cherry').setPatterns(['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
+    new ChromaTheme('Tide').setPatterns(['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
+    new ChromaTheme('Solemn').setPatterns(['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
+    new ChromaTheme('Flower').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
+    new ChromaTheme('Mario').setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
+    new PosterTheme('Comet').setPoster('posters/qmsht.jpg'),
   ],
 
   // the default theme when creating new ones
-  defaultTheme: new Theme('Newbie', 'chroma').setPatterns(['#aae', '#acc', '#aea', '#cca', '#eaa']),
+  defaultTheme: new ChromaTheme('Newbie').setPatterns(['#aae', '#acc', '#aea', '#cca', '#eaa']),
 
   //////////////////////////////
   // Themes Management Interface
@@ -54,8 +54,8 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    */
   sendTheme(theme) {
     function checkTheme() {
-      return (theme.type == Theme.CHROMA_TYPE && theme.patterns && theme.patterns.length > 0) ||
-             (theme.type == Theme.POSTER_TYPE && theme.poster)
+      return (theme instanceof ChromaTheme && theme.patterns && theme.patterns.length > 0) ||
+             (theme instanceof PosterTheme && theme.poster)
     }
 
     if (theme === null) {
@@ -252,8 +252,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     // Display all user images according to `userKey`
     // there may be two types of images stored: dataURL or (web) url
     function loadUserImgs(){
-      let _query = {}; _query[userKey] = []
-      chrome.storage.local.get(_query, obj => {
+      chrome.storage.local.get({[userKey]: []}, obj => {
         for (let [id, url] of obj[userKey]) {
           let img = CGC.urlToImg(url)
           // add dataset for content script
@@ -330,8 +329,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   _addToDataset(key, data) {
-    let query = {}; query[key] = []
-    chrome.storage.local.get(query, obj => {
+    chrome.storage.local.get({[key]: []}, obj => {
       obj[key].push(data)
       let newData = {}; newData[key] = obj[key]
       chrome.storage.local.set(newData)
@@ -339,8 +337,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   _removeFromDataset(key, pred, cb) {
-    let query = {}; query[key] = []
-    chrome.storage.local.get(query, obj => {
+    chrome.storage.local.get({[key]: []}, obj => {
       let ind = obj[key].findIndex(pred)
       if (ind === -1) return
       obj[key].splice(ind, 1)

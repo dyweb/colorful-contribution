@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-18 11:37:26
+* @Last Modified time: 2018-10-18 17:13:19
 */
 
 /*
@@ -210,7 +210,7 @@ function debounce(func, idleMs=1000) {
       clearErrorPrompt()
       let url = event.target.value
       if (!url) return
-      let prompt = _PosterTheme.checkWebURL(url)
+      let prompt = PosterTheme.checkWebURL(url)
       prompt ? showErrorPrompt(prompt) : previewInputURL(url)
     }))
   }()
