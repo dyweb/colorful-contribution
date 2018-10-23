@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-23 22:01:47
+ * @Last Modified time: 2018-10-23 22:16:18
  */
 
 /*
@@ -13,7 +13,9 @@
 let CGC = window.CGC // defined in `CGC.js`. Explict announcement to avoid ambiguity
 const COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/ // e.g. '#11AAdd'
 
-// util func
+////////////////
+// Utils
+////////////////
 function findAncestor(elem, elemClass) {
   while (elem !== null) {
     if (elem.classList.contains(elemClass)) return elem
@@ -21,6 +23,58 @@ function findAncestor(elem, elemClass) {
   }
   return null
 }
+
+/*
+ *  Theme type will be displayed on the theme block when in editor mode.
+ *  @param: themeType { string }
+ *    one of the keys of Theme.TYPES
+ */
+function setThemeTypeTxt(themeBlock, themeType) {
+  themeBlock.dataset.typeName = themeType
+  let cls = Theme.getClass(themeType)
+
+  switch (cls) {
+    case ChromaTheme:
+      themeBlock.querySelector('.theme-type').textContent = 'Type: Chroma'
+      break
+    case PosterTheme:
+      themeBlock.querySelector('.theme-type').textContent = 'Type: Poster'
+      break
+    default:
+      console.error(`Unknown theme type: '${themeType}'`)
+  }
+}
+
+/*
+ * Clear all css states
+ *
+ * @param: except: {String}
+ *   if given, theme blocks with `theme.dataset.name == except` will not be reset
+ */
+function resetAllThemeBlocks(except) {
+  let blocks = document.querySelectorAll('#theme-panel .theme-block')
+  for (let b of blocks) {
+    if (b.dataset.name === except) continue
+    b.classList.remove('selected')
+    b.querySelector('.del-btn').classList.remove('confirming')
+    setEditMode(b, false)
+  }
+}
+
+
+function selectTheme(themeName) {
+  if (!themeName) return
+  let themePanel = document.getElementById('theme-panel')
+
+  CGC.setTheme(themeName)
+  themePanel.dataset.selected = themeName
+  themePanel.querySelector(`.theme-block[data-name=${themeName}]`).classList.add('selected')
+}
+
+////////////////
+// Utils End
+////////////////
+
 
 /*
  * Convert `theme.patterns` into html str
@@ -139,7 +193,7 @@ function getThemeBlock(theme) {
 }
 
 //////////////////////////////
-// Editor Functinos
+// Editor Functions
 //////////////////////////////
 function bindNameInput(nameInputElem, theme) {
   nameInputElem.addEventListener('change', event => {
@@ -375,52 +429,13 @@ function setEditMode(themeBlock, val) {
   }
 }
 
-
 function getEditingThemeBlock() {
   return document.querySelector('.theme-block.editing')
-}
-
-
-/*
- *  Theme type will be displayed on the theme block when in editor mode.
- *  @param: themeType { string }
- *    one of the keys of Theme.TYPES
- */
-function setThemeTypeTxt(themeBlock, themeType) {
-  themeBlock.dataset.typeName = themeType
-  let cls = Theme.getClass(themeType)
-
-  switch (cls) {
-    case ChromaTheme:
-      themeBlock.querySelector('.theme-type').textContent = 'Type: Chroma'
-      break
-    case PosterTheme:
-      themeBlock.querySelector('.theme-type').textContent = 'Type: Poster'
-      break
-    default:
-      console.error(`Unknown theme type: '${themeType}'`)
-  }
 }
 //////////////////////////////
 // Editor Functinos End
 //////////////////////////////
 
-
-/*
- * Clear all css states
- *
- * @param: except: {String}
- *   if given, theme blocks with `theme.dataset.name == except` will not be reset
- */
-function resetAllThemeBlocks(except) {
-  let blocks = document.querySelectorAll('#theme-panel .theme-block')
-  for (let b of blocks) {
-    if (b.dataset.name === except) continue
-    b.classList.remove('selected')
-    b.querySelector('.del-btn').classList.remove('confirming')
-    setEditMode(b, false)
-  }
-}
 
 /*
  * initialize popup html
@@ -439,6 +454,33 @@ function initPopup() {
     fragment.appendChild(themeBlock)
   }
   themePanel.appendChild(fragment)
+
+  // Theme panel (Cont.)
+  // When clicking on a theme panel, select it
+  themePanel.addEventListener('click', (event) => {
+    let elem = event.target
+    let inEditorArea = false, inBlockArea = false, isEditing = false, isSelected = false
+
+    while (elem !== themePanel) {
+      if (elem.classList.contains('theme-editor')) {
+        inEditorArea = true
+      }
+      if (elem.classList.contains('theme-block')) {
+        // found the block we want
+        inBlockArea = true
+        isEditing = elem.classList.contains('editing')
+        isSelected = elem.classList.contains('selected')
+        break
+      }
+      elem = elem.parentNode
+    }
+
+    if (inBlockArea && !inEditorArea && !isEditing && !isSelected) {
+      // will not select a theme by clicking on its editor area
+      resetAllThemeBlocks(elem.dataset.name)
+      selectTheme(elem.dataset.name) // every .theme-block should have a data-name field
+    }
+  })
 
   // Icon gallery
   let iconGallery = document.getElementById('icon-gallery')
@@ -464,8 +506,6 @@ function initPopup() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  let themePanel = document.getElementById('theme-panel')
-
   chrome.storage.sync.get('CGC_all', (obj) => {
     if (!obj['CGC_all']) {
       CGC.initStorage()
@@ -476,43 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initPopup()
 
-    function _setTheme(themeName) {
-      if (!themeName) return
-      CGC.setTheme(themeName)
-      themePanel.dataset.selected = themeName
-      themePanel.querySelector(`.theme-block[data-name=${themeName}]`).classList.add('selected')
-    }
-
     // Reload selected theme
     chrome.storage.sync.get('CGC_selected', (obj) => {
-      _setTheme(obj['CGC_selected'])
-    })
-
-    // Add click event of setting themes
-    // TODO: move this into initPopup
-    themePanel.addEventListener('click', (event) => {
-      let elem = event.target
-      let inEditorArea = false, inBlockArea = false, isEditing = false, isSelected = false
-
-      while (elem !== themePanel) {
-        if (elem.classList.contains('theme-editor')) {
-          inEditorArea = true
-        }
-        if (elem.classList.contains('theme-block')) {
-          // found the block we want
-          inBlockArea = true
-          isEditing = elem.classList.contains('editing')
-          isSelected = elem.classList.contains('selected')
-          break
-        }
-        elem = elem.parentNode
-      }
-
-      if (inBlockArea && !inEditorArea && !isEditing && !isSelected) {
-        // will not select a theme by clicking on its editor area
-        resetAllThemeBlocks(elem.dataset.name)
-        _setTheme(elem.dataset.name) // every .theme-block should have a data-name field
-      }
+      selectTheme(obj['CGC_selected'])
     })
   })
 })
