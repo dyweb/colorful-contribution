@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-23 22:01:56
+* @Last Modified time: 2018-10-25 10:06:50
 */
 
 /*
@@ -18,7 +18,11 @@ class Theme {
   constructor(name, type) {
     this.name = name
     this.type = type
-    this.thresholds = Theme.DEFAULT_THRESHOLDS
+    this.thresholds = Theme.DETECTED_THRESHOLDS
+      // use `DETECTED_THRESHOLDS even if `Theme.detectContribLevelThresholds` is yet to be called
+      // this will ensure content script can know it should detect the thresholds
+      // according to the special value of theme.thresholds in sent themes
+      // Theme.DEFAULT_THRESHOLDS is only used when some error happens
   }
 
   /*
@@ -63,10 +67,69 @@ class Theme {
     return Theme.getClass(obj.type).fromObject(obj)
   }
 
+  static detectContribLevelThresholds() {
+    if (Theme._THRESHOLDS_DETECTED) return Theme.DETECTED_THRESHOLDS
+
+    // 'rgb(0, 16, 255)' => '#0010FF'
+    function _rgbToHex(rgbColorStr) {
+      let match = rgbColorStr.match(/rgb\((\w+),?\s*(\w+),?\s*(\w+),?\s*\)/)
+      console.assert(match, "Can not parse color string: " + rgbColorStr)
+      let rgb = match.slice(1, 4).map(n => ('0' + parseInt(n).toString(16)).slice(-2))
+      return '#' + rgb.join('')
+    }
+
+    let colors = document.querySelectorAll('ul.legend > li')
+    colors = Array.from(colors).map(elem => _rgbToHex(elem.style['background-color']))
+
+    let days = document.querySelectorAll('rect.day')
+    let thresholds = []
+    colors.forEach(_ => thresholds.push([undefined, undefined])) // min, max (inclusive)
+
+    days.forEach(elem => {
+      let count = parseInt(elem.dataset['count'])
+      let color = elem.getAttribute('fill')
+      if (color.match(/^#[0-9a-zA-Z]{3}$/)) {
+        // e.g. #123 => #112233
+        color = Array.from(color).map((ch, ind) => ch == '#' ? '#' : ch.repeat(2)).join('')
+      }
+      console.assert(color.match(/^#[0-9a-zA-Z]{6}$/), "Can not parse color string: " + color)
+      console.assert(colors.includes(color), `Can not determine color ${color} from ${colors}`)
+      let colorInd = colors.indexOf(color)
+
+      let [min, max] = thresholds[colorInd]
+      thresholds[colorInd][0] = min ? Math.min(min, count) : count
+      thresholds[colorInd][1] = max ? Math.max(max, count) : count
+    })
+
+    Theme._THRESHOLDS_DETECTED = true
+    Theme.DETECTED_THRESHOLDS = thresholds
+    return thresholds
+  }
+
+   /*
+   * Calculate the mapping between the contribution count and the color level.
+   * However, this is not open according to
+   *   'https://stackoverflow.com/questions/19712159/github-contribution-histograms'
+   * We choose to circumvent this by detecting the thresholds dynamically from html.
+   *
+   * @param: cnt { Integer }
+   * @return { Integer }
+   *    will return a value in [0, 1, 2, 3, 4], 0 denotes the lowest level (should use the plainest color)
+   */
   _contribCntToInd(cnt) {
-    let ind = cnt && this.thresholds.findIndex(th => th >= cnt) // TODO: the real mapping is more complicated
-    if (ind < 0) ind = this.thresholds.length - 1
-    return ind
+    let thresholds = this.thresholds
+
+    if (thresholds == '<to_be_detected>') {
+      console.error("Tried to determine contribution ranges but no thresholds have been detected!")
+      thresholds = Theme.DEFAULT_THRESHOLDS
+    }
+
+    for (let ind in thresholds) {
+      let [min, max] = thresholds[ind]
+      if (min <= cnt && cnt <= max) return ind
+    }
+
+    console.error(`Can not determine the color for contribution count ${cnt} according to thresholds: ${this.thresholds}`)
   }
 
   /*
@@ -97,7 +160,17 @@ class Theme {
   }
 }
 
-Theme.DEFAULT_THRESHOLDS = null
+// thresholds will be detected when `CGC.detectContribLevelThresholds` is triggered
+// There will be two case
+//  case 1:
+//    Theme.DETECTED_THRESHOLDS is the initial value "<to_be_detected>"
+//    when content script is executed, it will see this special value in the sent theme and
+//    call Theme.detectContribLevelThresholds to detect the thresholds,
+//    which will change Theme.DETECTED_THRESHOLDS into the detected value
+//  case 2:
+//     Theme.DETECTED_THRESHOLDS has already been changed. Directly use the value
+Theme.DEFAULT_THRESHOLDS = [[0, 0], [1, 5], [6, 10], [11, Number.POSITIVE_INFINITY]]
+Theme.DETECTED_THRESHOLDS = "<to_be_detected>"
 
 class ChromaTheme extends Theme {
   constructor(name) { super(name, ChromaTheme.TYPE_STR) }

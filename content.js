@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-09-13 14:04:13
+ * @Last Modified time: 2018-10-25 10:04:31
  *
  * This file is intended as content script for github contribution page
  *
@@ -39,6 +39,11 @@ chrome.storage.local.get('CGC', (theme) => {
   theme = theme['CGC']
   if (!theme) return
   theme = Theme.fromObject(theme)
+
+  // detect contrib thresholds if necessary
+  if (theme.thresholds == '<to_be_detected>') {
+    theme.thresholds = Theme.detectContribLevelThresholds()
+  }
 
   let contrib = document.querySelector('.js-yearly-contributions')
 

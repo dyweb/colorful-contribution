@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-23 22:08:44
+* @Last Modified time: 2018-10-25 10:03:16
 */
 
 // CGC means colorful github contributino
@@ -15,15 +15,9 @@
 console.assert(typeof Theme !== 'undefined', "`Theme` not found, include `theme.js` before `CGC.js`")
 console.assert(typeof CGC_util !== 'undefined', "`CGC_util` not found, include `util.js` before `CGC.js`")
 
-Theme.DEFAULT_THRESHOLDS = [0, 3, 5, 8, 10] // 0 => patterns[0], 1,2,3 => patterns[1], etc.
-
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
 
   version: chrome.runtime.getManifest().version,
-
-  // the threshold used by github default contribution coloring, ranged from 0 to 10
-  // non-customizeable for now
-  defaultThresholds: Theme.DEFAULT_THRESHOLDS,
 
   // built-in themes
   defaultThemes: [
@@ -67,7 +61,6 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     } else {
 
       if (!checkTheme()) return
-      if (!theme.thresholds) theme.thresholds = CGC.defaultThresholds
 
       chrome.storage.local.set({
         'CGC': theme.toObject()
