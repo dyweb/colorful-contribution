@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-23 22:16:18
+ * @Last Modified time: 2018-10-30 22:40:57
  */
 
 /*
@@ -250,6 +250,7 @@ function bindFlipBtn(flipBtn, theme) {
   let types = Object.keys(Theme.TYPES)
   let typeFilpMapping = {}
   for (let ind in types) {
+    ind = parseInt(ind)
     typeFilpMapping[types[ind]] = types[ (ind + 1) % types.length ]
   }
 
