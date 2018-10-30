@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-25 10:03:16
+* @Last Modified time: 2018-10-30 08:57:58
 */
 
 // CGC means colorful github contributino
@@ -220,6 +220,31 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     return img
   },
 
+  deletedDefaultImgs: undefined, // we allow user to delete default images, but we just make a marker in case the user would want to recover
+
+  loadDeletedDefaultImgs(cb) {
+    if (CGC.deletedDefaultImgs === undefined) {
+      chrome.storage.local.get('CGC_deleted_defaults', obj => {
+        CGC.deletedDefaultImgs = obj['CGC_deleted_defaults'] || []
+        cb && cb(CGC.deletedDefaultImgs)
+      })
+    } else {
+      cb && cb(CGC.deletedDefaultImgs)
+    }
+  },
+
+  setDeletedDefaultImgs(fileNames) {
+    CGC.deletedDefaultImgs = fileNames
+    chrome.storage.local.set({'CGC_deleted_defaults': CGC.deletedDefaultImgs})
+  },
+
+  addToDeletedDefaultImgs(fileNames) {
+    fileNames = (fileNames instanceof Array) ? fileNames : [ fileNames ]
+    CGC.loadDeletedDefaultImgs(imgs => {
+      CGC.setDeletedDefaultImgs(imgs.concat(fileNames))
+    })
+  },
+
   _getImgs(predDir, userKey, predCb, userCb) {
     userCb = userCb || predCb
     if (predDir.endsWith('/')) predDir = predDir.slice(0, -1)
@@ -227,7 +252,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     // Display all predefined images according to `predDir`
     function loadPredefinedImgs(then) {
       CGC.traverseDir(predDir,
-          file => file.name.match(/png|jpg|jpeg|ico$/),
+          file => {
+            let path = `${predDir}/${file.name}`
+            return file.name.match(/png|jpg|jpeg|ico$/) && !CGC.deletedDefaultImgs.includes(path)
+          },
           (file, is_last) => {
             if (file === null) then()   // empty folder
             else {
@@ -235,7 +263,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
                   img = CGC.pathToImg(path)
               // add dataset for content script
               img.dataset.src = path
-              predCb(file.name, img)
+              predCb(path, img)
               if (is_last) then()
             }
           }
@@ -258,7 +286,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
     // put all user images after predefined ones, so that they do not mix up
     // (but they may mix up inside each group because file reading is async)
-    loadPredefinedImgs(loadUserImgs)
+    CGC.loadDeletedDefaultImgs(_ => loadPredefinedImgs(loadUserImgs))
   },
 
   /*
@@ -313,8 +341,18 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   uploadPosterURL(url, id) {
-    id = id || Data.now()
+    id = id || Date.now()
     CGC._addToDataset('CGC_upload_posters', [id, url])
+  },
+
+  recoverIcon() {
+    CGC.setDeletedDefaultImgs( CGC.deletedDefaultImgs.filter(img => !img.startsWith('icons/')) )
+    window.location.reload()
+  },
+
+  recoverPoster() {
+    CGC.setDeletedDefaultImgs( CGC.deletedDefaultImgs.filter(img => !img.startsWith('posters/')) )
+    window.location.reload()
   },
 
   removePoster(id) {
@@ -324,8 +362,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   _addToDataset(key, data) {
     chrome.storage.local.get({[key]: []}, obj => {
       obj[key].push(data)
-      let newData = {}; newData[key] = obj[key]
-      chrome.storage.local.set(newData)
+      chrome.storage.local.set({[key]: obj[key]})
     })
   },
 
@@ -334,8 +371,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       let ind = obj[key].findIndex(pred)
       if (ind === -1) return
       obj[key].splice(ind, 1)
-      let newData = {}; newData[key] = obj[key]
-      chrome.storage.local.set(newData)
+      chrome.storage.local.set({[key]: obj[key]})
       cb && cb()
     })
   },

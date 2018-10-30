@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-18 17:13:19
+* @Last Modified time: 2018-10-30 09:15:13
 */
 
 /*
@@ -16,20 +16,29 @@ let galleries = {
   icon: {
     input: document.getElementById("icon-form").children[0],
     gallery: document.getElementById("icon-gallery"),
-    addFileBtn: document.getElementById("icon-gallery").querySelector(".js-add-file-btn")
+    addFileBtn: document.getElementById("icon-gallery").querySelector(".js-add-file-btn"),
+    recoverBtn: document.getElementById("icon-gallery").querySelector(".js-recover-btn")
   },
   poster: {
     input: document.getElementById("poster-form").children[0],
     gallery: document.getElementById("poster-gallery"),
     addFileBtn: document.getElementById("poster-gallery").querySelector(".js-add-file-btn"),
+    recoverBtn: document.getElementById("poster-gallery").querySelector(".js-recover-btn")
   },
 }
 
-function insertBeforeLastChild(parent, elem) {
-  if (parent.lastElementChild) {
-    parent.insertBefore(elem, parent.lastElementChild)
-  } else {
+function insertBeforeLastChild(parent, elem, ind=1) {
+  let target = parent.lastElementChild
+  if (!target) {
     parent.appendChild(elem)
+  } else {
+
+    while (target.previousElementSibling && ind > 1) {
+      target = target.previousSibling
+      ind -= 1
+      while (target.nodeType !== Node.ELEMENT_NODE && target.previousSibling) target = target.previousSibling
+    }
+    parent.insertBefore(elem, target)
   }
 }
 
@@ -70,63 +79,52 @@ function debounce(func, idleMs=1000) {
 
 !function(){
   /////////////////////
-  // util funtions 
-  function appendIcon(id, imgElem, deleteable=true){
-      let container = document.createElement('div')
-      container.classList.add('icon')
-      container.appendChild(imgElem)
-      imgElem.classList.add('img')
+  // util funtions
+  function _appendImg(type, id, imgElem, deleteFunc) {
+    let container = document.createElement('div')
+    container.classList.add(type)
+    container.appendChild(imgElem)
+    imgElem.classList.add('img')
 
-      if (deleteable) {
-        let delBtn = document.createElement('div')
-        delBtn.classList.add('del-btn')
-        delBtn.classList.add('cross')
-        delBtn.addEventListener('click', event => {
-          CGC.removeIcon(id)
-          container.parentNode.removeChild(container)
-        })
-        container.appendChild(delBtn)
-      }
+    if (deleteFunc) {
+      let delBtn = document.createElement('div')
+      delBtn.classList.add('del-btn')
+      delBtn.classList.add('cross')
+      delBtn.addEventListener('click', event => {
+        deleteFunc(event)
+        container.parentNode.removeChild(container)
+      })
+      container.appendChild(delBtn)
+    }
 
-      container.setAttribute('data-id', id)
-      insertBeforeLastChild(galleries.icon.gallery, container)
+    container.setAttribute('data-id', id)
+    insertBeforeLastChild(galleries[type].gallery, container, 2) // insert before two buttons
   }
 
-  function appendPoster(id, imgElem, deleteable=true){
-      let container = document.createElement('div')
-      container.classList.add('poster')
-      container.appendChild(imgElem)
-      imgElem.classList.add('img')
+  let appendIcon   = _appendImg.bind(null, 'icon'),
+      appendPoster = _appendImg.bind(null, 'poster')
 
-      if (deleteable) {
-        let delBtn = document.createElement('div')
-        delBtn.classList.add('del-btn')
-        delBtn.classList.add('cross')
-        delBtn.addEventListener('click', event => {
-          CGC.removePoster(id)
-          container.parentNode.removeChild(container)
-        })
-        container.appendChild(delBtn)
-      }
-
-      container.setAttribute('data-id', id)
-      insertBeforeLastChild(galleries.poster.gallery, container)
-  }
   // util functions end
   /////////////////////
 
   /////////////////////
   // event listeners
   for (let key in galleries) {
+    let _cap = {icon: 'Icon', poster: 'Poster'}[key]
 
     !function(){
-      let uploadFunc = CGC['upload' + {icon: 'Icon', poster: 'Poster'}[key]]
-      let appendFunc = {icon: appendIcon, poster: appendPoster}[key]
+      let uploadFunc = CGC['upload' + _cap],
+          recoverFunc = CGC['recover' + _cap],
+          appendFunc = {icon: appendIcon, poster: appendPoster}[key]
 
-      let addFileBtn = galleries[key].addFileBtn
-      let input = galleries[key].input
+      let addFileBtn = galleries[key].addFileBtn,
+          recoverBtn = galleries[key].recoverBtn,
+          input = galleries[key].input
 
       addFileBtn.addEventListener('click', event => input.click())
+      recoverBtn.addEventListener('click', event => {
+        if (confirm("Do you want to recover the deleted default images?")) recoverFunc()
+      })
       input.addEventListener('change', event => {
         if (!input.files[0]) return
         uploadFunc(input.files[0], (id, dataURL) => appendFunc(id, CGC.urlToImg(dataURL)))
@@ -218,14 +216,13 @@ function debounce(func, idleMs=1000) {
   /////////////////////
 
   // Add icons & posters to gallery
-
   CGC.getIconAsImgs(
-    (id, imgElem) => appendIcon(id, imgElem, false), // predefined icons are not deleteable
-    (id, imgElem) => appendIcon(id, imgElem),
+    (id, imgElem) => appendIcon(id, imgElem, _ => CGC.addToDeletedDefaultImgs(id)),
+    (id, imgElem) => appendIcon(id, imgElem, _ => CGC.removeIcon(id)),
   )
 
   CGC.getPosterAsImgs(
-    (id, imgElem) => appendPoster(id, imgElem, false), // predefined icons are not deleteable
-    (id, imgElem) => appendPoster(id, imgElem),
+    (id, imgElem) => appendPoster(id, imgElem, _ => CGC.addToDeletedDefaultImgs(id)),
+    (id, imgElem) => appendPoster(id, imgElem, _ => CGC.removeIcon(id)),
   )
 }()

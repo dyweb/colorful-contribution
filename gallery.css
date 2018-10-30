@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 16:31:02
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-18 11:35:55
+* @Last Modified time: 2018-10-30 09:05:59
 */
 
 body {
@@ -34,6 +34,9 @@ h1 {
   margin: 10px;
   width: 32px;
   height: 32px;
+  font-size: 32px;
+  line-height: 32px;
+  color: #aaa;
 
   display: inline-block;
   vertical-align: middle;
@@ -76,7 +79,8 @@ h1 {
   transform: scale(1.005);
 }
 
-.js-add-file-btn { /* class for js */
+.js-add-file-btn,
+.js-recover-btn {  /* class for js */
   cursor: pointer;
 }
 
@@ -180,15 +184,13 @@ h1 {
   height: 100%;
   line-height: 100%;
 
-  margin: 0 32px;
-
   vertical-align: middle;
   position: relative;
   transition: width 0.3s ease-out;
 }
 
 #poster-gallery .btn-group.editing .url-input-box {
-  width: 70%;
+  width: 75%;
 }
 
 #poster-gallery .btn-group .js-add-file-btn,
