@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-30 22:40:57
+ * @Last Modified time: 2018-10-31 14:57:51
  */
 
 /*
@@ -41,7 +41,7 @@ function setThemeTypeTxt(themeBlock, themeType) {
       themeBlock.querySelector('.theme-type').textContent = 'Type: Poster'
       break
     default:
-      console.error(`Unknown theme type: '${themeType}'`)
+      throw new RangeError(`Unknown theme type: '${themeType}'`)
   }
 }
 
@@ -103,7 +103,7 @@ function getPatternBlockStr(patternStr) {
  * so the passed `theme` should be preserved
  */
 function getThemeBlock(theme) {
-  console.assert(theme instanceof Theme, "invalid theme: " + theme)
+  if (!theme instanceof Theme) throw Error("invalid theme: " + theme)
 
   let [patternBlocksStr, posterBlockStr, typeStr] = function() {
     let pat = theme.patterns || CGC.defaultTheme.patterns;
@@ -157,7 +157,12 @@ function getThemeBlock(theme) {
   if (!posterBlockStr.includes("NONE")) {
     theme.waitForStorageCallback(() => {
       let url = theme.getPosterUrl()
-      themeBlock.querySelector('.theme-poster div').style = `background-image: url(${url})`
+      if (url) {
+        themeBlock.querySelector('.theme-poster div').style = `background-image: url(${url})`
+      } else {
+        // may happen when the selected poster has already been deleted
+        themeBlock.querySelector('.theme-poster').innerHTML = "<span>NONE</span>"
+      }
     })
   }
 
@@ -216,7 +221,9 @@ function bindColorInput(colorInputElem, theme) {
     patternBlock.style['background-image'] = ''
     theme.patterns[idx] = colorStr
     CGC.saveThemes()
-    CGC.sendTheme(theme)
+
+    let themeBlock = findAncestor(elem, 'theme-block')
+    if (themeBlock.classList.contains('selected')) CGC.sendTheme(theme)
   })
 }
 
@@ -268,7 +275,7 @@ function bindFlipBtn(flipBtn, theme) {
 
       // modify the data
       let targetType = typeFilpMapping[block.dataset.typeName]
-      console.assert(targetType, "Unknown type: " + block.dataset.typeName)
+      if (!targetType) throw new RangeError("Unknown type: " + block.dataset.typeName)
       theme.setThemeType(targetType)
       setThemeTypeTxt(block, targetType)
 
@@ -287,13 +294,13 @@ function bindFlipBtn(flipBtn, theme) {
 function bindPatternBlock(patternBlock, theme) {
   // .colorInput should follow the mouse as it enter a pattern block
   patternBlock.addEventListener('mouseenter', event => {
-    let cb = event.target,
-      isEditing = findAncestor(cb, 'theme-block').classList.contains('editing'),
-      editBox = findAncestor(cb, 'theme-patterns').querySelector('.color-edit-box')
+    let pb = event.target,
+      isEditing = findAncestor(pb, 'theme-block').classList.contains('editing'),
+      editBox = findAncestor(pb, 'theme-patterns').querySelector('.color-edit-box')
 
     if (isEditing) {
-      editBox.style.left = (cb.offsetLeft + cb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
-      editBox.dataset.idx = Math.floor(cb.offsetLeft / cb.offsetWidth)
+      editBox.style.left = (pb.offsetLeft + pb.offsetWidth / 2 - editBox.offsetWidth / 2) + 'px'
+      editBox.dataset.idx = Math.round(pb.offsetLeft / pb.offsetWidth)
 
       let patternStr = theme.patterns[editBox.dataset.idx]
       editBox.querySelector('input').value = patternStr.match(COLOR_REG) ? patternStr : '<icon>'
@@ -341,8 +348,9 @@ function bindPosterGallery(gallery) {
       theme = CGC.getTheme(themeBlock.dataset.name)
 
     let posterBlock = themeBlock.querySelector('.theme-poster')
-    console.log(poster.style['background-image'])
+    posterBlock.innerHTML = "<div></div>"
     posterBlock.firstElementChild.style = `background-image: ${poster.style['background-image']}`
+      // can not do change tag and set background together because the "//" in url will get censored
 
     theme.setThemeType('poster')
     theme.setPoster(poster.dataset.src)
@@ -358,6 +366,7 @@ function bindFootPanel(footPanel, themePanel) {
     let theme = CGC.addNewTheme()
     let themeBlock = getThemeBlock(theme)
     themePanel.appendChild(themeBlock)
+    setEditMode(themeBlock, true)
   })
   undoBtn.addEventListener('click', event => {
     if (undoBtn.classList.contains('warning')) {

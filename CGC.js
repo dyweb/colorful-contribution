@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-30 08:57:58
+* @Last Modified time: 2018-10-31 14:17:26
 */
 
 // CGC means colorful github contributino
@@ -31,7 +31,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   ],
 
   // the default theme when creating new ones
-  defaultTheme: new ChromaTheme('Newbie').setPatterns(['#aae', '#acc', '#aea', '#cca', '#eaa']),
+  defaultTheme: new ChromaTheme('Newbie').setPatterns(['#eee', '#eee', '#eee', '#eee', '#eee']),
 
   //////////////////////////////
   // Themes Management Interface
@@ -150,10 +150,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * this new theme will be save to `chrome.storage.sync`
    */
   addNewTheme() {
-    if (CGC.allThemes === null) {
-      console.error("Themes are not initialized! Failed to add a new one.")
-      return
-    }
+    if (CGC.allThemes === null) throw new Error("Can not add new theme in to uninitialized allThemes")
 
     let theme = CGC.defaultTheme.copy()
     CGC.allThemes.push(theme)

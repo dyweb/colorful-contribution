@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-30 09:15:13
+* @Last Modified time: 2018-10-31 15:23:59
 */
 
 /*
@@ -69,11 +69,15 @@ function verifyImageURL(url, onload, onerror, ontimeout, timeout=1000) {
 
 // debounce the call of some function
 // all but the last one of consecutive calls in `idle` ms will be ignored
-function debounce(func, idleMs=1000) {
+function debounce(func, nowaitIf, idleMs=1000) {
   let timer = null
   return function(...args) {
     window.clearTimeout(timer)
-    timer = window.setTimeout(() => func(...args), idleMs)
+    if (nowaitIf && nowaitIf(...args)) {
+      func(...args)
+    } else {
+      timer = window.setTimeout(() => func(...args), idleMs)
+    }
   }
 }
 
@@ -91,6 +95,7 @@ function debounce(func, idleMs=1000) {
       delBtn.classList.add('del-btn')
       delBtn.classList.add('cross')
       delBtn.addEventListener('click', event => {
+        if (!confirm("Do you want to delete this picture?")) return
         deleteFunc(event)
         container.parentNode.removeChild(container)
       })
@@ -98,7 +103,7 @@ function debounce(func, idleMs=1000) {
     }
 
     container.setAttribute('data-id', id)
-    insertBeforeLastChild(galleries[type].gallery, container, 2) // insert before two buttons
+    insertBeforeLastChild(galleries[type].gallery, container, {'icon': 2, 'poster': 1}[type]) // insert before buttons
   }
 
   let appendIcon   = _appendImg.bind(null, 'icon'),
@@ -123,7 +128,7 @@ function debounce(func, idleMs=1000) {
 
       addFileBtn.addEventListener('click', event => input.click())
       recoverBtn.addEventListener('click', event => {
-        if (confirm("Do you want to recover the deleted default images?")) recoverFunc()
+        if (confirm("Do you want to recover the deleted default picture?")) recoverFunc()
       })
       input.addEventListener('change', event => {
         if (!input.files[0]) return
@@ -204,13 +209,19 @@ function debounce(func, idleMs=1000) {
       urlImage.style = `background-image: url(${url});`
     }
 
-    urlInput.addEventListener('input', debounce(event => {
-      clearErrorPrompt()
-      let url = event.target.value
-      if (!url) return
-      let prompt = PosterTheme.checkWebURL(url)
-      prompt ? showErrorPrompt(prompt) : previewInputURL(url)
-    }))
+    urlInput.addEventListener('input', debounce(
+      event => { // no wait if the url is complete
+        let url = event.target.value
+        return url.match(PosterTheme._WEB_URL_REG)
+      },
+      event => {
+        clearErrorPrompt()
+        let url = event.target.value
+        if (!url) return
+        let prompt = PosterTheme.checkWebURL(url)
+        prompt ? showErrorPrompt(prompt) : previewInputURL(url)
+      }),
+    )
   }()
   // event listeners end
   /////////////////////
@@ -223,6 +234,6 @@ function debounce(func, idleMs=1000) {
 
   CGC.getPosterAsImgs(
     (id, imgElem) => appendPoster(id, imgElem, _ => CGC.addToDeletedDefaultImgs(id)),
-    (id, imgElem) => appendPoster(id, imgElem, _ => CGC.removeIcon(id)),
+    (id, imgElem) => appendPoster(id, imgElem, _ => CGC.removePoster(id)),
   )
 }()

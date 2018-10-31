@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-25 10:06:50
+* @Last Modified time: 2018-10-31 15:45:12
 */
 
 /*
@@ -41,29 +41,32 @@ class Theme {
     if (Theme.TYPES.hasOwnProperty(themeType)) {
       return Theme.TYPES[themeType]
     } else {
-      console.error("Unknown theme type: " + themeType)
+      throw new RangeError("Unknown theme type: " + themeType)
     }
   }
 
   getClass() { return Theme.getClass(this.type) }
 
-  copy() { console.error('virtual function called') }
+  copy() { throw new Error('virtual function called') }
 
   /*
    * Used when being injected with content script
    */
-  toObject() { console.error('virtual function called') }
+  toObject() { throw new Error('virtual function called') }
 
   /*
    * Convert an object into instance.
    * This function will delegate to subclasses.
    */
   static fromObject(obj) {
-    let _checkStr = field =>  `Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`
+    function _check(field, pred) {
+      pred = pred || (x => x[field])
+      if (!pred(obj)) throw new Error(`Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`)
+    }
 
-    console.assert(obj.name, _checkStr('name'))
-    console.assert(obj.type, _checkStr('type'))
-    console.assert(obj.thresholds && obj.thresholds.length > 0, _checkStr('thresholds'))
+    _check('name')
+    _check('type')
+    _check('thresholds', x => x.thresholds && obj.thresholds.length > 0)
     return Theme.getClass(obj.type).fromObject(obj)
   }
 
@@ -73,7 +76,7 @@ class Theme {
     // 'rgb(0, 16, 255)' => '#0010FF'
     function _rgbToHex(rgbColorStr) {
       let match = rgbColorStr.match(/rgb\((\w+),?\s*(\w+),?\s*(\w+),?\s*\)/)
-      console.assert(match, "Can not parse color string: " + rgbColorStr)
+      if (!match) throw new Error("Can not parse color string: " + rgbColorStr)
       let rgb = match.slice(1, 4).map(n => ('0' + parseInt(n).toString(16)).slice(-2))
       return '#' + rgb.join('')
     }
@@ -92,10 +95,10 @@ class Theme {
         // e.g. #123 => #112233
         color = Array.from(color).map((ch, ind) => ch == '#' ? '#' : ch.repeat(2)).join('')
       }
-      console.assert(color.match(/^#[0-9a-zA-Z]{6}$/), "Can not parse color string: " + color)
-      console.assert(colors.includes(color), `Can not determine color ${color} from ${colors}`)
-      let colorInd = colors.indexOf(color)
+      if(!color.match(/^#[0-9a-zA-Z]{6}$/)) throw new Error("Can not parse color string: " + color)
+      if(!colors.includes(color)) throw new Error(`Can not determine color ${color} from ${colors}`)
 
+      let colorInd = colors.indexOf(color)
       let [min, max] = thresholds[colorInd]
       thresholds[colorInd][0] = min ? Math.min(min, count) : count
       thresholds[colorInd][1] = max ? Math.max(max, count) : count
@@ -114,7 +117,7 @@ class Theme {
    *
    * @param: cnt { Integer }
    * @return { Integer }
-   *    will return a value in [0, 1, 2, 3, 4], 0 denotes the lowest level (should use the plainest color)
+   *    will return a value in {0, 1, 2, 3, 4}, 0 denotes the lowest level (should use the plainest color)
    */
   _contribCntToInd(cnt) {
     let thresholds = this.thresholds
@@ -130,6 +133,7 @@ class Theme {
     }
 
     console.error(`Can not determine the color for contribution count ${cnt} according to thresholds: ${this.thresholds}`)
+    return 0
   }
 
   /*
@@ -138,7 +142,7 @@ class Theme {
    * @param: contribChart: the whole contributiion chart svg element
    *   For now, it can be get by document.querySelector('.js-yearly-contributions')
    */
-  setHTMLLegends(contribChart) { console.error('virtual function called') }
+  setHTMLLegends(contribChart) { throw new Error('virtual function called') }
 
   /*
    * Modify the day blocks accoding to the theme
@@ -146,7 +150,7 @@ class Theme {
    * @param: contribChart: the whole contributiion chart element
    *   For now, it can be get by document.querySelector('.js-yearly-contributions')
    */
-  setHTMLDayBlocks(contribChart) { console.error('virtual function called') }
+  setHTMLDayBlocks(contribChart) { throw new Error('virtual function called') }
 
   /*
    * Recover the html so that another theme can be inserted
@@ -194,7 +198,7 @@ class ChromaTheme extends Theme {
   }
 
   static fromObject(obj) {
-    console.assert(obj.patterns && obj.patterns.length > 0, "Parsed failed. A chroma theme obj is required to have `patterns`. Given: ", obj)
+    if (!(obj.patterns && obj.patterns.length > 0)) throw new Error(`Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
     return new ChromaTheme(obj.name).setThresholds(obj.thresholds).setPatterns(obj.patterns)
   }
 
@@ -231,8 +235,7 @@ class ChromaTheme extends Theme {
 
     // Check for the number of legends
     if (legends.length != this.patterns.length) {
-      console.error('There are ' + legends.length + ' legends but ' + this.patterns.length + ' theme')
-      return
+      throw new Error('There are ' + legends.length + ' legends but ' + this.patterns.length + ' theme')
     }
 
     for (let ind = 0; ind < legends.length; ++ind) {
@@ -259,7 +262,7 @@ class ChromaTheme extends Theme {
           }
           break
         default:
-          console.error("Can not parse pattern: ", pat)
+          throw new Error("Can not parse pattern: " + pat)
       }
 
 
@@ -307,7 +310,7 @@ class ChromaTheme extends Theme {
           break
 
         default:
-          console.error("Can not parse pattern: ", pat)
+          throw new Error("Can not parse pattern: " + pat)
       }
     }
   }
@@ -340,7 +343,7 @@ class PosterTheme extends Theme {
   }
 
   static fromObject(obj) {
-    console.assert(obj.poster, "Parsed failed. A poster theme obj is required to have `poster`. Given: ", obj)
+    if (!obj.poster) throw new Error(`Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
     return new PosterTheme(obj.name).setThresholds(obj.thresholds).setPoster(obj.poster)
   }
 
@@ -355,6 +358,7 @@ class PosterTheme extends Theme {
    */
   static getPosterType(poster) {
     if (!PosterTheme._POSTER_TYPE_DEFINED) {
+      PosterTheme.POSTER_TYPE_NONE = 'none'
       PosterTheme.POSTER_TYPE_IMG = 'image'
       PosterTheme.POSTER_TYPE_URL = 'url' // may be web url or dataURL
       PosterTheme._POSTER_TYPE_DEFINED = true
@@ -364,6 +368,8 @@ class PosterTheme extends Theme {
       return PosterTheme.POSTER_TYPE_IMG
     } else if (poster.startsWith('url:')) { // this special header should be given by the code from the gallery part
       return PosterTheme.POSTER_TYPE_URL
+    } else {
+      return PosterTheme.POSTER_TYPE_NONE
     }
   }
 
@@ -372,7 +378,7 @@ class PosterTheme extends Theme {
       case PosterTheme.POSTER_TYPE_IMG: return chrome.extension.getURL(this.poster)
       case PosterTheme.POSTER_TYPE_URL: return this._retrieved_poster_url
         // will be null if `waitForStorageCallback` haven't been called
-      default: console.error("Can not parse poster: " + this.poster)
+      default: throw new Error("Can not parse poster: " + this.poster)
     }
   }
 
@@ -385,12 +391,15 @@ class PosterTheme extends Theme {
     chrome.storage.local.get({'CGC_upload_posters': []}, obj => {
       let uploaded = obj['CGC_upload_posters'] // something like [[<id>, <dataurl>], [<id>, <dataurl>], ...]
       let result = uploaded.find(([id, url]) => id == fileId)
-      if (!result) console.warn("Unknown poster: " + this.poster)
+      if (!result) {
+        console.warn("Unknown poster: " + this.poster)
+        this._retrieved_poster_url = null
+      } else {
+        this._retrieved_poster_url = result[1] // will be used by `getPosterUrl`
+      }
 
-      this._retrieved_poster_url = result[1] // will be used by `getPosterUrl`
       cb()
     })
-
     return true
   }
 
@@ -404,7 +413,7 @@ class PosterTheme extends Theme {
     let legends = contribChart.querySelectorAll('.contrib-legend ul.legend > li')
 
     for (let ind = 0; ind < legends.length; ++ind) {
-      let [leg, alpha] = [ legends[ind], PosterTheme._LEGEND_ALPHAS[ind] ]
+      let [leg, alpha] = [ legends[ind], PosterTheme._ALPHAS[ind] ]
       let x = ind * 15
 
       let css = {
@@ -426,6 +435,13 @@ class PosterTheme extends Theme {
       // this function will be called again when that is ready
 
     let svg = contribChart.querySelector('svg.js-calendar-graph-svg')
+
+    // enlarge the blocks to make the poster more visible
+    // TODO: make this customizable
+    Array.from(svg.querySelectorAll('rect.day')).forEach(elem => {
+      elem.setAttribute('width', 12)
+      elem.setAttribute('height', 12)
+    })
 
     // insert our poster
     // in svg, must use namespace-awared createElementNS instead of createElement
@@ -450,13 +466,13 @@ class PosterTheme extends Theme {
     let maskGroup = posterGroup.querySelector('mask g')
     for (let text of maskGroup.querySelectorAll('text')) { maskGroup.removeChild(text) }
     maskGroup.setAttribute('transform', 'translate(0, 0)') // nullify translate compensated by texts
+
     // TODO: a complete clone may be expensive
     //  but here is a dilemma:
     //    we need the day blocks on the upper layer (thus, appear after the mask element in html)
     //    to trigger click/hover events, and in the same time, being transparent
     //    and we also need the day blocks to appear before the mask in html
     //    to use the blocks as mask src
-
     svg.insertBefore(posterGroup, blockGroup) // blockGroup needs to be the latter to be on the upper layer
 
     // set the upper layer to be transparent
@@ -465,8 +481,10 @@ class PosterTheme extends Theme {
 
     let maskDays = maskGroup.querySelectorAll('.calendar-graph rect.day')
     for (let rectElem of maskDays) {
-      let ind = this._contribCntToInd(rectElem.dataset.count)
-      rectElem.setAttribute('fill', PosterTheme._MASK_COLORS[ind])
+      let ind = this._contribCntToInd(rectElem.dataset.count),
+          alpha = PosterTheme._ALPHAS[ind],
+          colorStr = '#' + Math.round(alpha * 255).toString(16).repeat(3)
+      rectElem.setAttribute('fill', colorStr)
     }
 
   }
@@ -474,6 +492,11 @@ class PosterTheme extends Theme {
   static clean(contribChart, themeTypeUnchanged) {
     let posterGroup = contribChart.querySelector(`#${PosterTheme._POSTERID}`)
     if (posterGroup) posterGroup.parentNode.removeChild(posterGroup)
+
+    Array.from(contribChart.querySelectorAll('rect.day')).forEach(elem => {
+      elem.setAttribute('width', 10)
+      elem.setAttribute('height', 10)
+    })
   }
 
   /*
@@ -492,8 +515,7 @@ class PosterTheme extends Theme {
 
 PosterTheme._POSTERID = "_CGC-poster", // use leading underscore to denote privateness
 PosterTheme._MASKID = "_CGC-poster-mask"
-PosterTheme._MASK_COLORS = ['#333', '#666', '#999', '#ccc','#fff'] // white -> visible for html blocks
-PosterTheme._LEGEND_ALPHAS = [ 0.2, 0.4, 0.6, 0.8, 1.0 ] // transparency for legends
+PosterTheme._ALPHAS = [ 0.4, 0.55, 0.7, 0.85, 1.0 ] // transparency constants
 PosterTheme._WEB_SUFFIXES = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
 PosterTheme._WEB_URL_REG = new RegExp('https?:\/\/.*\.(?:' + PosterTheme._WEB_SUFFIXES.join('|') + ')', 'i')
 
