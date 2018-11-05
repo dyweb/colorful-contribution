@@ -2,15 +2,13 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-31 15:23:59
+* @Last Modified time: 2018-10-31 16:11:19
 */
 
 /*
  * Here I goofed off by saving user uploaded icon into chrome storage as dataURL,
  *   rather than a real file in extension directory to avoid all the file creation/deletion code
  */
-
-// TODO: display storage usage
 
 let galleries = {
   icon: {

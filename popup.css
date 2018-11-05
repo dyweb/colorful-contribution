@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-08 15:33:00
+* @Last Modified time: 2018-11-05 13:25:12
 */
 
 body {
@@ -322,15 +322,15 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
  * Galleries
  *****************/
 #galleries {
-  height: 40px;
+  height: 50px;
   width: 100%;
 
-  max-height: 40px; /* max-height for animation */
+  max-height: 50px; /* max-height for animation */
   margin-bottom: 5px;
 
   white-space: nowrap; /* make all the sub galleries in the same line (since they are inline blocks) */
   word-spacing: -0.5em; /* remove the whitespace between inline blocks */
-  transform: translateX(0); /* translateX(0) -> show 1st, translateX(-100%) -> show 2nd, etc. */
+  transform: translateX(0); /* translateX(0) -> show 1st tab, translateX(-100%) -> show 2nd, etc. */
   transition: transform .5s;
 }
 
@@ -343,24 +343,31 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   transition: max-height .2s;
 }
 
-#galleries > .gallery {
+#galleries > .tab {
   display: inline-block;
   background-color: #eaeaea;
 
   height: 100%; /* size decided by #galleries */
   width: 100%;
 
+  overflow-x: hidden;
+
   box-sizing: border-box;
   padding: 0 7px;
-  cursor: pointer;
 }
 
+/*****************
+ * Icon Gallery
+ *****************/
 #icon-gallery {
+  height: 100%;
+  width: 100%;
+
   overflow-x: scroll;
   overflow-y: hidden;
 
   white-space: nowrap;  /* because icons inside will be displayed as inline blocks */
-  line-height: 40px;    /* same as the height as .gallery */
+  line-height: 50px;    /* same as the height as .tab */
   vertical-align: middle;
 }
 
@@ -385,15 +392,21 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 }
 
 #icon-gallery .icon:hover {
-  border: 2px #ddd solid;
+  border: 2px #d0d0d0 solid;
 }
 
+/*****************
+ * Poster Gallery
+ *****************/
 #poster-gallery {
+  height: 100%;
+  width: 100%;
+
   overflow-x: scroll;
   overflow-y: hidden;
 
   white-space: nowrap;  /* because posters inside will be displayed as inline blocks */
-  line-height: 40px;
+  line-height: 50px;
   vertical-align: middle;
 }
 
@@ -403,7 +416,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   display: inline-block;
 
   width: 90%;
-  height: 40px;
+  height: 50px;
     /* same as the height .gallery
     can not use 100% because the inner poster's height
     would also be animated in that case */
@@ -414,19 +427,180 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   background-position: center;
 }
 
-
 /*****************
- * Theme Type Switching
+ * Palette
  *****************/
-.theme-block[data-type-name|=poster] {
-
+.palette {
+  height: 100%;
+  width: 100%;
+  display: flex;
 }
 
-.theme-block.show-flip-down {
+.palette > .palette-hex {
+  height: 100%;
+  width: 70%;
+  flex-grow: 1;
+}
+
+/* hexagon css */
+.hexagon {
+  position: relative;
+  box-sizing: border-box;
+  width: 34.64px; 
+  height: 20.00px;
+  margin-top: 10.00px;
+}
+
+.hexagon::before,
+.hexagon::after {
+  content: "";
+
+  box-sizing: border-box;
+  transform: scaleY(0.5774) rotate(-45deg);
+
+  position: absolute;
+  left: 5.0729px;
+
+  width: 24.99px; /* √(3/2) a */
+  height: 24.99px;
+
+  background-color: inherit;
+  background-image: inherit;
+  border-style: inherit;
+  border-color: inherit;
+  box-shadow: inherit;
+}
+
+.hexagon::before { top: -12.2471px; }
+.hexagon::after  { bottom: -12.2471px; }
+
+.hexagon > span { /*cover up extra shadows*/
+  display: block;
+  position: absolute;
+  top:0px;
+  left: 0;
+  width:100%;
+  height:20px;
+  z-index: 2;
+  background-color: inherit;
+  background-image: inherit;
+}
+/* hexagon css ends */
+
+.palette-hex .hexagon {
+  display: inline-block;
+  border-style: solid;
+  border-color: #ccc;
+  border-width: 0 2px 0 2px;
+  margin: 14px 3px 0;
+  transition: transform .2s  ease-out, border .2s ease-out;
+}
+
+  /* the following 5 lines are the offset for hexagon border */
+  .palette-hex .hexagon > span { margin-top: 2px; height:16px; }
+  .palette-hex .hexagon::before,
+  .palette-hex .hexagon::after { left: 3.0729px; }
+  .palette-hex .hexagon::after  { border-width: 0 0 2.4px 2.4px; }
+  .palette-hex .hexagon::before { border-width: 2.4px 2.4px 0 0; }
+
+.palette-hex .hexagon.selected {
+  border-style: double;
+  border-color: #ccc;
+  border-width: 0 3px 0 3px;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+  /* the following 5 lines are the offset for hexagon border */
+  .palette-hex .hexagon.selected > span { margin-top: 3px; height:14px; }
+  .palette-hex .hexagon.selected::before,
+  .palette-hex .hexagon.selected::after { left: 2.0729px; }
+  .palette-hex .hexagon.selected::after  { border-width: 0 0 3.6px 3.6px; }
+  .palette-hex .hexagon.selected::before { border-width: 3.6px 3.6px 0 0; }
+
+
+.palette-hex .hexagon.small {
+  transform: scale(0.4);
+  margin-left: -7px;
+  margin-right: -7px;
+}
+
+.palette-hex .hexagon.empty {
+  box-shadow: 0 0 5px #888;
+  background-color: transparent;
+}
+
+.palette-hex .hexagon.chained {
+  transform: rotate(45deg);
+}
+.palette-hex .hexagon.small.chained {
+  transform: scale(0.4) rotate(45deg);
+}
+
+.palette > .palette-editor {
+  height: 100%;
+  width: 30%;
+  flex-grow: 1;
+}
+
+.palette-editor .slider {
+  height: 7px;
+  width: 90%;
+  margin: 1px auto;
+
+  border: 1px solid #333;
+  border-radius: 4p x;
+  background-image: linear-gradient("<to_be_set_by_js>");
+
+  position: relative;
+  overflow-x: hidden;
+}
+
+.slider > .window {
+  position: absolute;
+  height: 100%;
+  width: 7px;
+
+  top: 0;
+  left: 0;
+
+  transition: left .1s;
+
+  border: 1px solid white;
+  box-sizing: border-box
+}
+
+.palette-editor .palette-btns .fa {
+  margin: 3px 0;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  padding: 1px 4px;
+  transition: color, .2s, background-color .2s;
+  border-radius: 5px;
+  user-select: none;
+}
+
+.palette-editor .palette-btns .fa:hover {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.palette-editor .palette-btns .fa-chain.activated {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 3px #000;
+}
+
+.palette-btns {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/*****************
+ * Vertical Flipping
+ *****************/
+.show-flip-down {
   animation: flipdown 0.5s ease-in forwards;
 }
 
-.theme-block.show-flip-up {
+.show-flip-up {
   animation: flipup 0.5s ease-out forwards;
 }
 
@@ -439,3 +613,11 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   0% { transform: rotateX(90deg); }
   100% { transform: rotateX(0deg); }
 }
+
+/*****************
+ * Utils
+ *****************/
+.hide-nth-child-1 > .hidable-child:nth-child(1) { display: none; }
+.hide-nth-child-2 > .hidable-child:nth-child(2) { display: none; }
+.hide-nth-child-3 > .hidable-child:nth-child(3) { display: none; }
+.hide-nth-child-4 > .hidable-child:nth-child(4) { display: none; }

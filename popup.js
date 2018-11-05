@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-31 14:57:51
+ * @Last Modified time: 2018-11-05 13:52:57
  */
 
 /*
@@ -17,7 +17,7 @@ const COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/ // e.g. '#11AAdd'
 // Utils
 ////////////////
 function findAncestor(elem, elemClass) {
-  while (elem !== null) {
+  while (elem && elem.classList) {
     if (elem.classList.contains(elemClass)) return elem
     elem = elem.parentNode
   }
@@ -63,6 +63,7 @@ function resetAllThemeBlocks(except) {
 
 
 function selectTheme(themeName) {
+  console.log("CGC: Selecting theme " + themeName)
   if (!themeName) return
   let themePanel = document.getElementById('theme-panel')
 
@@ -71,6 +72,9 @@ function selectTheme(themeName) {
   themePanel.querySelector(`.theme-block[data-name=${themeName}]`).classList.add('selected')
 }
 
+function getEditingThemeBlock() {
+  return document.querySelector('.theme-block.editing')
+}
 ////////////////
 // Utils End
 ////////////////
@@ -310,15 +314,13 @@ function bindPatternBlock(patternBlock, theme) {
 
 function bindIconGallery(gallery) {
   gallery.addEventListener('click', event => {
-    // when clicking on the gallery, jump to option page
-    if (!event.target.classList.contains('icon')) {
-      chrome.runtime.openOptionsPage()
-      return
-    }
+    if (!event.target.classList.contains('icon')) return
 
     let icon = event.target,
       themeBlock = getEditingThemeBlock(),
       theme = CGC.getTheme(themeBlock.dataset.name)
+
+    if (!icon.dataset.src) return
 
     // set the content of patternBlock to icon
     let colorInput = themeBlock.querySelector('.color-edit-box'),
@@ -333,15 +335,31 @@ function bindIconGallery(gallery) {
     CGC.saveThemes()
     if (themeBlock.classList.contains('selected')) CGC.sendTheme(theme)
   })
+
+  gallery.querySelector('.flip-btn').addEventListener('click', event => {
+    console.log('in')
+    // TODO: extract flip animation
+    let tab = findAncestor(gallery, 'tab')
+
+    tab.classList.remove('show-flip-up')
+    tab.classList.add('show-flip-down')
+
+    function _flip() {
+      // display the second half of the animation
+      tab.classList.remove('show-flip-down')
+      tab.classList.add('show-flip-up')
+
+      tab.classList.toggle('hide-nth-child-1')
+      tab.classList.toggle('hide-nth-child-2')
+    }
+
+    window.setTimeout(_flip, 600) // slightly longer than the animation duration (500ms)
+  })
 }
 
 function bindPosterGallery(gallery) {
   gallery.addEventListener('click', event => {
-    // when clicking on the gallery, jump to option page
-    if (!event.target.classList.contains('poster')) {
-      chrome.runtime.openOptionsPage()
-      return
-    }
+    if (!event.target.classList.contains('poster')) return
 
     let poster = event.target,
       themeBlock = getEditingThemeBlock(),  // gallery will be moved to be after of the theme block being edited
@@ -426,6 +444,7 @@ function setEditMode(themeBlock, val) {
     galleries.dataset.typeName = themeBlock.dataset.typeName
     themeBlock.insertAdjacentElement('afterend', galleries)
     window.setTimeout(() => galleries.classList.remove('hidden'), 0) // 0 timeout to smooth the animation
+    resetPalette()
 
   } else {
     // leave edit mode
@@ -439,9 +458,250 @@ function setEditMode(themeBlock, val) {
   }
 }
 
-function getEditingThemeBlock() {
-  return document.querySelector('.theme-block.editing')
+/*
+ * Palette is the color pickler located in the icon gallery
+ */
+function initPalette() {
+  let palette = document.querySelector('.palette'),
+      hexagons = Array.from(palette.querySelectorAll('.hexagon')) // should be 5
+      sliders = Array.from(palette.querySelectorAll('.slider')) // should be 3, corresponding to h,s,l
+
+  // init & bind event for sliders
+  sliders.forEach((slider, ind) => {
+    win = slider.querySelector('.window')
+    win.style.cssText = 'left: 0;'
+
+    slider.addEventListener("click", event => {
+      let percent = (event.clientX - slider.offsetLeft) / slider.clientWidth
+      slider.dataset['val'] = percent.toFixed(4)
+
+      // collect hsl and update the pattern block color
+      let [h, s, l] = sliders.map(s => parseFloat(s.dataset['val'])),
+          selectedIdx = parseInt(palette.dataset['selected']),
+          patternBlocks = getEditingThemeBlock().querySelectorAll('.pattern-block'),
+          newColors = []
+      newColors[selectedIdx] = [h, s, l]
+
+      // if chained, auto-calc the gradients for hexagons/pattern blocks in the chained range
+      if (hexagons[selectedIdx].classList.contains('chained')) {
+        let beg = parseInt(palette.dataset['rangeBeg']),
+            end = parseInt(palette.dataset['rangeEnd']),
+            colors = [],
+            hexToHSL = hex => CGC_util.rgbStr2hsl(hex.style['background-color']),
+            zip = (pred, ...arrs) => Array.from(Array(arrs[0].length).keys()).map(ind => pred(...arrs.map(arr => arr[ind])))
+
+        if (selectedIdx !== beg && selectedIdx !== end) {
+          throw new Error("selected index " + selectedIdx + " is not one of the range ends: " + [beg, end])
+        }
+        colors[beg] = hexToHSL(hexagons[beg])
+        colors[end] = hexToHSL(hexagons[end])
+        colors[selectedIdx] = [h, s, l]
+        let step = zip((x, y) => (y - x) / (end - beg), colors[beg], colors[end])
+        for (let i = beg + 1; i < end; ++i) {
+          colors[i] = zip((x, y) => x + y, colors[i-1], step)
+        }
+
+        newColors = colors
+      }
+
+      for (let i = 0; i < newColors.length; ++i) {
+        if (!newColors[i]) continue
+        let [h, s, l] = newColors[i]
+        patternBlocks[i].style['background-color'] = `hsl(${h * 360}, ${s * 100}%, ${l * 100}%)`
+      }
+
+      adaptPalette() // true means only changes color, leave dataset untouched
+      // move the window
+      // change the hsl color of selected hexagon
+      // auto-calc all the other blocks
+      // change the color of the theme
+    })
+  })
+
+  // init & bind event for hexagons
+  let hexN = hexagons.length
+  hexagons.forEach((hexagon, ind) => {
+    hexagon.addEventListener('click', event => {
+      palette.dataset['selected'] = ind
+
+      // only one hexagon can be selected (the selected hexagon's color is adjustable by the color picker)
+      for (let i = 0; i < hexN; ++i) {
+        hexagons[i].classList[(i == ind) ? 'add' : 'remove']('selected')
+      }
+
+      // only two hexagons can be large (the large hexagons denote the range of auto gradient)
+      let beg = parseInt(palette.dataset['rangeBeg']),
+          end = parseInt(palette.dataset['rangeEnd']),
+          oldRange = [beg, end]
+
+      if (ind !== beg && ind !== end) {// range changed
+        hexagon.classList.remove('small')
+        if (Math.abs(ind - beg) <= Math.abs(ind - end)) {
+          hexagons[beg].classList.add('small')
+          beg = palette.dataset['rangeBeg'] = ind
+        } else {
+          hexagons[end].classList.add('small')
+          end = palette.dataset['rangeEnd'] = ind
+        }
+      }
+
+      // change chained range
+      !function() {
+        if (!palette.querySelector('.chain-btn').classList.contains('activated')) return
+        if (oldRange[0] === beg && oldRange[1] === end) return
+
+        for (let i = 0; i < hexN; ++i) {
+          hexagons[i].classList[(i >= beg && i <= end) ? 'add' : 'remove']('chained')
+        }
+      }()
+
+      adaptPaletteSliders()
+    })
+  })
+
+  // biind event for btns
+  let chainBtn = palette.querySelector('.chain-btn'),
+      flipBtn = palette.querySelector('.flip-btn')
+
+  chainBtn.addEventListener('click', event => {
+    chainBtn.classList.toggle('activated')
+
+    let chained = chainBtn.classList.contains('activated')
+
+    if (!chained) {
+      hexagons.forEach(hex => hex.classList.remove('chained'))
+    } else {
+      let beg = palette.dataset['rangeBeg']
+          end = palette.dataset['rangeEnd']
+
+      if (!(!!beg && !!end)) return
+
+      for (let i = beg; i <= end; ++i) {
+        hexagons[i].classList.add('chained')
+      }
+    }
+  })
+
+  flipBtn.addEventListener('click', event => {
+    // Toggling theme type (chroma/poster) when click on the flip button
+    let tab = findAncestor(flipBtn, 'tab')
+
+    tab.classList.remove('show-flip-up')
+    tab.classList.add('show-flip-down')
+
+    function _flip() {
+      // display the second half of the animation
+      tab.classList.remove('show-flip-down')
+      tab.classList.add('show-flip-up')
+
+      tab.classList.toggle('hide-nth-child-1')
+      tab.classList.toggle('hide-nth-child-2')
+    }
+
+    window.setTimeout(_flip, 600) // slightly longer than the animation duration (500ms)
+  })
 }
+
+function adaptPalette() {
+  adaptPaletteHexagons()
+  adaptPaletteSliders()
+}
+
+function resetPalette() {
+  let palette = document.querySelector('.palette'),
+      hexagons = palette.querySelectorAll('.hexagon')
+
+  // reset dataset
+  delete palette.dataset['selected']
+  delete palette.dataset['rangeBeg']
+  delete palette.dataset['rangeEnd']
+  delete palette.dataset['initialized']
+
+  // reset chained state
+  palette.querySelector('.chain-btn').classList.remove('activated');
+  [].forEach.call(hexagons, hex => hex.classList.remove('chained'))
+
+  // reset
+  adaptPalette()
+}
+
+/*
+ * Read the colors of the editing block and adjust hexagons correspondingly
+ * Will initialize the css for hexagons if the editing theme has changed,
+ *   otherwise, do nothing
+ */
+function adaptPaletteHexagons() {
+  let themeBlock = getEditingThemeBlock()
+
+  if (!themeBlock) {
+    console.warn("adaptPalette is called but no themeBlock is selected!")
+    return
+  }
+
+  let palette = document.querySelector('.palette'),
+      hexagons = palette.querySelectorAll('.hexagon')
+
+  // set the css for hexagons
+  let match = null,
+      pbs = themeBlock.querySelectorAll('.pattern-block')
+      colors = [].map.call(pbs, pb => pb.style['background-color'])
+
+  let firstInd = -1, lastInd = -1
+
+  for (let i = 0; i < colors.length; ++i) {
+    if (!colors[i]) { // the pattern is an icon instead of a color
+      hexagons[i].classList.add('empty')
+    } else {
+      hexagons[i].classList.remove('empty')
+      if (firstInd < 0 && i > 0) { firstInd = i } // first color (except the index 0, which is very probably white/grey and excluded from auto-gradient)
+      if (i > lastInd) { lastInd = i }
+      hexagons[i].style.cssText = `background-color: ${colors[i]}`
+    }
+  }
+
+  // generate params
+  if (!!palette.dataset['initialized']) return
+
+  if (firstInd < 0 || lastInd < 0) throw new Error("TODO: Not enough color blocks")
+
+  for (let i = 0; i < colors.length; ++i) {
+    hexagons[i].classList[(i == firstInd || i == lastInd) ? 'remove' : 'add']('small')
+    hexagons[i].classList[(i == lastInd) ? 'add' : 'remove']('selected')
+  }
+
+  palette.dataset['selected'] = lastInd
+  palette.dataset['rangeBeg'] = firstInd
+  palette.dataset['rangeEnd'] = lastInd
+  palette.dataset['initialized'] = 1
+}
+
+/*
+ * Read the color of selected hexagon and adjust sliders correspondingly
+ */
+function adaptPaletteSliders() {
+  let palette = document.querySelector('.palette'),
+      hexagons = palette.querySelectorAll('.hexagon'),
+      sliders = palette.querySelectorAll('.slider'),
+      color = hexagons[palette.dataset['selected']].style['background-color'],
+      [h, s, l] = CGC_util.rgbStr2hsl(color)
+
+  // set the sliders according to the selected hsl
+  for (let i = 0; i < 3; ++i) {
+    let sl = sliders[i],
+        w = sl.querySelector('.window'),
+        x = [h, s, l][i],
+        gradStr = [
+          CGC_util.range(0, 361, 30).map(x => `hsl(${x}, ${s * 100}%, ${l * 100}%)`),
+          CGC_util.range(0, 101, 10).map(x => `hsl(${h * 360}, ${x}%, ${l * 100}%)`),
+          CGC_util.range(0, 101, 10).map(x => `hsl(${h * 360}, ${s * 100}%, ${x}%)`),
+        ][i].join(', ')
+
+    sl.dataset['val'] = x.toFixed(4)
+    sl.style.cssText = 'background-image: linear-gradient(90deg, ' + gradStr + ');'
+    w.style.left = (sl.offsetWidth * x - w.offsetWidth / 2) + 'px'
+  }
+}
+
 //////////////////////////////
 // Editor Functinos End
 //////////////////////////////
@@ -491,6 +751,9 @@ function initPopup() {
       selectTheme(elem.dataset.name) // every .theme-block should have a data-name field
     }
   })
+
+  // Palette
+  initPalette()
 
   // Icon gallery
   let iconGallery = document.getElementById('icon-gallery')

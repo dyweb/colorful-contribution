@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-31 15:45:12
+* @Last Modified time: 2018-10-31 16:11:42
 */
 
 /*
@@ -437,7 +437,6 @@ class PosterTheme extends Theme {
     let svg = contribChart.querySelector('svg.js-calendar-graph-svg')
 
     // enlarge the blocks to make the poster more visible
-    // TODO: make this customizable
     Array.from(svg.querySelectorAll('rect.day')).forEach(elem => {
       elem.setAttribute('width', 12)
       elem.setAttribute('height', 12)

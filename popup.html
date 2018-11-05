@@ -16,7 +16,7 @@
 
       <!-- Demo block -->
       <!-- 
-      <div class="theme-block editing" id="theme-block-demo" data-name="FooBar">
+      <div class="theme-block editing" id="theme-block-demo" data-name="FooBar" data-type-name="chroma">
         <div class="theme-name underline">
           <input class="invisible-input" type="text" value="FooBar">
         </div>
@@ -38,8 +38,32 @@
       </div>
       -->
     <div id="galleries" class="hidden">
-      <div id="icon-gallery" class="gallery"></div>
-      <div id="poster-gallery" class="gallery"></div>
+      <div class="tab hide-nth-child-2">
+        <div class="palette hidable-child">
+          <div class="palette-hex">
+            <div class="hexagon"><span></span></div>
+            <div class="hexagon small"><span></span></div>
+            <div class="hexagon small"><span></span></div>
+            <div class="hexagon small"><span></span></div>
+            <div class="hexagon"><span></span></div>
+          </div>
+          <div class="palette-editor">
+            <div class="slider"><div class="window"></div></div>
+            <div class="slider"><div class="window"></div></div>
+            <div class="slider"><div class="window"></div></div>
+            <div class="palette-btns">
+              <i class="chain-btn fa fa-chain" title="Enable auto-gradients"></i>
+              <i class="flip-btn fa fa-star-o" title="Flip to icon gallery"></i>
+            </div>
+          </div>
+        </div>
+        <div id="icon-gallery" class="hidable-child">
+          <div class="icon"><i class="flip-btn fas fa-palette"></i></div>
+        </div>
+      </div>
+      <div class="tab">
+        <div id="poster-gallery"></div>
+      </div>
     </div>
     </div>
     <div id="foot-panel">
