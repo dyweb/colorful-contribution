@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-06 16:27:23
+ * @Last Modified time: 2018-11-06 22:22:47
  *
  * This file is intended as content script for github contribution page
  *
@@ -33,24 +33,28 @@
  *   (3) For each `.calendar-graph .day`, reset its color acoording to the object
  */
 
-chrome.storage.local.get('CGC', (theme) => {
-  theme = theme['CGC']
-  if (!theme) return
-  theme = Theme.fromObject(theme)
+if (document.querySelector('.js-yearly-contributions')) {
 
-  // detect contrib thresholds if necessary
-  if (theme.thresholds == '<to_be_detected>') {
-    theme.thresholds = Theme.detectContribLevelThresholds()
-  }
+  chrome.storage.local.get('CGC', (theme) => {
+    theme = theme['CGC']
+    if (!theme) return
+    theme = Theme.fromObject(theme)
 
-  let contrib = document.querySelector('.js-yearly-contributions')
+    // detect contrib thresholds if necessary
+    if (theme.thresholds == '<to_be_detected>') {
+      theme.thresholds = Theme.detectContribLevelThresholds()
+    }
 
-  // clean old theme
-  window._CGC_themeToBeCleaned && Theme.clean(contrib, window._CGC_themeToBeCleaned, window._CGC_themeToBeCleaned === theme.type)
+    let contrib = document.querySelector('.js-yearly-contributions')
 
-  theme.setHTMLLegends(contrib)
+    // clean old theme
+    window._CGC_themeToBeCleaned && Theme.clean(contrib, window._CGC_themeToBeCleaned, window._CGC_themeToBeCleaned === theme.type)
 
-  theme.setHTMLDayBlocks(contrib)
+    theme.setHTMLLegends(contrib)
 
-  window._CGC_themeToBeCleaned = theme.type
-})
+    theme.setHTMLDayBlocks(contrib)
+
+    window._CGC_themeToBeCleaned = theme.type
+  })
+
+}

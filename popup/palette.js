@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:38:32
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 22:18:17
+* @Last Modified time: 2018-11-06 22:36:09
 */
 
 /*
@@ -226,19 +226,34 @@ class Palette {
       }
 
       // update colors
-      for (let i = 0; i < newColors.length; ++i) {
-        if (!newColors[i]) continue
-        let [h, s, l] = newColors[i],
-            css = `hsl(${h * 360}, ${s * 100}%, ${l * 100}%)`
+      newColors = newColors.map((color, ind) => {
+        if (color) {
+          let [h, s, l] = color,
+              css = `hsl(${h * 360}, ${s * 100}%, ${l * 100}%)`
+          this.setHexagonColor(ind, css)
+          return css
+        } else {
+          return null
+        }
+      })
+      
+      manager.setColors(newColors)
 
-        manager.patternBlocks[i].style['background-color'] = css // TODO: only display now, no saving yet
-        this.setHexagonColor(i, css)
-      }
+      // for (let i = 0; i < newColors.length; ++i) {
+      //   if (!newColors[i]) continue
+      //   let [h, s, l] = newColors[i],
+      //       css = `hsl(${h * 360}, ${s * 100}%, ${l * 100}%)`
+      //   // manager.patternBlocks[i].style['background-color'] = css // TODO: only display now, no saving yet
+      //   this.setHexagonColor(i, css)
+      // }
+
     })
   }
 
   _bindHexagon(hexagon, ind) {
     hexagon.addEventListener('click', event => {
+      if (hexagon.classList.contains('is-non-color')) return
+
       this.setSelctedHexagonInd(ind)
 
       // only two hexagons can be large (the large hexagons denote the range of auto gradient)

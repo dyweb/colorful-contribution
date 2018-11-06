@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 16:43:11
+* @Last Modified time: 2018-11-06 22:44:31
 */
 
 // CGC means colorful github contributino
@@ -16,9 +16,6 @@
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
 
   version: chrome.runtime.getManifest().version,
-
-  // contants
-  COLOR_REG: /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/, // e.g. '#11AAdd'
 
   // the default theme when creating new ones
   defaultTheme: new ChromaTheme('Newbie').setPatterns(['#eee', '#eee', '#eee', '#eee', '#eee']),

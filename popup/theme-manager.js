@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 20:35:49
+* @Last Modified time: 2018-11-06 22:53:26
 */
 
 class ThemeManager {
@@ -17,8 +17,11 @@ class ThemeManager {
   static getPatternBlockStr(patternStr) {
     let patternType = 'none'
 
-    if (patternStr.startsWith('#')) patternType = 'color'
-    else if (patternStr.startsWith('icons/') || patternStr.startsWith('data:image/')) patternType = 'icon'
+    if (patternStr.startsWith('icons/') || patternStr.startsWith('data:image/')) patternType = 'icon'
+    else if (patternStr.match(Theme.COLOR_REG)) patternType = 'color'
+    else {
+      throw new Error("CGC> Can not parse pattern string: " + patternStr)
+    }
 
     return {
       color: `<div class="pattern-block" style="background-color: ${patternStr}"></div>`,
@@ -43,7 +46,7 @@ class ThemeManager {
       patStr = `
         ${patStr}
         <div class="color-edit-box underline hidden" data-idx="0">
-          <input class="invisible-input" type="text" disabled value="${pat[0].match(CGC.COLOR_REG) ? pat[0] : '<icon>'}">
+          <input class="invisible-input" type="text" disabled value="${pat[0].match(Theme.COLOR_REG) ? pat[0] : '<icon>'}">
         </div>`
 
       return [patStr, posStr, typeStr]
@@ -207,6 +210,27 @@ class ThemeManager {
      return this.patternBlocks.map(pb => pb.style['background-color'])
   }
 
+  /*
+   * Set the colors for pattern blocks
+   *
+   * setColors([null, 'rgb(1,2,3)', '#111', 'hsl(0, 70%, 80%)', null])
+   *   mean keep the 1st and 5th block unchanged, and set the css of the others
+   */
+  setColors(colors) {
+    colors.forEach((color, ind) => {
+      let pb = this.patternBlocks[ind]
+      if (color) {
+        pb.style['background-image'] = ''
+        pb.style['background-color'] = color
+
+        this.theme.setPattern(ind, pb.style['background-color'])
+      }
+    })
+
+    CGC.saveThemes()
+    if (this.isSelected()) CGC.sendTheme(this.theme)
+  }
+
   setPoster(backgoundImgUrl) {
     this.posterBox.innerHTML = "<div></div>"
     this.posterBox.firstElementChild.style = `background-image: ${backgoundImgUrl}`
@@ -237,7 +261,7 @@ class ThemeManager {
       let elem = event.target,
         colorStr = elem.value
 
-      if (!colorStr.match(CGC.COLOR_REG)) return  // illegal color string
+      if (!colorStr.match(Theme.COLOR_REG)) return  // illegal color string
 
       let idx = this.colorInputBox.dataset.idx
       let patternBlock = this.patternBlocks[idx]
@@ -247,7 +271,7 @@ class ThemeManager {
       this.theme.setPattern(idx, colorStr)
       CGC.saveThemes()
 
-      if (this.themeBlock.classList.contains('selected')) CGC.sendTheme(this.theme)
+      if (this.isSelected()) CGC.sendTheme(this.theme)
     })
   }
 
@@ -338,7 +362,7 @@ class ThemeManager {
         cb.dataset.idx = Math.round(block.offsetLeft / block.offsetWidth)
 
         let patternStr = this.theme.patterns[cb.dataset.idx]
-        this.colorInput.value = patternStr.match(CGC.COLOR_REG) ? patternStr : '<icon>'
+        this.colorInput.value = patternStr.match(Theme.COLOR_REG) ? patternStr : '<icon>'
       }
     })
   }

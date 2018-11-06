@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 16:19:31
+* @Last Modified time: 2018-11-06 22:54:16
 */
 
 /*
@@ -72,7 +72,7 @@ class Theme {
   static fromObject(obj) {
     function _check(field, pred) {
       pred = pred || (x => x[field])
-      if (!pred(obj)) throw new Error(`Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`)
+      if (!pred(obj)) throw new Error(`Theme> Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`)
     }
 
     _check('id')
@@ -88,7 +88,7 @@ class Theme {
     // 'rgb(0, 16, 255)' => '#0010FF'
     function _rgbToHex(rgbColorStr) {
       let match = rgbColorStr.match(/rgb\((\w+),?\s*(\w+),?\s*(\w+),?\s*\)/)
-      if (!match) throw new Error("Can not parse color string: " + rgbColorStr)
+      if (!match) throw new Error("Theme> Can not parse color string: " + rgbColorStr)
       let rgb = match.slice(1, 4).map(n => ('0' + parseInt(n).toString(16)).slice(-2))
       return '#' + rgb.join('')
     }
@@ -107,8 +107,8 @@ class Theme {
         // e.g. #123 => #112233
         color = Array.from(color).map((ch, ind) => ch == '#' ? '#' : ch.repeat(2)).join('')
       }
-      if(!color.match(/^#[0-9a-zA-Z]{6}$/)) throw new Error("Can not parse color string: " + color)
-      if(!colors.includes(color)) throw new Error(`Can not determine color ${color} from ${colors}`)
+      if(!color.match(/^#[0-9a-zA-Z]{6}$/)) throw new Error("Theme> Can not parse color string: " + color)
+      if(!colors.includes(color)) throw new Error(`Theme> Can not determine color ${color} from ${colors}`)
 
       let colorInd = colors.indexOf(color)
       let [min, max] = thresholds[colorInd]
@@ -188,6 +188,8 @@ class Theme {
 Theme.DEFAULT_THRESHOLDS = [[0, 0], [1, 5], [6, 10], [11, Number.POSITIVE_INFINITY]]
 Theme.DETECTED_THRESHOLDS = "<to_be_detected>"
 Theme.nextId = 1
+Theme.COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$|^rgb\(\w+,?\s*\w+,?\s*\w+\s*\)$|^hsl\(\w+,?\s*\w+(\.\w+)?\%,?\s*\w+(\.\w+)?\%\s*\)$/
+  // e.g. '#1ad', '#11AAdd', `rgb(1,2,3)', 'hsl(1, 1%, 2%)'
 
 class ChromaTheme extends Theme {
   constructor(name, id=null) { super(id, name, ChromaTheme.TYPE_STR) }
@@ -212,7 +214,7 @@ class ChromaTheme extends Theme {
   }
 
   static fromObject(obj) {
-    if (!(obj.patterns && obj.patterns.length > 0)) throw new Error(`Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
+    if (!(obj.patterns && obj.patterns.length > 0)) throw new Error(`ChromaTheme> Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
     return new ChromaTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPatterns(obj.patterns)
   }
 
@@ -235,12 +237,12 @@ class ChromaTheme extends Theme {
       ChromaTheme._PATTERN_TYPE_DEFINED = true
     }
 
-    if (pattern.startsWith('#')) {
-      return ChromaTheme.PATTERN_TYPE_COL
-    } else if (pattern.startsWith('icons/')) {
+    if (pattern.startsWith('icons/')) {
       return ChromaTheme.PATTERN_TYPE_ICO
     } else if (pattern.startsWith('data:image/')) {
       return ChromaTheme.PATTERN_TYPE_DAT
+    } else if (pattern.match(Theme.COLOR_REG)) {
+      return ChromaTheme.PATTERN_TYPE_COL
     }
   }
 
@@ -249,7 +251,7 @@ class ChromaTheme extends Theme {
 
     // Check for the number of legends
     if (legends.length != this.patterns.length) {
-      throw new Error('There are ' + legends.length + ' legends but ' + this.patterns.length + ' theme')
+      throw new Error('ChromaTheme> There are ' + legends.length + ' legends but ' + this.patterns.length + ' theme')
     }
 
     for (let ind = 0; ind < legends.length; ++ind) {
@@ -276,7 +278,7 @@ class ChromaTheme extends Theme {
           }
           break
         default:
-          throw new Error("Can not parse pattern: " + pat)
+          throw new Error("ChromaTheme> Can not parse pattern: " + pat)
       }
 
 
@@ -324,7 +326,7 @@ class ChromaTheme extends Theme {
           break
 
         default:
-          throw new Error("Can not parse pattern: " + pat)
+          throw new Error("ChromaTheme> Can not parse pattern: " + pat)
       }
     }
   }
@@ -358,7 +360,7 @@ class PosterTheme extends Theme {
   }
 
   static fromObject(obj) {
-    if (!obj.poster) throw new Error(`Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
+    if (!obj.poster) throw new Error(`PosterTheme> Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
     return new PosterTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPoster(obj.poster)
   }
 
@@ -393,7 +395,7 @@ class PosterTheme extends Theme {
       case PosterTheme.POSTER_TYPE_IMG: return chrome.extension.getURL(this.poster)
       case PosterTheme.POSTER_TYPE_URL: return this._retrieved_poster_url
         // will be null if `waitForStorageCallback` haven't been called
-      default: throw new Error("Can not parse poster: " + this.poster)
+      default: throw new Error("PosterTheme> Can not parse poster: " + this.poster)
     }
   }
 
