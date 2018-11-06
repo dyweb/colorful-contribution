@@ -2,30 +2,25 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-06 14:52:27
+ * @Last Modified time: 2018-11-06 16:42:59
  */
 
 ////////////////
 // Utils
 ////////////////
-/*
- * Clear all css states
- *
- * @param: except: {String}
- *   if given, theme blocks with `theme.dataset.name == except` will not be reset
- */
-function resetAllThemeBlocks(except) {
-  CGC.managers.forEach(man => {
-    if (man instanceof ThemeManager && man.theme.name !== except) man.reset()
+
+function selectTheme(themeId) {
+  if (!themeId) return
+
+  Object.values(CGC.managers).filter(manager => manager instanceof ThemeManager).forEach(manager => {
+    if (manager.theme.id !== themeId) {
+      manager.reset()
+    } else {
+      manager.setSelected()
+      CGC.setTheme(manager.theme)
+      console.log("CGC> Selected theme " + manager.theme.name)
+    }
   })
-}
-
-function selectTheme(themeName) {
-  console.log("CGC: Selecting theme " + themeName)
-  if (!themeName) return
-
-  CGC.setTheme(themeName)
-  CGC.managers.find(man => (man.theme && man.themeName == themeName)).setSelected()
 }
 
 function getEditingThemeBlock() {
@@ -34,13 +29,17 @@ function getEditingThemeBlock() {
 
 function getEditingThemeManager() {
   let themeBlock = getEditingThemeBlock()
-  return CGC.managers[themeBlock.dataset.name]
+  return CGC.managers[Number.parseInt(themeBlock.dataset.themeId)]
 }
 ////////////////
 // Utils End
 ////////////////
 
-function bindFootPanel(footPanel, themePanel) {
+// Foot Panel ( bind foot panel first to ensure the functionality of resetting )
+function initFootPanel() {
+  let themePanel = document.getElementById('theme-panel'),
+      footPanel = document.getElementById('foot-panel')
+
   let addBtn = footPanel.querySelector('.add-btn'),
       undoBtn = footPanel.querySelector('.undo-btn')
   addBtn.addEventListener('click', event => {
@@ -69,15 +68,11 @@ function initPopup() {
   let themePanel = document.getElementById('theme-panel')
   let galleries = document.getElementById('galleries')
 
-  // Foot Panel ( bind foot panel first to ensure the functionality of resetting )
-  let footPanel = document.getElementById('foot-panel')
-  bindFootPanel(footPanel, themePanel)
-
   // Theme panel
   {
     let fragment = document.createDocumentFragment()
     CGC.allThemes.forEach(theme => {
-      let manager = CGC.managers[theme.name] = new ThemeManager(theme)
+      let manager = CGC.managers[theme.id] = new ThemeManager(theme)
       fragment.appendChild(manager.themeBlock)
     })
     themePanel.appendChild(fragment)
@@ -105,8 +100,8 @@ function initPopup() {
 
     if (inBlockArea && !inEditorArea && !isEditing && !isSelected) {
       // will not select a theme by clicking on its editor area
-      resetAllThemeBlocks(elem.dataset.name)
-      selectTheme(elem.dataset.name) // every .theme-block should have a data-name field
+      let id = Number.parseInt(elem.dataset.themeId)  // every .theme-block should have a data-theme-id field
+      selectTheme(id)
     }
   })
 
@@ -157,19 +152,12 @@ function initPopup() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  chrome.storage.sync.get('CGC_all', (obj) => {
-    if (!obj['CGC_all']) {
-      CGC.initStorage()
-      CGC.allThemes = CGC.defaultThemes
-    } else {
-      CGC.allThemes = obj['CGC_all'].map(obj => Theme.fromObject(obj))
-    }
+  initFootPanel() // init foot panel first to ensure the functionality of resetting
 
+  CGC.loadStorage(data => {
+    console.log("CGC> Initializing popup...")
     initPopup()
-
-    // Reload selected theme
-    chrome.storage.sync.get('CGC_selected', (obj) => {
-      selectTheme(obj['CGC_selected'])
-    })
+    console.log("CGC> Popup initialized.")
+    selectTheme(data['CGC_selected'])
   })
 })

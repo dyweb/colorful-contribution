@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-10-25 10:04:31
+ * @Last Modified time: 2018-11-06 16:27:23
  *
  * This file is intended as content script for github contribution page
  *
@@ -32,8 +32,6 @@
  *     the length of this object is required to equal to the length of `.contrib-legend ul.legend > li`
  *   (3) For each `.calendar-graph .day`, reset its color acoording to the object
  */
-
-console.assert(typeof Theme !== 'undefined', "`Theme` not found, please inject `theme.js` together with content script")
 
 chrome.storage.local.get('CGC', (theme) => {
   theme = theme['CGC']

@@ -2,10 +2,8 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:09:55
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 14:53:42
+* @Last Modified time: 2018-11-06 16:11:04
 */
-
-assertInScope(CGC, "`CGC` not found, include `CGC.js` before `popup/*.js`")
 
 class IconGallery {
   constructor(galleryElem) {

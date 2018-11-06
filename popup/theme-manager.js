@@ -2,10 +2,8 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 14:40:27
+* @Last Modified time: 2018-11-06 16:17:40
 */
-
-assertInScope(CGC, "`CGC` not found, include `CGC.js` before `popup/*.js`")
 
 class ThemeManager {
   /*
@@ -52,7 +50,7 @@ class ThemeManager {
     }()
 
     let themeBlockHTML = `
-    <div class="theme-block" data-name="${theme.name}" data-type-name="${theme.type}">
+    <div class="theme-block" data-theme-id="${theme.id}" data-type-name="${theme.type}">
       <div class="theme-type">${typeStr}</div>
       <div class="theme-name underline">
         <input class="invisible-input" type="text" value="${theme.name}" disabled>
@@ -222,7 +220,7 @@ class ThemeManager {
 
   _bindNameInput() {
     this.nameInput.addEventListener('change', event => {
-      this.theme.name = this.themeBlock.dataset.name = event.target.value
+      this.theme.name = event.target.value
       CGC.saveThemes()
     })
   }

@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-05 15:56:51
+* @Last Modified time: 2018-11-06 16:19:31
 */
 
 /*
@@ -14,8 +14,19 @@
  *   is redirected to the `prototype` of the corresponding subclass
  */
 class Theme {
+  static getId() {
+    let ret = Theme.nextId++
+    chrome.storage.sync.set({'next_theme_id': Theme.nextId})
+    return ret
+  }
+
   // private
-  constructor(name, type) {
+  constructor(id, name, type) {
+    if (!Number.isInteger(id)) {
+      if (id !== null) console.warn(`Theme> Tend to use invalid value ${id} as theme id, ignored`)
+      id = Theme.getId()
+    }
+    this.id = id
     this.name = name
     this.type = type
     this.thresholds = Theme.DETECTED_THRESHOLDS
@@ -64,6 +75,7 @@ class Theme {
       if (!pred(obj)) throw new Error(`Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`)
     }
 
+    _check('id')
     _check('name')
     _check('type')
     _check('thresholds', x => x.thresholds && obj.thresholds.length > 0)
@@ -175,9 +187,10 @@ class Theme {
 //     Theme.DETECTED_THRESHOLDS has already been changed. Directly use the value
 Theme.DEFAULT_THRESHOLDS = [[0, 0], [1, 5], [6, 10], [11, Number.POSITIVE_INFINITY]]
 Theme.DETECTED_THRESHOLDS = "<to_be_detected>"
+Theme.nextId = 1
 
 class ChromaTheme extends Theme {
-  constructor(name) { super(name, ChromaTheme.TYPE_STR) }
+  constructor(name, id=null) { super(id, name, ChromaTheme.TYPE_STR) }
 
   setPattern(ind, pattern) {
     if (!this.patterns) this.patterns = []
@@ -186,10 +199,11 @@ class ChromaTheme extends Theme {
   }
   setPatterns(patterns) { this.patterns = patterns; return this }
 
-  copy() { return new ChromaTheme(this.name).setThresholds(this.thresholds).setPatterns(this.patterns) }
+  copy() { return new ChromaTheme(this.name, this.id).setThresholds(this.thresholds).setPatterns(this.patterns) }
 
   toObject() {
     return {
+      id: this.id,
       name: this.name,
       type: this.type,
       thresholds: this.thresholds,
@@ -199,7 +213,7 @@ class ChromaTheme extends Theme {
 
   static fromObject(obj) {
     if (!(obj.patterns && obj.patterns.length > 0)) throw new Error(`Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
-    return new ChromaTheme(obj.name).setThresholds(obj.thresholds).setPatterns(obj.patterns)
+    return new ChromaTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPatterns(obj.patterns)
   }
 
   /*
@@ -327,14 +341,15 @@ class ChromaTheme extends Theme {
 }
 
 class PosterTheme extends Theme {
-  constructor(name) { super(name, PosterTheme.TYPE_STR) }
+  constructor(name, id=null) { super(id, name, PosterTheme.TYPE_STR) }
 
   setPoster(poster) { this.poster = poster; return this }
 
-  copy() { return new PosterTheme(this.name).setThresholds(obj.thresholds).setPoster(this.poster) }
+  copy() { return new PosterTheme(this.name, this.id).setThresholds(obj.thresholds).setPoster(this.poster) }
 
   toObject() {
     return {
+      id: this.id,
       name: this.name,
       type: this.type,
       thresholds: this.thresholds,
@@ -344,7 +359,7 @@ class PosterTheme extends Theme {
 
   static fromObject(obj) {
     if (!obj.poster) throw new Error(`Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
-    return new PosterTheme(obj.name).setThresholds(obj.thresholds).setPoster(obj.poster)
+    return new PosterTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPoster(obj.poster)
   }
 
   /*

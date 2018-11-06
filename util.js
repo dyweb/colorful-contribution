@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-09 22:39:44
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 10:57:58
+* @Last Modified time: 2018-11-06 16:11:14
 */
 
 // TODO: determine whether or not to put this into a namespace
@@ -10,12 +10,6 @@
 /*****************
  * General Utils
  ****************/
-function assertInScope(variable, prompt) {
-  if (typeof(variable) == 'undefined') {
-    throw new Error(prompt)
-  }
-}
-
 function range(beg, end, step = 1) {
   let ret = []
   while (beg < end) {

@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 13:39:32
+* @Last Modified time: 2018-11-06 16:43:11
 */
 
 // CGC means colorful github contributino
@@ -13,15 +13,15 @@
 // gallery.js  -- Icon Management Interface -/
 
 
-assertInScope(Theme, "`Theme` not found, include `theme.js` before `CGC.js`")
-assertInScope(CGC_util, "`CGC_util` not found, include `util.js` before `CGC.js`")
-
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
 
   version: chrome.runtime.getManifest().version,
 
   // contants
   COLOR_REG: /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/, // e.g. '#11AAdd'
+
+  // the default theme when creating new ones
+  defaultTheme: new ChromaTheme('Newbie').setPatterns(['#eee', '#eee', '#eee', '#eee', '#eee']),
 
   // built-in themes
   defaultThemes: [
@@ -33,9 +33,6 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     new ChromaTheme('Mario').setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
     new PosterTheme('Comet').setPoster('posters/qmsht.jpg'),
   ],
-
-  // the default theme when creating new ones
-  defaultTheme: new ChromaTheme('Newbie').setPatterns(['#eee', '#eee', '#eee', '#eee', '#eee']),
 
   //////////////////////////////
   // Themes Management Interface
@@ -60,14 +57,15 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
     if (theme === null) {
       chrome.storage.sync.get('CGC_selected', obj => {
-        let name = obj['CGC_selected']
-        let theme = CGC.allThemes.find(t => t.name === name)
+        let id = obj['CGC_selected']
+        let theme = CGC.allThemes.find(t => t.id === id)
         CGC.sendTheme(theme)
       })
     } else {
 
       if (!checkTheme()) return
 
+      console.log("CGC> Sending theme: " + theme.name)
       chrome.storage.local.set({
         'CGC': theme.toObject()
       }, () => {
@@ -83,7 +81,29 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     chrome.storage.sync.set({
       'version': CGC.version,
       'CGC_all': CGC.defaultThemes,
-      'CGC_selected': ''
+      'CGC_selected': null,
+
+      'next_theme_id': 1
+    })
+  },
+
+  loadStorage(cb) {
+    chrome.storage.sync.get(null, obj => {
+      if (!obj['version']) {
+        // no data, re-init
+        CGC.initStorage()
+        CGC.allThemes = CGC.defaultThemes
+      } else {
+
+        if (obj['version'] !== CGC.version){
+          obj = CGC._updateFromOldVersion(obj['version'], obj)
+        }
+
+        Theme.nextId = obj['next_theme_id']
+        CGC.allThemes = obj['CGC_all'].map(obj => Theme.fromObject(obj))
+      }
+
+      cb(obj)
     })
   },
 
@@ -101,18 +121,19 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * Set the theme currently in use
    * will send to `chrome.storage.local` to trigger actual page modification
    *
-   * @params theme { String | Object }
-   *    The theme object or its name.
+   * @params theme { Integer | String | Object }
+   *    The theme object or its id or its name.
+   *    If name is given, the first theme with that name will be sent
    *    Will do nothing if a string is given but can not be found from `allThemes`
    */
   setTheme(theme) {
-    if (typeof(theme) === 'string') {
-      theme = CGC.allThemes.find(t => t.name === theme)
-    }
+    if (typeof(theme) === 'number') theme = CGC.allThemes.find(t => t.id === theme)
+    if (typeof(theme) === 'string') theme = CGC.allThemes.find(t => t.name === theme)
     if (!theme) return
 
     CGC.sendTheme(theme)
-    chrome.storage.sync.set({ 'CGC_selected': theme.name })
+    chrome.storage.sync.set({ 'CGC_selected': theme.id })
+    return theme
   },
 
   /*
@@ -121,14 +142,14 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * `chrome.storage.sync['CGC_selected']` will be set to empty string
    *   if it happens to be deleted
    * 
-   * @params theme { String | Object }
-   *    The theme object or its name.
+   * @params theme { Integer | String | Object }
+   *    The theme object or its id or its name.
+   *    If name is given, the first theme with that name will be sent
    *    Will do nothing if a string is given but can not be found from `allThemes`
    */
   deleteTheme(theme) {
-    if (typeof(theme) === 'string') {
-      theme = CGC.allThemes.find(t => t.name == theme)
-    }
+    if (typeof(theme) === 'number') theme = CGC.allThemes.find(t => t.id === theme)
+    if (typeof(theme) === 'string') theme = CGC.allThemes.find(t => t.name === theme)
     if (!theme) return
 
     let ind = CGC.allThemes.indexOf(theme)
@@ -138,13 +159,13 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     CGC.saveThemes()
 
     chrome.storage.sync.get('CGC_selected', obj => {
-      if (obj['CGC_selected'] === theme.name ) {
-        chrome.storage.sync.set({'CGC_selected': ''})
+      if (obj['CGC_selected'] === theme.id ) {
+        chrome.storage.sync.set({'CGC_selected': null})
       }
     })
 
     chrome.storage.local.get('CGC', obj => {
-      if (obj['CGC'].name === theme.name ) {
+      if (obj['CGC'].id === theme.id ) {
         chrome.storage.local.set({'CGC': ''})
       }
     })
@@ -164,8 +185,8 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     return theme
   },
 
-  getTheme(themeName) {
-    return CGC.allThemes.find(th => th.name === themeName)
+  getTheme(id) {
+    return CGC.allThemes.find(th => th.id === id)
   },
 
   ///////////////////////////////////
@@ -381,4 +402,30 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   ///////////////////////////////////
   // Icon & Poster Management Interface Ends
   ///////////////////////////////////
+
+  //////////////////////////////
+  // Updating
+  //////////////////////////////
+  _updateFromOldVersion(oldVersion, oldData) {
+    if (oldVersion.startsWith('0.2')) {
+      console.warn(`CGC> Updating data from old version ${oldVersion}`)
+      // no 'next_theme_id' in version in or before 0.2
+      oldData['next_theme_id'] = Theme.nextId
+
+      // themes do not have id in or before 0.2
+      oldData['CGC_all'].forEach(theme => theme.id = Theme.getId())
+
+      // CGC_selected is name instead of id in or before 0.2
+      {
+        let selected = oldData['CGC_all'].find(theme => theme.name === oldData['CGC_selected'])
+        oldData['CGC_selected'] = selected ? selected.id : null
+      }
+
+    } else {
+      throw new Error(`CGC> unknown version: ${oldVersion}`)
+    }
+
+    chrome.storage.local.clear() // local are used to save temp data for html rendering, clear them anyway
+    return oldData
+  }
 }
