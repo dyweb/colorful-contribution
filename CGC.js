@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-31 14:17:26
+* @Last Modified time: 2018-11-06 13:39:32
 */
 
 // CGC means colorful github contributino
@@ -12,12 +12,16 @@
 // popup.js -- Themes Management Interface -----> CGC.js  -- `sendTheme()` -->  content.js
 // gallery.js  -- Icon Management Interface -/
 
-console.assert(typeof Theme !== 'undefined', "`Theme` not found, include `theme.js` before `CGC.js`")
-console.assert(typeof CGC_util !== 'undefined', "`CGC_util` not found, include `util.js` before `CGC.js`")
+
+assertInScope(Theme, "`Theme` not found, include `theme.js` before `CGC.js`")
+assertInScope(CGC_util, "`CGC_util` not found, include `util.js` before `CGC.js`")
 
 window.CGC = {  // ok to add a variable to `window` since this `window` is private to this extension
 
   version: chrome.runtime.getManifest().version,
+
+  // contants
+  COLOR_REG: /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/, // e.g. '#11AAdd'
 
   // built-in themes
   defaultThemes: [
@@ -37,6 +41,8 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   // Themes Management Interface
   //////////////////////////////
   allThemes: null, // globally accessible variable, should be initialized from storage instantly after bootup
+
+  managers: {}, // created every once the popup is loaded
 
   /*
    * Send a theme object to `chrome.storage.local` and carry out content script `content.js`

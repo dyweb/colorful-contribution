@@ -2,11 +2,20 @@
 <html>
   <head>
     <title>Colorful Github Contribution</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="popup.css">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/solid.css" integrity="sha384-rdyFrfAIC05c5ph7BKz3l5NG5yEottvO/DQ0dCrwD8gzeQDjYBHNr1ucUpQuljos" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/fontawesome.css" integrity="sha384-u5J7JghGz0qUrmEsWzBQkfvc8nK3fUT7DCaQzNQ+q4oEXhGSx+P2OqjWsfIRB8QT" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="util.css">
     <script src="util.js"></script>
+
     <script src="theme.js"></script>
     <script src="CGC.js"></script>
+
+    <link rel="stylesheet" href="popup.css">
+    <script src="popup/theme-manager.js"></script>
+    <script src="popup/galleries.js"></script>
+    <script src="popup/palette.js"></script>
     <script src="popup.js"></script>
   </head>
 
@@ -32,14 +41,14 @@
         </div>
         <div class="theme-poster"></div>
         <div class="theme-editor">
-          <i class="edit-btn fa fa-pencil"></i>
-          <i class="del-btn fa fa-trash"></i>
+          <i class="js-edit-btn fa fa-btn fa-pencil-alt"></i>
+          <i class="js-del-btn fa fa-btn fa-trash"></i>
         </div>
       </div>
       -->
     <div id="galleries" class="hidden">
       <div class="tab hide-nth-child-2">
-        <div class="palette hidable-child">
+        <div id="palette" class="hidable-child">
           <div class="palette-hex">
             <div class="hexagon"><span></span></div>
             <div class="hexagon small"><span></span></div>
@@ -52,13 +61,13 @@
             <div class="slider"><div class="window"></div></div>
             <div class="slider"><div class="window"></div></div>
             <div class="palette-btns">
-              <i class="chain-btn fa fa-chain" title="Enable auto-gradients"></i>
-              <i class="flip-btn fa fa-star-o" title="Flip to icon gallery"></i>
+              <i class="js-chain-btn fa fa-btn fa-link fa-flip-horizontal" title="Enable auto-gradients"></i>
+              <i class="js-flip-btn  fa fa-btn fa-star" title="Flip to icon gallery"></i>
             </div>
           </div>
         </div>
         <div id="icon-gallery" class="hidable-child">
-          <div class="icon"><i class="flip-btn fas fa-palette"></i></div>
+          <i class="js-flip-btn icon fas fa-btn fa-inline-fix fa-palette rainbow-txt-shadow"></i>
         </div>
       </div>
       <div class="tab">

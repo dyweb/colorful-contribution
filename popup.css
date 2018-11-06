@@ -2,25 +2,13 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-05 13:25:12
+* @Last Modified time: 2018-11-06 14:54:54
 */
 
 body {
   background-color: #ddd;
   margin: 0 0 -10px; /* -10px for foot panel */
   width: 215px;
-}
-
-input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
-  background-color: transparent;
-  border: 0;
-  outline: none;
-  box-shadow: none;
-  cursor:default;
-  padding: 0;
-
-  width: 100%;
-  text-align: center;
 }
 
 /*****************
@@ -69,6 +57,10 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   left: 3px;
   font-size: 8px;
   visibility: hidden;
+}
+
+.theme-type:before {
+  content: attr(data-type-name)
 }
 
 .theme-block.editing .theme-type {
@@ -177,23 +169,16 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   text-align: center;
 }
 
-.theme-editor > i {
+.theme-editor .fa-btn {
   margin: 3px 0;
-  color: rgba(0, 0, 0, 0.4);
-  cursor: pointer;
   padding: 1px 3px;
-  transition: color, .2s, background-color .2s;
-  border-radius: 5px;
-}
-.theme-editor > i:hover {
-  color: rgba(0, 0, 0, 0.9);
 }
 
-.theme-editor > .del-btn.confirming {
+.theme-editor .js-del-btn.fa-trash.confirming {
   color: rgba(255, 255, 255, 0.9);
   background-color: #eaa;
 }
-.theme-editor > .del-btn.confirming::before {
+.theme-editor .js-del-btn.fa-trash.confirming::before {
   content: "\f1f8?";
 }
 
@@ -234,13 +219,13 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 }
 
 /* flip btn is only visible in editor mode */
-.theme-block .flip-btn {
+.theme-block .js-flip-btn {
   max-height: 0;
   transition: max-height .2s;
   overflow-y: hidden;
 }
 
-.theme-block.editing .flip-btn {
+.theme-block.editing .js-flip-btn {
   max-height: none;
 }
 
@@ -285,7 +270,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   background-color: #ccc;
 }
 
-#foot-panel > .btn > i.fa {
+#foot-panel > .btn > .fa {
   font-size: 25px;
   vertical-align: middle;
 }
@@ -299,7 +284,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 }
 
 
-#foot-panel > .add-btn > i.fa-plus {
+#foot-panel > .add-btn > .fa-plus {
   font-size: 27px;  /* 2px larger than the box due to the asymmetry of the the character '\f067' */
 }
 
@@ -430,13 +415,13 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
 /*****************
  * Palette
  *****************/
-.palette {
+#palette {
   height: 100%;
   width: 100%;
   display: flex;
 }
 
-.palette > .palette-hex {
+#palette > .palette-hex {
   height: 100%;
   width: 70%;
   flex-grow: 1;
@@ -449,6 +434,7 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   width: 34.64px; 
   height: 20.00px;
   margin-top: 10.00px;
+  user-select: none;
 }
 
 .hexagon::before,
@@ -518,25 +504,25 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   .palette-hex .hexagon.selected::before { border-width: 3.6px 3.6px 0 0; }
 
 
-.palette-hex .hexagon.small {
+.palette-hex .hexagon.is-not-chain-endpoint {
   transform: scale(0.4);
   margin-left: -7px;
   margin-right: -7px;
 }
 
-.palette-hex .hexagon.empty {
+.palette-hex .hexagon.is-non-color {
   box-shadow: 0 0 5px #888;
   background-color: transparent;
 }
 
-.palette-hex .hexagon.chained {
+.palette-hex .hexagon.is-chained {
   transform: rotate(45deg);
 }
-.palette-hex .hexagon.small.chained {
+.palette-hex .hexagon.is-not-chain-endpoint.is-chained {
   transform: scale(0.4) rotate(45deg);
 }
 
-.palette > .palette-editor {
+.palette-editor {
   height: 100%;
   width: 30%;
   flex-grow: 1;
@@ -569,55 +555,17 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   box-sizing: border-box
 }
 
-.palette-editor .palette-btns .fa {
-  margin: 3px 0;
-  color: rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-  padding: 1px 4px;
-  transition: color, .2s, background-color .2s;
-  border-radius: 5px;
-  user-select: none;
-}
-
-.palette-editor .palette-btns .fa:hover {
-  color: rgba(0, 0, 0, 0.9);
-}
-
-.palette-editor .palette-btns .fa-chain.activated {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 0 3px #000;
-}
-
 .palette-btns {
   display: flex;
   justify-content: flex-end;
 }
 
-/*****************
- * Vertical Flipping
- *****************/
-.show-flip-down {
-  animation: flipdown 0.5s ease-in forwards;
+.palette-btns .fa-btn {
+  margin: 3px 0;
+  padding: 1px 4px;
 }
 
-.show-flip-up {
-  animation: flipup 0.5s ease-out forwards;
+.palette-btns .fa-btn.activated {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 3px #000, 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000;
 }
-
-@keyframes flipdown {
-  0% { transform: rotateX(0deg); }
-  100% { transform: rotateX(90deg); }
-}
-
-@keyframes flipup {
-  0% { transform: rotateX(90deg); }
-  100% { transform: rotateX(0deg); }
-}
-
-/*****************
- * Utils
- *****************/
-.hide-nth-child-1 > .hidable-child:nth-child(1) { display: none; }
-.hide-nth-child-2 > .hidable-child:nth-child(2) { display: none; }
-.hide-nth-child-3 > .hidable-child:nth-child(3) { display: none; }
-.hide-nth-child-4 > .hidable-child:nth-child(4) { display: none; }

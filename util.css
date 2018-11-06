@@ -1,0 +1,74 @@
+/*
+* @Author: gigaflw
+* @Date:   2018-11-05 22:38:12
+* @Last Modified by:   gigaflw
+* @Last Modified time: 2018-11-06 14:28:38
+*/
+
+/*****************
+ * General
+ ****************/
+input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
+  background-color: transparent;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  cursor:default;
+  padding: 0;
+
+  width: 100%;
+  text-align: center;
+}
+
+.rainbow-txt-shadow {
+  text-shadow:
+    1.732px 1px 1px hsla(0, 50%, 75%, 0.5),
+    -1.732px 1px 1px hsla(120, 50%, 75%, 0.5),
+    0px -2px 1px hsla(240, 50%, 75%, 0.5);
+}
+
+.hide-nth-child-1 > .hidable-child:nth-child(1) { display: none !important; }
+.hide-nth-child-2 > .hidable-child:nth-child(2) { display: none !important; }
+.hide-nth-child-3 > .hidable-child:nth-child(3) { display: none !important; }
+.hide-nth-child-4 > .hidable-child:nth-child(4) { display: none !important; }
+
+/*****************
+ * Font awesome extension
+ ****************/
+.fa-btn {
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  user-select: none;
+  transition: color, .2s, background-color .2s;
+  border-radius: 5px;
+}
+
+.fa-btn:hover {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.fa-inline-fix { /* used when aligned with a row of inline-blocks */
+  vertical-align: top;
+  font-size: 16px;
+}
+
+/*****************
+ * Flipping
+ ****************/
+.is-flipping-down {
+  animation: flipdown 0.5s ease-in forwards;
+}
+
+.is-flipping-up {
+  animation: flipup 0.5s ease-out forwards;
+}
+
+@keyframes flipdown {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(90deg); }
+}
+
+@keyframes flipup {
+  0% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
