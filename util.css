@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 22:38:12
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 14:28:38
+* @Last Modified time: 2018-11-06 22:00:15
 */
 
 /*****************
@@ -39,17 +39,12 @@ input.invisible-input{  /* TODO: Invisible input box, only tested on Mac */
   color: rgba(0, 0, 0, 0.4);
   cursor: pointer;
   user-select: none;
-  transition: color, .2s, background-color .2s;
+  transition: color, .2s, background-color .2s, text-shadow .5s;
   border-radius: 5px;
 }
 
 .fa-btn:hover {
   color: rgba(0, 0, 0, 0.9);
-}
-
-.fa-inline-fix { /* used when aligned with a row of inline-blocks */
-  vertical-align: top;
-  font-size: 16px;
 }
 
 /*****************

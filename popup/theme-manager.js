@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 16:17:40
+* @Last Modified time: 2018-11-06 20:35:49
 */
 
 class ThemeManager {
@@ -63,7 +63,10 @@ class ThemeManager {
       </div>
       <div class="theme-editor">
         <i class="js-edit-btn fa fa-btn fa-pencil-alt" title="Enter editor mode"></i>
-        <i class="js-del-btn  fa fa-btn fa-trash"  title="Delete this theme"></i>
+        <div class="js-del-btn-group">
+          <i class="js-del-cancel-btn fa fa-btn fa-times"  title="Do not delete"></i>
+          <i class="js-del-btn far fa-btn fa-trash-alt" title="Delete this theme"></i>
+        </div>
         <i class="js-flip-btn fa fa-btn fa-retweet" title="Switch between theme types"></i>
       </div>
     </div>`
@@ -104,7 +107,9 @@ class ThemeManager {
 
     // identify components
     this.editBtn = tb.querySelector('.js-edit-btn')
+    this.delBtnGroup = tb.querySelector('.js-del-btn-group')
     this.delBtn = tb.querySelector('.js-del-btn')
+    this.delCancelBtn = tb.querySelector('.js-del-cancel-btn')
     this.flipBtn = tb.querySelector('.js-flip-btn')
     this.nameInput = tb.querySelector('.theme-name input')
     this.colorInput = tb.querySelector('.color-edit-box input')
@@ -124,7 +129,7 @@ class ThemeManager {
 
   reset() {
     this.themeBlock.classList.remove('selected')
-    this.delBtn.classList.remove('confirming')
+    this.delBtnGroup.classList.remove('confirming')
     this.setEditMode(false)
   }
 
@@ -160,8 +165,9 @@ class ThemeManager {
 
       this.themeBlock.classList.add('editing')
 
-      this.editBtn.classList.remove('fa-pencil-alt')
-      this.editBtn.classList.add('fa-check')
+      this.editBtn.classList.add('activated')
+      // this.editBtn.classList.remove('fa-pencil-alt')
+      // this.editBtn.classList.add('fa-check')
 
       this.colorInput.disabled = this.nameInput.disabled = false  // editable
       this.nameInput.focus()
@@ -172,8 +178,9 @@ class ThemeManager {
 
       this.themeBlock.classList.remove('editing')
 
-      this.editBtn.classList.add('fa-pencil-alt')
-      this.editBtn.classList.remove('fa-check')
+      this.editBtn.classList.remove('activated')
+      // this.editBtn.classList.add('fa-pencil-alt')
+      // this.editBtn.classList.remove('fa-check')
 
       this.colorInput.disabled = this.nameInput.disabled = true // non-editable
 
@@ -246,15 +253,19 @@ class ThemeManager {
 
   _bindDelBtn() {
     this.delBtn.addEventListener('click', event => {
-      if (!this.delBtn.classList.contains('confirming')) {
+      if (!this.delBtnGroup.classList.contains('confirming')) {
         // first click, change style to ask for confirm
-        this.delBtn.classList.add('confirming')
+        this.delBtnGroup.classList.add('confirming')
       } else {
         // confirmed, delete it
         CGC.deleteTheme(this.theme)
         this.themeBlock.classList.add('deleted')    // display disappearance effect
         window.setTimeout(() => this.themeBlock.remove(), 500) // add a time delay to diplay the full deletion animation
       }
+    })
+
+    this.delCancelBtn.addEventListener('click', event => {
+      this.delBtnGroup.classList.remove('confirming')
     })
   }
 

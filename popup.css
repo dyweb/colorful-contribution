@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 14:54:54
+* @Last Modified time: 2018-11-06 22:18:13
 */
 
 body {
@@ -174,19 +174,47 @@ body {
   padding: 1px 3px;
 }
 
-.theme-editor .js-del-btn.fa-trash.confirming {
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #eaa;
+.theme-editor .js-del-btn-group {
+  display: inline-block;
+  position: relative;
 }
-.theme-editor .js-del-btn.fa-trash.confirming::before {
-  content: "\f1f8?";
+
+.theme-editor .js-del-btn-group .js-del-btn {
+  position: relative;
+  left: 0;
+  transition: left .2s;
+}
+
+.theme-editor .js-del-btn-group .js-del-cancel-btn {
+  position: absolute;
+  right: 0.5em;
+  opacity: 0;
+  transition: right .2s, opacity .2s;
+}
+
+.theme-editor .js-del-btn-group.confirming .js-del-btn {
+  left: -0.65em;
+  animation: 0.5s 0.2s forwards lightenRed;
+}
+
+.theme-editor .js-del-btn-group.confirming .js-del-cancel-btn {
+  opacity: 1;
+  right: -0.25em;
+  animation: 0.5s 0.2s forwards lightenGreen;
+}
+
+@keyframes lightenRed {
+  100% { color: #fff; text-shadow: 1px 0 #b00, -1px 0 #b00, 0 1px #b00, 0 -1px #b00, 0 0 3px #f00; }
+}
+@keyframes lightenGreen {
+  100% { color: #fff; text-shadow: 1px 0 #0b0, -1px 0 #0b0, 0 1px #0b0, 0 -1px #0b0, 0 0 2px #0f0; }
 }
 
 .theme-block.editing {
   height: 70px;
 }
 
-.underline::before {
+.underline:before {
   content: '';
   position: absolute;
   left: 0;
@@ -197,7 +225,7 @@ body {
   transition: width .3s ease-out;
 }
 
-.theme-block.editing .underline::before {
+.theme-block.editing .underline:before {
   border-bottom: 2px solid rgba(0, 0, 0, 0.3);
   width: 100%;
 }
@@ -227,6 +255,11 @@ body {
 
 .theme-block.editing .js-flip-btn {
   max-height: none;
+}
+
+.theme-block.editing .js-edit-btn {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000, 0 0 3px #000;
 }
 
 /*****************
@@ -294,8 +327,8 @@ body {
   border-color: #c33;
 }
 
-#foot-panel > .undo-btn.warning::after {
-  content: 'Restore All?';
+#foot-panel > .undo-btn.warning:after {
+  content: 'Reset All?';
   display: block;
   position: absolute;
   left: 100%;
@@ -353,11 +386,11 @@ body {
 
   white-space: nowrap;  /* because icons inside will be displayed as inline blocks */
   line-height: 50px;    /* same as the height as .tab */
-  vertical-align: middle;
 }
 
 #icon-gallery .icon {
   display: inline-block;
+  vertical-align: middle;
 
   width: 16px;
   height: 16px;
@@ -378,6 +411,10 @@ body {
 
 #icon-gallery .icon:hover {
   border: 2px #d0d0d0 solid;
+}
+
+#icon-gallery .icon.fa-btn {
+  font-size: 16px;
 }
 
 /*****************
@@ -419,6 +456,7 @@ body {
   height: 100%;
   width: 100%;
   display: flex;
+  user-select: none;
 }
 
 #palette > .palette-hex {
@@ -434,11 +472,10 @@ body {
   width: 34.64px; 
   height: 20.00px;
   margin-top: 10.00px;
-  user-select: none;
 }
 
-.hexagon::before,
-.hexagon::after {
+.hexagon:before,
+.hexagon:after {
   content: "";
 
   box-sizing: border-box;
@@ -451,14 +488,12 @@ body {
   height: 24.99px;
 
   background-color: inherit;
-  background-image: inherit;
-  border-style: inherit;
-  border-color: inherit;
+  transition: inherit;
   box-shadow: inherit;
 }
 
-.hexagon::before { top: -12.2471px; }
-.hexagon::after  { bottom: -12.2471px; }
+.hexagon:before { top: -12.2471px; }
+.hexagon:after  { bottom: -12.2471px; }
 
 .hexagon > span { /*cover up extra shadows*/
   display: block;
@@ -474,35 +509,19 @@ body {
 /* hexagon css ends */
 
 .palette-hex .hexagon {
+  transform: scale(0.7);
   display: inline-block;
-  border-style: solid;
-  border-color: #ccc;
-  border-width: 0 2px 0 2px;
-  margin: 14px 3px 0;
-  transition: transform .2s  ease-out, border .2s ease-out;
+  margin: 16px 1px 0;
+  transition: transform .2s, box-shadow .1s;
 }
 
-  /* the following 5 lines are the offset for hexagon border */
-  .palette-hex .hexagon > span { margin-top: 2px; height:16px; }
-  .palette-hex .hexagon::before,
-  .palette-hex .hexagon::after { left: 3.0729px; }
-  .palette-hex .hexagon::after  { border-width: 0 0 2.4px 2.4px; }
-  .palette-hex .hexagon::before { border-width: 2.4px 2.4px 0 0; }
+.palette-hex .hexagon { box-shadow: 1px 0 #555, -1px 0 #555, 0 1px #555, 0 -1px #555; }
+.palette-hex .hexagon:before { box-shadow: 1.2px 0.7px #555, -0.7px -1.2px #555, 1.2px -1.2px #555; }
+.palette-hex .hexagon:after  { box-shadow: -1.2px -0.7px #555, 0.7px 1.2px #555, -1.2px 1.2px #555; }
 
-.palette-hex .hexagon.selected {
-  border-style: double;
-  border-color: #ccc;
-  border-width: 0 3px 0 3px;
-  box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
-}
-
-  /* the following 5 lines are the offset for hexagon border */
-  .palette-hex .hexagon.selected > span { margin-top: 3px; height:14px; }
-  .palette-hex .hexagon.selected::before,
-  .palette-hex .hexagon.selected::after { left: 2.0729px; }
-  .palette-hex .hexagon.selected::after  { border-width: 0 0 3.6px 3.6px; }
-  .palette-hex .hexagon.selected::before { border-width: 3.6px 3.6px 0 0; }
-
+.palette-hex .hexagon.selected { box-shadow: 3px 0 #555, -3px 0 #555; }
+.palette-hex .hexagon.selected:before { box-shadow: 3.6px 0.7px #555, -0.7px -3.6px #555, 3.6px -3.6px #555; }
+.palette-hex .hexagon.selected:after  { box-shadow: 0.7px 3.6px #555, -3.6px -0.7px #555, -3.6px 3.6px #555; }
 
 .palette-hex .hexagon.is-not-chain-endpoint {
   transform: scale(0.4);
@@ -516,7 +535,7 @@ body {
 }
 
 .palette-hex .hexagon.is-chained {
-  transform: rotate(45deg);
+  transform: scale(0.7) rotate(45deg);
 }
 .palette-hex .hexagon.is-not-chain-endpoint.is-chained {
   transform: scale(0.4) rotate(45deg);
@@ -526,19 +545,24 @@ body {
   height: 100%;
   width: 30%;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .palette-editor .slider {
-  height: 7px;
+  height: 8px;
   width: 90%;
   margin: 1px auto;
 
   border: 1px solid #333;
-  border-radius: 4p x;
+  border-radius: 4px;
   background-image: linear-gradient("<to_be_set_by_js>");
 
   position: relative;
   overflow-x: hidden;
+
+  transition: border .2s, box-shadow .2s;
 }
 
 .slider > .window {
@@ -549,7 +573,7 @@ body {
   top: 0;
   left: 0;
 
-  transition: left .1s;
+  transition: left .1s, border .2s, box-shadow .2s;
 
   border: 1px solid white;
   box-sizing: border-box
@@ -557,15 +581,20 @@ body {
 
 .palette-btns {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  justify-content: space-evenly;
 }
 
 .palette-btns .fa-btn {
-  margin: 3px 0;
   padding: 1px 4px;
+}
+
+.palette-btns .fa-link { /* this icon is slightly wider */
+  position: relative;
+  left: -1px;
 }
 
 .palette-btns .fa-btn.activated {
   color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 0 3px #000, 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000;
+  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000, 0 0 3px #000;
 }
