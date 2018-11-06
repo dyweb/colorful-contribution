@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 22:53:26
+* @Last Modified time: 2018-11-06 23:13:15
 */
 
 class ThemeManager {
@@ -123,7 +123,8 @@ class ThemeManager {
   }
 
   setEventCb(eventName, cb) {
-    let allowedEvents = ['flipThemeType', 'enterEditMode', 'leaveEditMode']
+    // TODO: make this stronger
+    let allowedEvents = ['colorInput', 'flipThemeType', 'enterEditMode', 'leaveEditMode']
     if (!allowedEvents.includes(eventName)) {
       throw new Error('Unknown manager event name: ' + eventName + '. Allowed: ' + allowedEvents)
     }
@@ -175,7 +176,7 @@ class ThemeManager {
       this.colorInput.disabled = this.nameInput.disabled = false  // editable
       this.nameInput.focus()
 
-      this.enterEditModeCb(this)
+      this.enterEditModeCb && this.enterEditModeCb(this)
 
     } else { // leave edit mode
 
@@ -187,8 +188,12 @@ class ThemeManager {
 
       this.colorInput.disabled = this.nameInput.disabled = true // non-editable
 
-      this.leaveEditModeCb(this)
+      this.leaveEditModeCb && this.leaveEditModeCb(this)
     }
+  }
+
+  isEditing() {
+    return this.themeBlock.classList.contains('editing')
   }
 
   getEditingPatternBlockIdx() {
@@ -272,6 +277,8 @@ class ThemeManager {
       CGC.saveThemes()
 
       if (this.isSelected()) CGC.sendTheme(this.theme)
+
+      this.colorInputCb && this.colorInputCb(idx, colorStr)
     })
   }
 
@@ -347,17 +354,16 @@ class ThemeManager {
       let selected = tb.classList.contains('selected')
       if (selected) CGC.sendTheme(theme)
 
-      this.flipThemeTypeCb(targetType)
+      this.flipThemeTypeCb && this.flipThemeTypeCb(targetType)
     })
   }
 
   _bindPatternBlock(block) {
     // .colorInput should follow the mouse as it enter a pattern block
     block.addEventListener('mouseenter', event => {
-      let isEditing = this.themeBlock.classList.contains('editing'),
-          cb = this.colorInputBox
+      let cb = this.colorInputBox
 
-      if (isEditing) {
+      if (this.isEditing()) {
         cb.style.left = (block.offsetLeft + block.offsetWidth / 2 - cb.offsetWidth / 2) + 'px'
         cb.dataset.idx = Math.round(block.offsetLeft / block.offsetWidth)
 

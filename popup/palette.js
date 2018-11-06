@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:38:32
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 22:36:09
+* @Last Modified time: 2018-11-06 23:04:01
 */
 
 /*
@@ -48,6 +48,7 @@ class Palette {
           color = colors[i]
       if (!color) { // the pattern is an icon instead of a color
         hex.classList.add('is-non-color')
+        hex.style['background-color'] = ''
       } else {
         hex.classList.remove('is-non-color')
           // first color (except the index 0,
@@ -238,14 +239,6 @@ class Palette {
       })
       
       manager.setColors(newColors)
-
-      // for (let i = 0; i < newColors.length; ++i) {
-      //   if (!newColors[i]) continue
-      //   let [h, s, l] = newColors[i],
-      //       css = `hsl(${h * 360}, ${s * 100}%, ${l * 100}%)`
-      //   // manager.patternBlocks[i].style['background-color'] = css // TODO: only display now, no saving yet
-      //   this.setHexagonColor(i, css)
-      // }
 
     })
   }

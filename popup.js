@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-06 16:42:59
+ * @Last Modified time: 2018-11-06 23:13:49
  */
 
 ////////////////
@@ -134,6 +134,9 @@ function initPopup() {
     })
     manager.setEventCb('leaveEditMode', _ => {
       galleries.classList.add('hidden')
+    })
+    manager.setEventCb('colorInput', (ind, colorStr) => {
+      if (manager.isEditing()) palette.setHexagonColor(ind, colorStr)
     })
   })
 
