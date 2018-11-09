@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 22:54:16
+* @Last Modified time: 2018-11-09 13:35:41
 */
 
 /*
@@ -36,6 +36,12 @@ class Theme {
       // Theme.DEFAULT_THRESHOLDS is only used when some error happens
   }
 
+  static createFrom(theme) {
+    let th = theme.copy()
+    th.id = Theme.getId()
+    return th
+  }
+
   /*
    * @parameter: type { String }
    *   one of value stored in Theme.TYPES
@@ -44,6 +50,7 @@ class Theme {
   setThemeType(type) {
     this.type = type.toLowerCase()
     this.__proto__ = Theme.getClass(this.type).prototype
+    this.setDefault()
   }
 
   setThresholds(thresholds) { this.thresholds = thresholds; return this }
@@ -70,17 +77,29 @@ class Theme {
    * This function will delegate to subclasses.
    */
   static fromObject(obj) {
-    function _check(field, pred) {
-      pred = pred || (x => x[field])
-      if (!pred(obj)) throw new Error(`Theme> Parsed failed. A theme obj is required to have \`${field}\` field. Given: ${Object.entries(obj)}`)
-    }
-
-    _check('id')
-    _check('name')
-    _check('type')
-    _check('thresholds', x => x.thresholds && obj.thresholds.length > 0)
-    return Theme.getClass(obj.type).fromObject(obj)
+    let theme = Theme.getClass(obj.type).fromObject(obj)
+    theme.validate()
+    return theme
   }
+
+  validateField(field, pred=null) {
+    let pred_ = pred ? (val => (val && pred(val))) : (val => val)
+    if (!pred_(this[field])) throw new Error(`Theme> A theme obj is required to have \`${field}\` field. Given: ${Object.entries(this.toObject())}`)
+  }
+
+  validate() {
+    this.validateField('id')
+    this.validateField('name')
+    this.validateField('type')
+    this.validateField('thresholds', thre => thre.length > 0)
+  }
+
+  /*
+   * Theme instances are designed to be able to switch between subclasses
+   * So we need a functoin to set all the default value for the subclass-specific properties
+   * Notice that the old values are not forced to be discarded
+   */
+  setDefault() { }
 
   static detectContribLevelThresholds() {
     if (Theme._THRESHOLDS_DETECTED) return Theme.DETECTED_THRESHOLDS
@@ -187,7 +206,7 @@ class Theme {
 //     Theme.DETECTED_THRESHOLDS has already been changed. Directly use the value
 Theme.DEFAULT_THRESHOLDS = [[0, 0], [1, 5], [6, 10], [11, Number.POSITIVE_INFINITY]]
 Theme.DETECTED_THRESHOLDS = "<to_be_detected>"
-Theme.nextId = 1
+Theme.nextId = 0
 Theme.COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$|^rgb\(\w+,?\s*\w+,?\s*\w+\s*\)$|^hsl\(\w+,?\s*\w+(\.\w+)?\%,?\s*\w+(\.\w+)?\%\s*\)$/
   // e.g. '#1ad', '#11AAdd', `rgb(1,2,3)', 'hsl(1, 1%, 2%)'
 
@@ -200,6 +219,8 @@ class ChromaTheme extends Theme {
     return this
   }
   setPatterns(patterns) { this.patterns = patterns; return this }
+
+  setDefault() { this.setPatterns(ChromaTheme.DEFAULT_PATTERNS) }
 
   copy() { return new ChromaTheme(this.name, this.id).setThresholds(this.thresholds).setPatterns(this.patterns) }
 
@@ -214,8 +235,14 @@ class ChromaTheme extends Theme {
   }
 
   static fromObject(obj) {
-    if (!(obj.patterns && obj.patterns.length > 0)) throw new Error(`ChromaTheme> Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
-    return new ChromaTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPatterns(obj.patterns)
+    let theme = new ChromaTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPatterns(obj.patterns)
+    theme.validate()
+    return theme
+  }
+
+  validate() {
+    super.validate()
+    this.validateField('patterns', pat => pat.length > 0)
   }
 
   /*
@@ -360,8 +387,14 @@ class PosterTheme extends Theme {
   }
 
   static fromObject(obj) {
-    if (!obj.poster) throw new Error(`PosterTheme> Parsed failed. A chroma theme obj is required to have 'patterns'. Given: ${Object.entries(obj)}`)
-    return new PosterTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPoster(obj.poster)
+    let theme = new PosterTheme(obj.name, obj.id).setThresholds(obj.thresholds).setPoster(obj.poster)
+    theme.validate()
+    return theme
+  }
+
+  validate() {
+    super.validate()
+    this.validateField('poster')
   }
 
   /*
@@ -529,11 +562,14 @@ class PosterTheme extends Theme {
   }
 }
 
+ChromaTheme.DEFAULT_PATTERNS = [...Array(5)].map(_ => '#eee')
+
 PosterTheme._POSTERID = "_CGC-poster", // use leading underscore to denote privateness
 PosterTheme._MASKID = "_CGC-poster-mask"
 PosterTheme._ALPHAS = [ 0.4, 0.55, 0.7, 0.85, 1.0 ] // transparency constants
 PosterTheme._WEB_SUFFIXES = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
 PosterTheme._WEB_URL_REG = new RegExp('https?:\/\/.*\.(?:' + PosterTheme._WEB_SUFFIXES.join('|') + ')', 'i')
+PosterTheme.NOTFOUND_IMG = "notfound.png"
 
 ChromaTheme.TYPE_STR = 'chroma'
 PosterTheme.TYPE_STR = 'poster'

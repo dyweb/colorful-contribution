@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-09 22:39:44
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 16:11:14
+* @Last Modified time: 2018-11-09 10:32:57
 */
 
 // TODO: determine whether or not to put this into a namespace
@@ -11,21 +11,19 @@
  * General Utils
  ****************/
 function range(beg, end, step = 1) {
-  let ret = []
-  while (beg < end) {
-    ret.push(beg)
-    beg += step
-  }
-  return ret
+  return Array.from(
+    function* () { for(; beg < end; beg += step) yield beg }()
+  )
 }
 
 function zip(pred, ...arrs){
-  return Array.from(Array(arrs[0].length).keys()).map(ind => pred(...arrs.map(arr => arr[ind])))
+  return [...Array(arrs[0].length)].map((val, ind) => pred(...arrs.map(arr => arr[ind])))
 } 
 
-function findAncestor(elem, elemClass) {
+function findAncestor(elem, elemClass, guardPred=null) {
   while (elem && elem.classList) {
     if (elem.classList.contains(elemClass)) return elem
+    if (guardPred && guardPred(elem)) break
     elem = elem.parentNode
   }
   return null
@@ -78,6 +76,8 @@ function rgbStr2hsl(rgbStr) {
 // the delay is set to be slightly longer than the animation duration (500ms)
 function addFlip(btnElem, flipElem, cb, delay=600) {
   btnElem.addEventListener('click', event => {
+    event.stopPropagation()
+
     flipElem.classList.remove('is-flipping-up')
     flipElem.classList.add('is-flipping-down')
 

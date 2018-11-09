@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 23:13:15
+* @Last Modified time: 2018-11-09 16:29:26
 */
 
 class ThemeManager {
@@ -32,8 +32,11 @@ class ThemeManager {
 
   static getThemeBlock(theme) {
     let [patternBlocksStr, posterBlockStr, typeStr] = function() {
-      let pat = theme.patterns || CGC.defaultTheme.patterns;
-      let posStr = theme.poster ? `<div style="background-image: url(${theme.poster})"></div>` : '<span>NONE</span>' // other css propoerties will be handled by popup.css
+      let pat = theme.patterns || ChromaTheme.DEFAULT_PATTERNS
+      let posStr = theme.poster ?
+        `<div style="background-image: url(${theme.poster}), url(${PosterTheme.NOTFOUND_IMG})" title="${theme.poster}"></div>` :
+        '<span>NONE</span>'
+        // other css propoerties will be handled by popup.css
 
       let typeStr;
       if (theme instanceof ChromaTheme) {
@@ -54,7 +57,7 @@ class ThemeManager {
 
     let themeBlockHTML = `
     <div class="theme-block" data-theme-id="${theme.id}" data-type-name="${theme.type}">
-      <div class="theme-type">${typeStr}</div>
+      <div class="theme-type" data-type-str="${typeStr}"></div>
       <div class="theme-name underline">
         <input class="invisible-input" type="text" value="${theme.name}" disabled>
       </div>
@@ -100,7 +103,7 @@ class ThemeManager {
       theme.waitForStorageCallback(() => {
         let url = theme.getPosterUrl()
         if (url) {
-          tb.querySelector('.theme-poster div').style = `background-image: url(${url})`
+          tb.querySelector('.theme-poster div').style = `background-image: url(${url}), url(${PosterTheme.NOTFOUND_IMG})`
         } else {
           // may happen when the selected poster has already been deleted
           tb.querySelector('.theme-poster').innerHTML = "<span>NONE</span>"
@@ -119,16 +122,33 @@ class ThemeManager {
     this.colorInputBox = tb.querySelector('.color-edit-box')
     this.patternBlocks = Array.from(tb.querySelectorAll('.pattern-block'))
     this.patternBox = tb.querySelector('.theme-patterns')
-    this.posterBox = tb.querySelector('.theme-posters')
+    this.posterBox = tb.querySelector('.theme-poster')
+
+    // init cbs
+    this.initEventCbs()
+  }
+
+  // TODO: make the event cb system stronger
+  // It is necessary because some events requires to communicate with some html elem outside the theme block
+  //  e.g. galleries, palette, etc.
+  // for now, for each need, I hardcode the event name/type/elem here,
+  //  and add one more line to _bindXXXX to call the cb
+  // I need a way to add arbitrary events to arbitary type ('click', 'input', etc.) to arbitary elem (editBtn, delBtn, etc.)
+  initEventCbs() {
+    this._cbs = {}
+    let allowedEvents = ['colorInput', 'flipThemeType', 'enterEditMode', 'leaveEditMode', 'clickPatternBlock']
+    for (let key of allowedEvents) this._cbs[key] = () => {}
   }
 
   setEventCb(eventName, cb) {
-    // TODO: make this stronger
-    let allowedEvents = ['colorInput', 'flipThemeType', 'enterEditMode', 'leaveEditMode']
-    if (!allowedEvents.includes(eventName)) {
-      throw new Error('Unknown manager event name: ' + eventName + '. Allowed: ' + allowedEvents)
+    if (!this._cbs[eventName]) {
+      throw new Error('Unknown manager event name: ' + eventName + '. Allowed: ' + Object.keys(this._cbs))
     }
-    this[eventName + 'Cb'] = cb
+    this._cbs[eventName] = cb
+  }
+
+  callEventCb(eventName, ...args) {
+    this._cbs[eventName] && this._cbs[eventName].call(this, ...args)
   }
 
   reset() {
@@ -161,6 +181,8 @@ class ThemeManager {
   setEditMode(val) {
     val = !!val
 
+    if (this.isEditing() === val) return
+
     if (val) { // entering edit mode
       // only 1 block can enter edit mode at once
       for (let manager of Object.values(CGC.managers)) {
@@ -176,7 +198,7 @@ class ThemeManager {
       this.colorInput.disabled = this.nameInput.disabled = false  // editable
       this.nameInput.focus()
 
-      this.enterEditModeCb && this.enterEditModeCb(this)
+      this.callEventCb('enterEditMode')
 
     } else { // leave edit mode
 
@@ -188,13 +210,17 @@ class ThemeManager {
 
       this.colorInput.disabled = this.nameInput.disabled = true // non-editable
 
-      this.leaveEditModeCb && this.leaveEditModeCb(this)
+      this.callEventCb('leaveEditMode')
     }
   }
 
   isEditing() {
     return this.themeBlock.classList.contains('editing')
   }
+
+  isChroma() { return this.theme instanceof ChromaTheme }
+
+  isPoster() { return this.theme instanceof PosterTheme }
 
   getEditingPatternBlockIdx() {
     return this.colorInputBox.dataset.idx
@@ -236,10 +262,13 @@ class ThemeManager {
     if (this.isSelected()) CGC.sendTheme(this.theme)
   }
 
-  setPoster(backgoundImgUrl) {
+  setPoster(backgoundImgUrl, attrs={}) {
+    // can not do tag changing and background setting together because the "//" in url will get censored
     this.posterBox.innerHTML = "<div></div>"
-    this.posterBox.firstElementChild.style = `background-image: ${backgoundImgUrl}`
-        // can not do tag changing and background setting together because the "//" in url will get censored
+    let elem = this.posterBox.firstElementChild
+
+    elem.style = `background-image: ${backgoundImgUrl}`
+    for (let key in attrs) elem.setAttribute(key, attrs[key])
   }
 
   /***********
@@ -251,7 +280,8 @@ class ThemeManager {
     this._bindDelBtn()      // Delete theme
     this._bindEditBtn()     // Toggle edit mode for this theme
     this._bindFlipBtn()     // When a theme block is flipped, it switches between poster theme mode and chroma theme mode
-    this.patternBlocks.forEach(block => this._bindPatternBlock(block))
+    this.patternBlocks.forEach((block, ind) => this._bindPatternBlock(block, ind))
+    return this
   }
 
   _bindNameInput() {
@@ -278,17 +308,20 @@ class ThemeManager {
 
       if (this.isSelected()) CGC.sendTheme(this.theme)
 
-      this.colorInputCb && this.colorInputCb(idx, colorStr)
+      this.callEventCb('colorInput', idx, colorStr)
     })
   }
 
   _bindDelBtn() {
     this.delBtn.addEventListener('click', event => {
+      event.stopPropagation()
+
       if (!this.delBtnGroup.classList.contains('confirming')) {
         // first click, change style to ask for confirm
         this.delBtnGroup.classList.add('confirming')
       } else {
         // confirmed, delete it
+        this.setEditMode(false)
         CGC.deleteTheme(this.theme)
         this.themeBlock.classList.add('deleted')    // display disappearance effect
         window.setTimeout(() => this.themeBlock.remove(), 500) // add a time delay to diplay the full deletion animation
@@ -296,12 +329,14 @@ class ThemeManager {
     })
 
     this.delCancelBtn.addEventListener('click', event => {
+      event.stopPropagation()
       this.delBtnGroup.classList.remove('confirming')
     })
   }
 
   _bindEditBtn() {
     this.editBtn.addEventListener('click', event => {
+      event.stopPropagation()
       // Toggling editing mode when click on the edit button
       let editing = this.themeBlock.classList.contains('editing')
       this.setEditMode(!editing)
@@ -320,10 +355,10 @@ class ThemeManager {
 
       switch (cls) {
         case ChromaTheme:
-          txt.dataset['typeStr'] = 'Type: Chroma'
+          txt.dataset.typeStr = 'Type: Chroma'
           break
         case PosterTheme:
-          txt.dataset['typeStr'] = 'Type: Poster'
+          txt.dataset.typeStr = 'Type: Poster'
           break
         default:
           throw new RangeError(`Unknown theme type: '${themeType}'`)
@@ -352,24 +387,40 @@ class ThemeManager {
 
       // change the theme on the page if the block is selected
       let selected = tb.classList.contains('selected')
-      if (selected) CGC.sendTheme(theme)
+      if (selected) CGC.sendTheme(this.theme)
 
-      this.flipThemeTypeCb && this.flipThemeTypeCb(targetType)
+      this.callEventCb('flipThemeType', targetType)
     })
   }
 
-  _bindPatternBlock(block) {
+  _bindPatternBlock(block, blockInd) {
     // .colorInput should follow the mouse as it enter a pattern block
     block.addEventListener('mouseenter', event => {
-      let cb = this.colorInputBox
-
       if (this.isEditing()) {
-        cb.style.left = (block.offsetLeft + block.offsetWidth / 2 - cb.offsetWidth / 2) + 'px'
-        cb.dataset.idx = Math.round(block.offsetLeft / block.offsetWidth)
+        let cb = this.colorInputBox
+        cb.dataset.idx = blockInd
 
         let patternStr = this.theme.patterns[cb.dataset.idx]
         this.colorInput.value = patternStr.match(Theme.COLOR_REG) ? patternStr : '<icon>'
+
+        // calc colorInput position by pattern block positions
+        // |  p1  |  p2  |  p3  |  p4  |  p5
+        // x0       xcb   xcenter
+        let pN = this.patternBlocks.length,
+            pW = block.offsetWidth,
+            x0 = this.patternBlocks[0].offsetLeft,
+            xcenter = x0 + pN * pW / 2,
+            xcb = block.offsetLeft + pW / 2
+
+        // shrink when blockInd leaves the center of the blocks, so that the colorInput do not move away too much, 
+        let shrinkRatio = Math.abs(blockInd / (pN-1) - 0.5) * 1.4
+        xcb = xcb * shrinkRatio + xcenter * (1 - shrinkRatio)
+        cb.style.left = (xcb - cb.offsetWidth / 2) + 'px'
       }
+    })
+
+    block.addEventListener('click', event => {
+      this.callEventCb('clickPatternBlock', this.colorInputBox.dataset.idx, block)
     })
   }
 }

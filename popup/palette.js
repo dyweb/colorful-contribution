@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:38:32
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 23:04:01
+* @Last Modified time: 2018-11-08 23:17:19
 */
 
 /*
@@ -156,9 +156,22 @@ class Palette {
     }
   }
 
-  setChained() {
+  /*
+   * If val given:
+   *   true: set the hexagons and chainBtn to be in chaind state
+   *   false: set the hexagons and chainBtn to be in non-chaind state
+   * If not given:
+   *   detect the classList of chainBtn to determine how to set the hexagons
+   */
+  setChained(val=null) {
+    if (val === null) {
+      val = this.isChained()
+    } else {
+      this.chainBtn.classList[val ? 'add' : 'remove']('activated')
+    }
+
     let [beg, end] = this.getChainedRange()
-    let _op = this.isChained() ? i => ((beg <= i && i <= end) ? 'add' : 'remove') : i => 'remove'
+    let _op = val ? i => ((beg <= i && i <= end) ? 'add' : 'remove') : i => 'remove'
     for (let i = 0; i < this.hexagons.length; ++i) {
       this.hexagons[i].classList[_op(i)]('is-chained')
     }
@@ -273,7 +286,6 @@ class Palette {
       this.chainBtn.classList.toggle('activated')
       this.setChained()
     })
-
     // flipBtn is bound outside, because that involves non-local html elements
   }
 }

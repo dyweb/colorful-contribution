@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 22:44:31
+* @Last Modified time: 2018-11-09 15:34:06
 */
 
 // CGC means colorful github contributino
@@ -18,17 +18,17 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   version: chrome.runtime.getManifest().version,
 
   // the default theme when creating new ones
-  defaultTheme: new ChromaTheme('Newbie').setPatterns(['#eee', '#eee', '#eee', '#eee', '#eee']),
+  defaultTheme: new ChromaTheme('Newbie').setPatterns(ChromaTheme.DEFAULT_PATTERNS),
 
   // built-in themes
   defaultThemes: [
-    new ChromaTheme('Primal').setPatterns(['#eee'   , '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
-    new ChromaTheme('Cherry').setPatterns(['#eee'   , '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
-    new ChromaTheme('Tide').setPatterns(['#eee'   , '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
-    new ChromaTheme('Solemn').setPatterns(['#eee'   , '#bbb'   , '#888'   , '#555'   , '#111'   ]),
+    new ChromaTheme('Primal').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', '#196127']),    // the color used by GitHub
+    new ChromaTheme('Cherry').setPatterns(['#eee', '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
+    new ChromaTheme('Tide')  .setPatterns(['#eee', '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
+    new ChromaTheme('Solemn').setPatterns(['#eee', '#bbb'   , '#888'   , '#555'   , '#111'   ]),
     new ChromaTheme('Flower').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
-    new ChromaTheme('Mario').setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
-    new PosterTheme('Comet').setPoster('posters/qmsht.jpg'),
+    new ChromaTheme('Mario') .setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
+    new PosterTheme('Comet').setPoster('posters/arcarum.png'),
   ],
 
   //////////////////////////////
@@ -47,11 +47,6 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    *     will be sent according to `chrome.storage.sync`
    */
   sendTheme(theme) {
-    function checkTheme() {
-      return (theme instanceof ChromaTheme && theme.patterns && theme.patterns.length > 0) ||
-             (theme instanceof PosterTheme && theme.poster)
-    }
-
     if (theme === null) {
       chrome.storage.sync.get('CGC_selected', obj => {
         let id = obj['CGC_selected']
@@ -60,9 +55,14 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       })
     } else {
 
-      if (!checkTheme()) return
-
       console.log("CGC> Sending theme: " + theme.name)
+      try {
+        theme.validate()
+      } catch (err) {
+        console.error(err.message)
+        return
+      }
+
       chrome.storage.local.set({
         'CGC': theme.toObject()
       }, () => {
@@ -75,12 +75,13 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    * Init `chrome.storage.sync` where permanent user settings are saved
    */
   initStorage() {
+    console.log("CGC> Initializing storage...")
     chrome.storage.sync.set({
       'version': CGC.version,
       'CGC_all': CGC.defaultThemes,
       'CGC_selected': null,
 
-      'next_theme_id': 1
+      'next_theme_id': 0
     })
   },
 
@@ -100,6 +101,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
         CGC.allThemes = obj['CGC_all'].map(obj => Theme.fromObject(obj))
       }
 
+      CGC.allThemes.forEach(theme => {
+        CGC.managers[theme.id] = new ThemeManager(theme)
+      })
+
       cb(obj)
     })
   },
@@ -110,8 +115,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   saveThemes() {
-    chrome.storage.sync.set({'CGC_all': CGC.allThemes})
-    // TODO: Save all themes altogether may have efficiency issue
+    chrome.storage.sync.set({'CGC_all': CGC.allThemes.map(theme => theme.toObject())})
   },
 
   /*
@@ -175,11 +179,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    */
   addNewTheme() {
     if (CGC.allThemes === null) throw new Error("Can not add new theme in to uninitialized allThemes")
-
-    let theme = CGC.defaultTheme.copy()
+    let theme = Theme.createFrom(CGC.defaultTheme)
     CGC.allThemes.push(theme)
     CGC.saveThemes()
-    return theme
+    return CGC.managers[theme.id] = new ThemeManager(theme)
   },
 
   getTheme(id) {
@@ -273,11 +276,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     // Display all predefined images according to `predDir`
     function loadPredefinedImgs(then) {
       CGC.traverseDir(predDir,
-          file => {
+          /* filter */ file => {
             let path = `${predDir}/${file.name}`
             return file.name.match(/png|jpg|jpeg|ico$/) && !CGC.deletedDefaultImgs.includes(path)
           },
-          (file, is_last) => {
+          /* cb */ (file, is_last) => {
             if (file === null) then()   // empty folder
             else {
               let path = `${predDir}/${file.name}`,
@@ -340,7 +343,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   uploadIcon(file, cb) {
     CGC_util.readFileAsDataURL(file, event => {
       CGC_util.resizeImg(event.target.result, 16, 16, dataURL => {
-        let id = Date.now()
+        let id = "usrico_" + Date.now()
         CGC._addToDataset('CGC_upload_icons', [id, dataURL])
         cb(id, dataURL)
       })
@@ -354,7 +357,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   uploadPoster(file, cb) {
     CGC_util.readFileAsDataURL(file, event => {
       CGC_util.resizeAndCropImg(event.target.result, 52*16, 7*16, dataURL => {
-        let id = Date.now()
+        let id = "usrposter_" + Date.now()
         CGC._addToDataset('CGC_upload_posters', [id, dataURL])
         cb(id, dataURL)
       })

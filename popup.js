@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-06 23:13:49
+ * @Last Modified time: 2018-11-09 15:20:13
  */
 
 ////////////////
@@ -43,10 +43,12 @@ function initFootPanel() {
   let addBtn = footPanel.querySelector('.add-btn'),
       undoBtn = footPanel.querySelector('.undo-btn')
   addBtn.addEventListener('click', event => {
-    let theme = CGC.addNewTheme(),
-        manager = CGC.managers[theme.name] = new ThemeManager(theme)
+    let manager = CGC.addNewTheme()
+    manager.bindEvents()
+    CGC._initManagerEventCb(manager)
     themePanel.appendChild(manager.themeBlock)
     manager.setEditMode(true)
+    if (manager.isChroma()) CGC.managers['_CGC_<palette>'].setChained(true)
   })
   undoBtn.addEventListener('click', event => {
     if (undoBtn.classList.contains('warning')) {
@@ -71,8 +73,7 @@ function initPopup() {
   // Theme panel
   {
     let fragment = document.createDocumentFragment()
-    CGC.allThemes.forEach(theme => {
-      let manager = CGC.managers[theme.id] = new ThemeManager(theme)
+    Object.values(CGC.managers).forEach(manager => {
       fragment.appendChild(manager.themeBlock)
     })
     themePanel.appendChild(fragment)
@@ -80,28 +81,11 @@ function initPopup() {
 
   // Click event for theme panel
   // Select the theme when clicking on it
-  themePanel.addEventListener('click', (event) => {
+  themePanel.addEventListener('click', event => {
     let elem = event.target
-    let inEditorArea = false, inBlockArea = false, isEditing = false, isSelected = false
-
-    while (elem !== themePanel) {
-      if (elem.classList.contains('theme-editor')) {
-        inEditorArea = true
-      }
-      if (elem.classList.contains('theme-block')) {
-        // found the block we want
-        inBlockArea = true
-        isEditing = elem.classList.contains('editing')
-        isSelected = elem.classList.contains('selected')
-        break
-      }
-      elem = elem.parentNode
-    }
-
-    if (inBlockArea && !inEditorArea && !isEditing && !isSelected) {
-      // will not select a theme by clicking on its editor area
-      let id = Number.parseInt(elem.dataset.themeId)  // every .theme-block should have a data-theme-id field
-      selectTheme(id)
+    if (['theme-block', 'theme-editor'].some(cls => elem.classList.contains(cls))){
+      elem = findAncestor(elem, 'theme-block', /* guardPred */ e => e === themePanel)
+      selectTheme(Number.parseInt(elem.dataset.themeId)) // every .theme-block should have a data-theme-id field
     }
   })
 
@@ -118,26 +102,35 @@ function initPopup() {
   posterGallery.bindEvents()
 
   // bind event (especially ones which involves non-local elem)
-  Object.values(CGC.managers).filter(man => man instanceof ThemeManager).forEach(manager => {
-    manager.bindEvents()
-
-    // bind events that requires non-local html elements
+  CGC._initManagerEventCb = manager => {
+    // shift galleries when changing theme type
     manager.setEventCb('flipThemeType', targetType => {
       galleries.dataset.typeName = targetType // flip the gallery (will show animation)
     })
-    manager.setEventCb('enterEditMode', _ => {
-      // move galleries right below the theme block
+    // move galleries right below the theme block
+    manager.setEventCb('enterEditMode', () => {
       galleries.dataset.typeName = manager.themeBlock.dataset.typeName
       manager.themeBlock.insertAdjacentElement('afterend', galleries)
-      window.setTimeout(() => galleries.classList.remove('hidden'), 0) // 0 timeout to smooth the animation
+      galleries.classList.remove('hidden')
       CGC.managers['_CGC_<palette>'].reset()
     })
-    manager.setEventCb('leaveEditMode', _ => {
+    // hide galleries when leaving editor mode
+    manager.setEventCb('leaveEditMode', () => {
       galleries.classList.add('hidden')
     })
+    // change hexagon colors when colors are change through color inputs
     manager.setEventCb('colorInput', (ind, colorStr) => {
       if (manager.isEditing()) palette.setHexagonColor(ind, colorStr)
     })
+    // select the hexagon when clicking on the pattern block
+    manager.setEventCb('clickPatternBlock', (ind, patternBlock) => {
+      if (manager.isEditing()) palette.hexagons[ind].click()
+    })
+  }
+
+  Object.values(CGC.managers).filter(man => man instanceof ThemeManager).forEach(manager => {
+    manager.bindEvents()
+    CGC._initManagerEventCb(manager)
   })
 
   // bind tab flipping

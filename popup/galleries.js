@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:09:55
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-06 16:11:04
+* @Last Modified time: 2018-11-08 22:40:37
 */
 
 class IconGallery {
@@ -50,6 +50,9 @@ class PosterGallery {
     this.gallery = galleryElem
 
     CGC.getPosterAsImgs((id, imgElem) => {
+      // add backup incase the poster url is invalid
+      imgElem.style['background-image'] += ", linear-gradient(90deg, white, black)"
+
       imgElem.classList.add('poster')
       galleryElem.appendChild(imgElem)
     })
@@ -65,10 +68,10 @@ class PosterGallery {
 
       manager.theme.setThemeType('poster')
       manager.theme.setPoster(poster.dataset.src)
-      manager.setPoster(poster.style['background-image'])
+      manager.setPoster(poster.style['background-image'], {title: poster.dataset.src})
 
       CGC.saveThemes()
-      if (manager.isSelected()) CGC.sendTheme(theme)
+      if (manager.isSelected()) CGC.sendTheme(manager.theme)
     })
   }
 }

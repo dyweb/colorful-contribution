@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-03-03 15:49:50
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-10-31 16:11:19
+* @Last Modified time: 2018-11-08 22:55:16
 */
 
 /*
@@ -87,6 +87,7 @@ function debounce(func, nowaitIf, idleMs=1000) {
     container.classList.add(type)
     container.appendChild(imgElem)
     imgElem.classList.add('img')
+    // imgElem.setAttribute('title', id)
 
     if (deleteFunc) {
       let delBtn = document.createElement('div')
@@ -198,7 +199,7 @@ function debounce(func, nowaitIf, idleMs=1000) {
       // checked, the url is a valid image, we show the image
       let urlImage = gal.querySelector('.poster.editing .img')
       if (!urlImage) {
-        urlImageId = 'web_img_' + Date.now()
+        urlImageId = 'webimg_' + Date.now()
         urlImage = document.createElement('div')
         appendPoster(urlImageId, urlImage, true)
         urlImage.parentNode.classList.add('editing')

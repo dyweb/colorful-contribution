@@ -22,8 +22,8 @@
   ],
   "options_page": "gallery.html",
   "web_accessible_resources": [
-    "icons/*.png",
-    "posters/*.jpg"
+    "icons/*",
+    "posters/*"
   ],
   "icons": {"128": "icon.png"},
   "homepage_url": "https://github.com/dyweb/colorful-contribution"
