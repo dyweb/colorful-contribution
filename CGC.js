@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-12 23:18:55
+* @Last Modified time: 2018-11-13 10:41:29
 */
 
 // CGC means colorful github contributino
@@ -17,6 +17,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
   version: chrome.runtime.getManifest().version,
 
+  presetDir: 'presets',
+  presetIconDir: 'presets/icons',
+  presetPosterDir: 'presets/posters',
+
   // the default theme when creating new ones
   defaultTheme: new ChromaTheme('Newbie').setPatterns(ChromaTheme.DEFAULT_PATTERNS),
 
@@ -26,9 +30,9 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     new ChromaTheme('Cherry').setPatterns(['#eee', '#f8bbd0', '#f06292', '#e91e63', '#c2185b']),
     new ChromaTheme('Tide')  .setPatterns(['#eee', '#c5cae9', '#9fa8da', '#5c6bc0', '#3949ab']),
     new ChromaTheme('Solemn').setPatterns(['#eee', '#bbb'   , '#888'   , '#555'   , '#111'   ]),
-    new ChromaTheme('Flower').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'icons/flower.png']),
-    new ChromaTheme('Mario') .setPatterns(['#eee', 'icons/mario-coin.png', 'icons/mario-star.png', 'icons/mario-fireflower.png', 'icons/mario-1up.png']),
-    new PosterTheme('Comet').setPoster('posters/arcarum.png'),
+    new ChromaTheme('Flower').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'presets/icons/flower.png']),
+    new ChromaTheme('Mario') .setPatterns(['#eee', 'presets/icons/mario-coin.png', 'presets/icons/mario-star.png', 'presets/icons/mario-fireflower.png', 'presets/icons/mario-1up.png']),
+    new PosterTheme('Comet').setPoster('presets/posters/arcarum.png'),
   ],
 
   //////////////////////////////
@@ -66,7 +70,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       chrome.storage.local.set({
         'CGC': theme.toObject()
       }, () => {
-        chrome.tabs.executeScript({file: 'content.js'})
+        chrome.tabs.executeScript({file: 'content/content.js'}) /* content.css is injected by url, not programmatically */
       })
     }
   },
@@ -345,11 +349,11 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
    *         @params imgElem { HTMLElement }
    */
   getIconAsImgs(predCb, userCb) {
-    CGC._getImgs('icons', 'CGC_upload_icons', predCb, userCb)
+    CGC._getImgs(CGC.presetIconDir, 'CGC_upload_icons', predCb, userCb)
   },
 
   getPosterAsImgs(predCb, userCb) {
-    CGC._getImgs('posters', 'CGC_upload_posters', predCb, userCb)
+    CGC._getImgs(CGC.presetPosterDir, 'CGC_upload_posters', predCb, userCb)
   },
 
   uploadIcon(file, cb) {
@@ -382,12 +386,12 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
   },
 
   recoverIcon() {
-    CGC.setDeletedDefaultImgs( CGC.deletedDefaultImgs.filter(img => !img.startsWith('icons/')) )
+    CGC.setDeletedDefaultImgs( CGC.deletedDefaultImgs.filter(img => !img.startsWith(CGC.presetIconDir)) )
     window.location.reload()
   },
 
   recoverPoster() {
-    CGC.setDeletedDefaultImgs( CGC.deletedDefaultImgs.filter(img => !img.startsWith('posters/')) )
+    CGC.setDeletedDefaultImgs( CGC.deletedDefaultImgs.filter(img => !img.startsWith(CGC.presetPosterDir)) )
     window.location.reload()
   },
 

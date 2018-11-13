@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 10:21:50
+* @Last Modified time: 2018-11-13 10:44:21
 */
 
 /*
@@ -276,7 +276,7 @@ class ChromaTheme extends Theme {
    * 1. solid color
    *   e.g. #ffffff
    * 2. icon file
-   *   e.g. icons/foo.png
+   *   e.g. presets/foo.png
    * 3. data url
    *   e.g. data:image/XXXX
    *
@@ -291,7 +291,7 @@ class ChromaTheme extends Theme {
       ChromaTheme._PATTERN_TYPE_DEFINED = true
     }
 
-    if (pattern.startsWith('icons/')) {
+    if (pattern.startsWith('presets/icons/')) {
       return ChromaTheme.PATTERN_TYPE_ICO
     } else if (pattern.startsWith('data:image/')) {
       return ChromaTheme.PATTERN_TYPE_DAT
@@ -447,7 +447,7 @@ class PosterTheme extends Theme {
   // the .theme property may contain storage item, which can not be rendered directly
   //  the storage are retrieved by waitForStorageCallback
   getPoster() {
-    return this._storage_poster_url || this.patterns
+    return this._storage_poster_url || this.poster
   }
 
   copy() { return new PosterTheme(this.name, this.id).setThresholds(obj.thresholds).setPoster(this.poster) }
@@ -490,7 +490,7 @@ class PosterTheme extends Theme {
       PosterTheme._POSTER_TYPE_DEFINED = true
     }
 
-    if (poster.startsWith('posters/')) {
+    if (poster.startsWith('presets/posters/')) {
       return PosterTheme.POSTER_TYPE_IMG
     } else if (poster.startsWith('storage:')) { // this special header should be given by the code from the gallery part
       return PosterTheme.POSTER_TYPE_STO
@@ -643,7 +643,7 @@ PosterTheme._MASKID = "_CGC-poster-mask"
 PosterTheme._ALPHAS = [ 0.4, 0.55, 0.7, 0.85, 1.0 ] // transparency constants
 PosterTheme._WEB_SUFFIXES = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
 PosterTheme._WEB_URL_REG = new RegExp('https?:\/\/.*\.(?:' + PosterTheme._WEB_SUFFIXES.join('|') + ')', 'i')
-PosterTheme.NOTFOUND_IMG = "notfound.png"
+PosterTheme.NOTFOUND_IMG = "presets/notfound.png"
 
 ChromaTheme.TYPE_STR = 'chroma'
 PosterTheme.TYPE_STR = 'poster'

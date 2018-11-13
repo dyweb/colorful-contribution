@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 10:20:58
+* @Last Modified time: 2018-11-13 13:02:43
 */
 
 class ThemeManager {
@@ -16,7 +16,7 @@ class ThemeManager {
    */
   static getPatternBlockStr(patternStr) {
     let patternType = 'none'
-    if (patternStr.startsWith('icons/') || patternStr.startsWith('data:image/')) patternType = 'icon'
+    if (patternStr.startsWith(CGC.presetIconDir) || patternStr.startsWith('data:image/')) patternType = 'icon'
     else if (patternStr.match(Theme.COLOR_REG)) patternType = 'color'
     else {
       console.error("CGC> Can not parse pattern string: " + patternStr)
@@ -199,8 +199,6 @@ class ThemeManager {
 
       this.colorInput.disabled = this.nameInput.disabled = true // non-editable
 
-      this.themeBlock.parentElement.classList.remove('show-extended-editor') // see _bindEditorMoreBtn
-
       this.callEventCb('leaveEditMode')
     }
   }
@@ -358,6 +356,7 @@ class ThemeManager {
       // Toggling editing mode when click on the edit button
       let editing = this.themeBlock.classList.contains('editing')
       this.setEditMode(!editing)
+      if (editing) this.themeBlock.parentElement.classList.remove('show-extended-editor') // see _bindEditorMoreBtn
     })
   }
 
@@ -405,7 +404,7 @@ class ThemeManager {
 
       // change the theme on the page if the block is selected
       let selected = tb.classList.contains('selected')
-      if (selected) CGC.sendTheme(this.theme)
+      if (selected && !(this.isPoster() && !this.theme.poster)) CGC.sendTheme(this.theme)
 
       this.callEventCb('flipThemeType', targetType)
     })

@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 10:23:17
+* @Last Modified time: 2018-11-13 13:00:35
 */
 
 body {
@@ -358,14 +358,15 @@ body {
   max-height: 0;   /* max-height for animation, hidden by default */
   margin-bottom: 0;
 
+  overflow: hidden;
+
   white-space: nowrap; /* make all the sub galleries in the same line (since they are inline blocks) */
   word-spacing: -0.5em; /* remove the whitespace between inline blocks */
-  transform: translateX(0); /* translateX(0) -> show 1st tab, translateX(-100%) -> show 2nd, etc. */
-  transition: margin-bottom .5s, max-height .5s, transform .5s;
+  transition: margin-bottom 1s, max-height 1s;
 }
 
-#galleries[data-type-name|=icon]   { transform: translateX(0); }
-#galleries[data-type-name|=poster] { transform: translateX(-100%); }
+#galleries[data-type-name|=icon]   > .tab { left: 0; }
+#galleries[data-type-name|=poster] > .tab { left: -100%; }
 
 #theme-panel.show-extended-editor #galleries {
   max-height: 50px;
@@ -376,11 +377,15 @@ body {
   display: inline-block;
   background-color: #eaeaea;
 
+  position: relative;
+  left: 0;
+  transition: left .5s;
+
   height: 100%;
   min-height: 50px; /* same as the max height of galleries, for animation */
   width: 100%;
 
-  overflow-x: hidden;
+  vertical-align: middle;
 
   box-sizing: border-box;
   padding: 0 7px;
@@ -397,7 +402,7 @@ body {
   overflow-y: hidden;
 
   white-space: nowrap;  /* because icons inside will be displayed as inline blocks */
-  line-height: 50px;    /* same as the height as .tab */
+  /* line-height: 50px;    /* same as the height as .tab */
 }
 
 #icon-gallery .icon {
@@ -440,8 +445,8 @@ body {
   overflow-y: hidden;
 
   white-space: nowrap;  /* because posters inside will be displayed as inline blocks */
-  line-height: 50px;
-  vertical-align: middle;
+  /*line-height: 50px;*/
+  /*vertical-align: middle;*/
 }
 
 #poster-gallery .poster {
