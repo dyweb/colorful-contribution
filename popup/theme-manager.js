@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 09:26:46
+* @Last Modified time: 2018-11-13 10:20:58
 */
 
 class ThemeManager {
@@ -74,7 +74,10 @@ class ThemeManager {
           <i class="js-del-cancel-btn fa fa-btn fa-times"  title="Do not delete"></i>
           <i class="js-del-btn far fa-btn fa-trash-alt" title="Delete this theme"></i>
         </div>
-        <i class="js-flip-btn fa fa-btn fa-retweet" title="Switch between theme types"></i>
+        <div class="editor-btn-group js-show-on-editing">
+          <i class="js-flip-btn fa fa-btn fa-retweet" title="Switch between theme types"></i>
+          <i class="js-more-btn fas fa-btn fa-ellipsis-h" title="Delete this theme"></i>
+        </div>
       </div>
     </div>`
 
@@ -103,6 +106,7 @@ class ThemeManager {
     this.delBtn = tb.querySelector('.js-del-btn')
     this.delCancelBtn = tb.querySelector('.js-del-cancel-btn')
     this.flipBtn = tb.querySelector('.js-flip-btn')
+    this.editorMoreBtn = tb.querySelector('.js-more-btn')
     this.nameInput = tb.querySelector('.theme-name input')
     this.colorInput = tb.querySelector('.color-edit-box input')
     this.colorInputBox = tb.querySelector('.color-edit-box')
@@ -122,13 +126,16 @@ class ThemeManager {
   // I need a way to add arbitrary events to arbitary type ('click', 'input', etc.) to arbitary elem (editBtn, delBtn, etc.)
   initEventCbs() {
     this._cbs = {}
-    let allowedEvents = ['colorInput', 'flipThemeType', 'enterEditMode', 'leaveEditMode', 'clickPatternBlock']
+    let allowedEvents = [
+      'colorInput', 'flipThemeType', 'clickPatternBlock',
+      'enterEditMode', 'leaveEditMode'
+    ]
     for (let key of allowedEvents) this._cbs[key] = () => {}
   }
 
   setEventCb(eventName, cb) {
     if (!this._cbs[eventName]) {
-      throw new Error('Unknown manager event name: ' + eventName + '. Allowed: ' + Object.keys(this._cbs))
+      console.error('Unknown manager event name: ' + eventName + '. Allowed: ' + Object.keys(this._cbs))
     }
     this._cbs[eventName] = cb
   }
@@ -178,8 +185,6 @@ class ThemeManager {
       this.themeBlock.classList.add('editing')
 
       this.editBtn.classList.add('activated')
-      // this.editBtn.classList.remove('fa-pencil-alt')
-      // this.editBtn.classList.add('fa-check')
 
       this.colorInput.disabled = this.nameInput.disabled = false  // editable
       this.nameInput.focus()
@@ -191,10 +196,10 @@ class ThemeManager {
       this.themeBlock.classList.remove('editing')
 
       this.editBtn.classList.remove('activated')
-      // this.editBtn.classList.add('fa-pencil-alt')
-      // this.editBtn.classList.remove('fa-check')
 
       this.colorInput.disabled = this.nameInput.disabled = true // non-editable
+
+      this.themeBlock.parentElement.classList.remove('show-extended-editor') // see _bindEditorMoreBtn
 
       this.callEventCb('leaveEditMode')
     }
@@ -292,6 +297,7 @@ class ThemeManager {
     this._bindDelBtn()      // Delete theme
     this._bindEditBtn()     // Toggle edit mode for this theme
     this._bindFlipBtn()     // When a theme block is flipped, it switches between poster theme mode and chroma theme mode
+    this._bindEditorMoreBtn()   // show galleries
     this.patternBlocks.forEach((block, ind) => this._bindPatternBlock(block, ind))
     return this
   }
@@ -402,6 +408,15 @@ class ThemeManager {
       if (selected) CGC.sendTheme(this.theme)
 
       this.callEventCb('flipThemeType', targetType)
+    })
+  }
+
+  _bindEditorMoreBtn() {
+    this.editorMoreBtn.addEventListener('click', event => {
+      event.stopPropagation()
+
+      let activated = this.themeBlock.parentElement.classList.toggle('show-extended-editor')
+      this.callEventCb(activated ? 'showExtendedEditorBtns' : 'hideExtendedEditorBtns')
     })
   }
 

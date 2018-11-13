@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-09 15:22:02
+* @Last Modified time: 2018-11-13 10:23:17
 */
 
 body {
@@ -73,7 +73,7 @@ body {
 .theme-name {
   font-size: 15px;
   text-align: center;
-  width: 30%;
+  width: 27%;
   margin-right: 10px;
 
   position: relative;
@@ -199,7 +199,7 @@ body {
 
 .theme-editor .js-del-btn-group.confirming .js-del-cancel-btn {
   opacity: 1;
-  right: -0.25em;
+  right: -0.1em;
   animation: 0.5s 0.2s forwards lightenGreen;
 }
 
@@ -246,20 +246,32 @@ body {
   height: auto;
 }
 
-/* flip btn is only visible in editor mode */
-.theme-block .js-flip-btn {
+.theme-block .editor-btn-group {
+  padding: 0 1px;
+  user-select: none;
+}
+
+.theme-block .editor-btn-group .fa-btn {
+  padding: 0;
+  margin: 0;
+}
+
+.theme-block.editing .js-edit-btn,
+#theme-panel.show-extended-editor .theme-block.editing .js-more-btn {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000, 0 0 3px #000;
+}
+
+/* editor btns are only visible in editor mode */
+.theme-block .js-show-on-editing {
   max-height: 0;
-  transition: max-height .2s;
+  transition: max-height .1s; /* faster leaving than entering because the btns will have a jitter otherwise */
   overflow-y: hidden;
 }
 
-.theme-block.editing .js-flip-btn {
-  max-height: none;
-}
-
-.theme-block.editing .js-edit-btn {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000, 0 0 3px #000;
+.theme-block.editing .js-show-on-editing {
+  max-height: 100%;
+  transition: max-height .2s;
 }
 
 /*****************
@@ -343,29 +355,29 @@ body {
   height: 50px;
   width: 100%;
 
-  max-height: 50px; /* max-height for animation */
-  margin-bottom: 5px;
+  max-height: 0;   /* max-height for animation, hidden by default */
+  margin-bottom: 0;
 
   white-space: nowrap; /* make all the sub galleries in the same line (since they are inline blocks) */
   word-spacing: -0.5em; /* remove the whitespace between inline blocks */
   transform: translateX(0); /* translateX(0) -> show 1st tab, translateX(-100%) -> show 2nd, etc. */
-  transition: transform .5s;
+  transition: margin-bottom .5s, max-height .5s, transform .5s;
 }
 
 #galleries[data-type-name|=icon]   { transform: translateX(0); }
 #galleries[data-type-name|=poster] { transform: translateX(-100%); }
 
-#galleries.hidden {
-  max-height: 0;
-  margin-bottom: 0;
-  transition: max-height .2s;
+#theme-panel.show-extended-editor #galleries {
+  max-height: 50px;
+  margin-bottom: 5px;
 }
 
 #galleries > .tab {
   display: inline-block;
   background-color: #eaeaea;
 
-  height: 100%; /* size decided by #galleries */
+  height: 100%;
+  min-height: 50px; /* same as the max height of galleries, for animation */
   width: 100%;
 
   overflow-x: hidden;

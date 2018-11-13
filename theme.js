@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 09:28:10
+* @Last Modified time: 2018-11-13 10:21:50
 */
 
 /*
@@ -246,7 +246,7 @@ class ChromaTheme extends Theme {
     }
   }
 
-  setDefault() { this.setPatterns(ChromaTheme.DEFAULT_PATTERNS) }
+  setDefault() { if (!this.patterns) this.setPatterns(ChromaTheme.DEFAULT_PATTERNS) }
 
   copy() { return new ChromaTheme(this.name, this.id).setThresholds(this.thresholds).setPatterns(this.patterns) }
 

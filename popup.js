@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-12 22:46:40
+ * @Last Modified time: 2018-11-13 10:15:48
  */
 
 ////////////////
@@ -113,13 +113,9 @@ function initPopup() {
     manager.setEventCb('enterEditMode', () => {
       galleries.dataset.typeName = manager.themeBlock.dataset.typeName
       manager.themeBlock.insertAdjacentElement('afterend', galleries)
-      galleries.classList.remove('hidden')
       CGC.managers['_CGC_<palette>'].reset()
     })
-    // hide galleries when leaving editor mode
-    manager.setEventCb('leaveEditMode', () => {
-      galleries.classList.add('hidden')
-    })
+
     // change hexagon colors when colors are change through color inputs
     manager.setEventCb('colorInput', (ind, colorStr) => {
       if (manager.isEditing()) palette.setHexagonColor(ind, colorStr)
