@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-09 22:39:44
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-09 10:32:57
+* @Last Modified time: 2018-11-13 22:52:23
 */
 
 // TODO: determine whether or not to put this into a namespace
@@ -17,7 +17,7 @@ function range(beg, end, step = 1) {
 }
 
 function zip(pred, ...arrs){
-  return [...Array(arrs[0].length)].map((val, ind) => pred(...arrs.map(arr => arr[ind])))
+  return [...Array(arrs[0].length)].map((_, ind) => pred(...arrs.map(arr => arr[ind])))
 } 
 
 function findAncestor(elem, elemClass, guardPred=null) {

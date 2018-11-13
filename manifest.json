@@ -20,7 +20,7 @@
       "css": ["content/content.css"]
     }
   ],
-  "options_page": "options/gallery.html",
+  "options_page": "options.html",
   "web_accessible_resources": [
     "presets/*"
   ],

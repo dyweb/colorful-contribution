@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 10:41:29
+* @Last Modified time: 2018-11-13 23:10:09
 */
 
 // CGC means colorful github contributino
@@ -34,6 +34,15 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     new ChromaTheme('Mario') .setPatterns(['#eee', 'presets/icons/mario-coin.png', 'presets/icons/mario-star.png', 'presets/icons/mario-fireflower.png', 'presets/icons/mario-1up.png']),
     new PosterTheme('Comet').setPoster('presets/posters/arcarum.png'),
   ],
+
+  // deprecated default themes from older versions
+  _deletedDefaultThemes: [{
+    name: 'Olympic',
+    colors: ['#0000ff', '#fff000', '#000000', '#096600', '#ff0000']
+  }, {
+    name: 'Oreo',
+    colors: ['#222', '#fff', '#222', '#fff', '#222']
+  }],
 
   //////////////////////////////
   // Themes Management Interface
@@ -99,6 +108,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
         if (obj['version'] !== CGC.version){
           obj = CGC._updateFromOldVersion(obj['version'], obj)
+          // chrome.storage.sync.set(obj)
         }
 
         Theme.nextId = obj['next_theme_id']
@@ -428,6 +438,16 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       // no 'next_theme_id' in version in or before 0.2
       oldData['next_theme_id'] = Theme.nextId
 
+      // remove deleted default themes
+      {
+        let themeEq = (t1, t2) => {
+          return t1.name === t2.name && [...Array(t1.colors.length)].every((_, ind) => t1.colors[ind] === t2.colors[ind])
+        }
+        oldData['CGC_all'] = oldData['CGC_all'].filter(theme => {
+          return !CGC._deletedDefaultThemes.some(deleted => themeEq(deleted, theme))
+        })
+      }
+
       // themes do not have id in or before 0.2
       oldData['CGC_all'].forEach(theme => theme.id = Theme.getId())
 
@@ -436,6 +456,34 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
         let selected = oldData['CGC_all'].find(theme => theme.name === oldData['CGC_selected'])
         oldData['CGC_selected'] = selected ? selected.id : null
       }
+
+      // update each theme
+      oldData['CGC_all'].forEach(theme => {
+        // attr name change from colors to patterns
+        if (theme.colors) {
+          theme.patterns = theme.colors.reverse() // reversed order then
+          delete theme.colors
+        }
+
+        // there was only types of themes then
+        theme.type = ChromaTheme.TYPE_STR
+
+        // preset resources path change
+        theme.patterns.forEach((pat, ind) => {
+          if (pat.startsWith('icons/')) theme.patterns[ind] = pat.replace(/^icons/, CGC.presetIconDir)
+        })
+
+        // no dynamic thresholds then
+        theme.thresholds = Theme.DETECTED_THRESHOLDS
+      })
+
+      // handle user-uploaded img
+      oldData['CGC_user_icons'].forEach(data => { // old key is CGC_user_icons
+        let [id, dataURL] = data
+        id = "usrico_" + id
+        CGC._addToDataset('CGC_upload_icons', [id, dataURL])
+      })
+      delete oldData['CGC_user_icons']
 
     } else {
       throw new Error(`CGC> unknown version: ${oldVersion}`)
