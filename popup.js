@@ -2,7 +2,7 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-09 15:20:13
+ * @Last Modified time: 2018-11-12 22:46:40
  */
 
 ////////////////
@@ -83,8 +83,10 @@ function initPopup() {
   // Select the theme when clicking on it
   themePanel.addEventListener('click', event => {
     let elem = event.target
-    if (['theme-block', 'theme-editor'].some(cls => elem.classList.contains(cls))){
-      elem = findAncestor(elem, 'theme-block', /* guardPred */ e => e === themePanel)
+    if (['theme-block', 'theme-editor', 'theme-name'].some(
+        cls => findAncestor(elem, cls, /* guardPred */ e => e === themePanel)
+      )){
+      elem = findAncestor(elem, 'theme-block')
       selectTheme(Number.parseInt(elem.dataset.themeId)) // every .theme-block should have a data-theme-id field
     }
   })

@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-09 15:34:06
+* @Last Modified time: 2018-11-12 23:18:55
 */
 
 // CGC means colorful github contributino
@@ -101,11 +101,23 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
         CGC.allThemes = obj['CGC_all'].map(obj => Theme.fromObject(obj))
       }
 
-      CGC.allThemes.forEach(theme => {
-        CGC.managers[theme.id] = new ThemeManager(theme)
-      })
+      // theme may contains storage labels
+      // When rendering popup (only in which case this function get called)
+      //  we prepare all necessary storage stuff before hand
+      let whenThemeInited = theme => CGC.managers[theme.id] = new ThemeManager(theme),
+          uninitedThemeCnt = CGC.allThemes.length
 
-      cb(obj)
+      CGC.allThemes.forEach(theme => {
+        let needWait = theme.waitForStorageCallback(() => {
+          whenThemeInited(theme)
+          // call cb when all themes inited
+          if (--uninitedThemeCnt == 0) cb(obj)
+        })
+        if (!needWait) {
+          whenThemeInited(theme)
+          if (--uninitedThemeCnt == 0) cb(obj)
+        }
+      })
     })
   },
 
@@ -302,7 +314,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
           let img = CGC.urlToImg(url)
           // add dataset for content script
           // do not save url directly because that may be very long
-          img.dataset.src = 'url:' + id
+          img.dataset.src = 'storage:' + id
           userCb(id, img)
         }
       })

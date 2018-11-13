@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-09 13:35:41
+* @Last Modified time: 2018-11-13 09:28:10
 */
 
 /*
@@ -48,6 +48,7 @@ class Theme {
    * The `__proto__` of the instance will be changed
    */
   setThemeType(type) {
+    if (this.type === type.toLowerCase()) return // type not changed
     this.type = type.toLowerCase()
     this.__proto__ = Theme.getClass(this.type).prototype
     this.setDefault()
@@ -193,6 +194,20 @@ class Theme {
   static clean(contribChart, themeType, themeTypeUnchanged) {
     this.getClass(themeType).clean(contribChart, themeTypeUnchanged)
   }
+
+  static getUploadedIcons(cb) {
+    chrome.storage.local.get({['CGC_upload_icons']: []}, obj => {
+      let uploaded = obj['CGC_upload_icons'] // something like [[<id>, <dataurl>], [<id>, <dataurl>], ...]
+      cb(uploaded)
+    })
+  }
+
+  static getUploadedPosters(cb) {
+    chrome.storage.local.get({['CGC_upload_posters']: []}, obj => {
+      let uploaded = obj['CGC_upload_posters'] // something like [[<id>, <dataurl>], [<id>, <dataurl>], ...]
+      cb(uploaded)
+    })
+  }
 }
 
 // thresholds will be detected when `CGC.detectContribLevelThresholds` is triggered
@@ -219,6 +234,17 @@ class ChromaTheme extends Theme {
     return this
   }
   setPatterns(patterns) { this.patterns = patterns; return this }
+
+  // the .theme property may contain storage item, which can not be rendered directly
+  //  the storage are retrieved by waitForStorageCallback
+  getPatterns() {
+    if (!this._storage_pattern_urls) {
+      return this.patterns
+    } else {
+      let ret = this.patterns.map((pat, ind) => this._storage_pattern_urls[ind] || pat)
+      return ret
+    }
+  }
 
   setDefault() { this.setPatterns(ChromaTheme.DEFAULT_PATTERNS) }
 
@@ -261,6 +287,7 @@ class ChromaTheme extends Theme {
       ChromaTheme.PATTERN_TYPE_COL = 'color'
       ChromaTheme.PATTERN_TYPE_ICO = 'icon'
       ChromaTheme.PATTERN_TYPE_DAT = 'dataURL'
+      ChromaTheme.PATTERN_TYPE_STO = 'storage' // the data is in storage and not retrieved yet
       ChromaTheme._PATTERN_TYPE_DEFINED = true
     }
 
@@ -268,21 +295,61 @@ class ChromaTheme extends Theme {
       return ChromaTheme.PATTERN_TYPE_ICO
     } else if (pattern.startsWith('data:image/')) {
       return ChromaTheme.PATTERN_TYPE_DAT
+    } else if (pattern.startsWith('storage:')) {
+      return ChromaTheme.PATTERN_TYPE_STO
     } else if (pattern.match(Theme.COLOR_REG)) {
       return ChromaTheme.PATTERN_TYPE_COL
     }
   }
 
+  waitForStorageCallback(cb) {
+    // do not need to wait
+    if (this._storage_pattern_urls) return false
+
+    let patTypes = this.patterns.map(ChromaTheme.getPatternType)
+    if (patTypes.every(t => t !== ChromaTheme.PATTERN_TYPE_STO)) return false  // no pattern needs to be read from storage
+
+    this._storage_pattern_urls = []
+    let fileIds = this.patterns.map((pat, ind) => {
+      if (patTypes[ind] === ChromaTheme.PATTERN_TYPE_STO) {
+        return pat.slice(8) // remove leading 'storage:'
+      } else {
+        return null
+      }
+    })
+
+    Theme.getUploadedIcons(uploaded => {
+      this.patterns.forEach((pat, ind) => {
+        if (!fileIds[ind]) return
+        let result = uploaded.find(([id, url]) => id == fileIds[ind])
+
+        if (!result) {
+          console.warn("Unknonw icon: " + pat)
+        } else {
+          this._storage_pattern_urls[ind] = result[1]
+        }
+      })
+
+      cb()
+    })
+
+    return true
+  }
+
   setHTMLLegends(contribChart) {
+    let cb = this.setHTMLLegends.bind(this, contribChart) // call itself again
+    if (this.waitForStorageCallback(cb)) return
+
     let legends = contribChart.querySelectorAll('.contrib-legend ul.legend > li')
+    let patterns = this.getPatterns()
 
     // Check for the number of legends
-    if (legends.length != this.patterns.length) {
-      throw new Error('ChromaTheme> There are ' + legends.length + ' legends but ' + this.patterns.length + ' theme')
+    if (legends.length != patterns.length) {
+      throw new Error('ChromaTheme> There are ' + legends.length + ' legends but ' + patterns.length + ' theme')
     }
 
     for (let ind = 0; ind < legends.length; ++ind) {
-      let [pat, leg] = [ this.patterns[ind], legends[ind] ]
+      let [pat, leg] = [ patterns[ind], legends[ind] ]
       let css = null
 
       switch (ChromaTheme.getPatternType(pat)) {
@@ -308,7 +375,6 @@ class ChromaTheme extends Theme {
           throw new Error("ChromaTheme> Can not parse pattern: " + pat)
       }
 
-
       for (let key in css) {
         leg.style[key] = css[key]
       }
@@ -316,11 +382,15 @@ class ChromaTheme extends Theme {
   }
 
   setHTMLDayBlocks(contribChart) {
+    let cb = this.setHTMLDayBlocks.bind(this, contribChart) // call itself again
+    if (this.waitForStorageCallback(cb)) return
+
     let days = contribChart.querySelectorAll('.calendar-graph rect.day')
+    let patterns = this.getPatterns()
 
     for (let rectElem of days) {
       let _pat_ind = this._contribCntToInd(rectElem.dataset.count)
-      let pattern = this.patterns[_pat_ind]
+      let pattern = patterns[_pat_ind]
 
       let _prev = rectElem.previousElementSibling
       let imgElem = (_prev && _prev.matches('image')) ? _prev : null
@@ -353,7 +423,7 @@ class ChromaTheme extends Theme {
           break
 
         default:
-          throw new Error("ChromaTheme> Can not parse pattern: " + pat)
+          console.error("ChromaTheme> Can not parse pattern: " + pattern)
       }
     }
   }
@@ -373,6 +443,12 @@ class PosterTheme extends Theme {
   constructor(name, id=null) { super(id, name, PosterTheme.TYPE_STR) }
 
   setPoster(poster) { this.poster = poster; return this }
+
+  // the .theme property may contain storage item, which can not be rendered directly
+  //  the storage are retrieved by waitForStorageCallback
+  getPoster() {
+    return this._storage_poster_url || this.patterns
+  }
 
   copy() { return new PosterTheme(this.name, this.id).setThresholds(obj.thresholds).setPoster(this.poster) }
 
@@ -408,51 +484,49 @@ class PosterTheme extends Theme {
    */
   static getPosterType(poster) {
     if (!PosterTheme._POSTER_TYPE_DEFINED) {
-      PosterTheme.POSTER_TYPE_NONE = 'none'
       PosterTheme.POSTER_TYPE_IMG = 'image'
+      PosterTheme.POSTER_TYPE_STO = 'storage' // the data is in storage and not retrieved yet
       PosterTheme.POSTER_TYPE_URL = 'url' // may be web url or dataURL
       PosterTheme._POSTER_TYPE_DEFINED = true
     }
 
     if (poster.startsWith('posters/')) {
       return PosterTheme.POSTER_TYPE_IMG
-    } else if (poster.startsWith('url:')) { // this special header should be given by the code from the gallery part
-      return PosterTheme.POSTER_TYPE_URL
+    } else if (poster.startsWith('storage:')) { // this special header should be given by the code from the gallery part
+      return PosterTheme.POSTER_TYPE_STO
     } else {
-      return PosterTheme.POSTER_TYPE_NONE
+      return PosterTheme.POSTER_TYPE_URL
     }
   }
 
   getPosterUrl() {
     switch (PosterTheme.getPosterType(this.poster)) {
       case PosterTheme.POSTER_TYPE_IMG: return chrome.extension.getURL(this.poster)
-      case PosterTheme.POSTER_TYPE_URL: return this._retrieved_poster_url
+      case PosterTheme.POSTER_TYPE_STO: return this._storage_poster_url
         // will be null if `waitForStorageCallback` haven't been called
+      case PosterTheme.POSTER_TYPE_URL: return this.poster
       default: throw new Error("PosterTheme> Can not parse poster: " + this.poster)
     }
   }
 
   waitForStorageCallback(cb) {
-    if (PosterTheme.getPosterType(this.poster) != PosterTheme.POSTER_TYPE_URL || this._retrieved_poster_url) {
+    if (this._storage_poster_url || PosterTheme.getPosterType(this.poster) != PosterTheme.POSTER_TYPE_STO) {
       return false // do not need to wait
     }
 
-    let fileId = this.poster.slice(4) // remove leading 'url:'
-    chrome.storage.local.get({'CGC_upload_posters': []}, obj => {
-      let uploaded = obj['CGC_upload_posters'] // something like [[<id>, <dataurl>], [<id>, <dataurl>], ...]
-      let result = uploaded.find(([id, url]) => id == fileId)
+    Theme.getUploadedPosters(uploaded => {
+      let fileId = this.poster.slice(8), // remove leading 'storage:'
+          result = uploaded.find(([id, url]) => id == fileId)
       if (!result) {
         console.warn("Unknown poster: " + this.poster)
-        this._retrieved_poster_url = null
+        this._storage_poster_url = null
       } else {
-        this._retrieved_poster_url = result[1] // will be used by `getPosterUrl`
+        this._storage_poster_url = result[1] // will be used by `getPosterUrl`
       }
-
       cb()
     })
     return true
   }
-
 
   setHTMLLegends(contribChart) {
     let cb = this.setHTMLLegends.bind(this, contribChart) // call itself again

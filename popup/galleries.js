@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:09:55
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-08 22:40:37
+* @Last Modified time: 2018-11-09 16:50:41
 */
 
 class IconGallery {
@@ -31,16 +31,8 @@ class IconGallery {
         return
       }
 
-      // set the content of patternBlock to icon
-      let patternBlock = manager.getEditingPatternBlock()
-
-      patternBlock.style = `background-image: url(${icon.dataset.src})`
-      manager.colorInput.value = '<icon>'
-
       manager.theme.setThemeType('chroma')
-      manager.theme.setPattern(manager.getEditingPatternBlockIdx(), icon.dataset.src)
-      CGC.saveThemes()
-      if (manager.isSelected()) CGC.sendTheme(manager.theme)
+      manager.setPatternToIcon(manager.getEditingPatternBlockIdx(), /* label= */ icon.dataset.src, /* cssStr= */ icon.style['background-image'])
     })
   }
 }

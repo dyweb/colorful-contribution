@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-06 10:38:32
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-08 23:17:19
+* @Last Modified time: 2018-11-13 09:21:21
 */
 
 /*
@@ -61,6 +61,7 @@ class Palette {
     }
 
     this.setSelctedHexagonInd(lastInd)
+    this.setChained(false)
     this.setChainedRange(firstInd, lastInd)
 
     // init sliders

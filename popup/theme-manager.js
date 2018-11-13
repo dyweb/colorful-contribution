@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-09 16:29:26
+* @Last Modified time: 2018-11-13 09:26:46
 */
 
 class ThemeManager {
@@ -16,11 +16,10 @@ class ThemeManager {
    */
   static getPatternBlockStr(patternStr) {
     let patternType = 'none'
-
     if (patternStr.startsWith('icons/') || patternStr.startsWith('data:image/')) patternType = 'icon'
     else if (patternStr.match(Theme.COLOR_REG)) patternType = 'color'
     else {
-      throw new Error("CGC> Can not parse pattern string: " + patternStr)
+      console.error("CGC> Can not parse pattern string: " + patternStr)
     }
 
     return {
@@ -32,9 +31,11 @@ class ThemeManager {
 
   static getThemeBlock(theme) {
     let [patternBlocksStr, posterBlockStr, typeStr] = function() {
-      let pat = theme.patterns || ChromaTheme.DEFAULT_PATTERNS
+      let pat = theme.patterns || ChromaTheme.DEFAULT_PATTERNS,
+          realPat = theme.patterns ? theme.getPatterns() : pat
+          // pat are file identifiers, realPat are ready for css, they are always identical except for dataURL icons
       let posStr = theme.poster ?
-        `<div style="background-image: url(${theme.poster}), url(${PosterTheme.NOTFOUND_IMG})" title="${theme.poster}"></div>` :
+        `<div style="background-image: url(${theme.getPoster()}), url(${PosterTheme.NOTFOUND_IMG})" title="${theme.poster}"></div>` :
         '<span>NONE</span>'
         // other css propoerties will be handled by popup.css
 
@@ -45,7 +46,7 @@ class ThemeManager {
         typeStr = 'Type: Poster'
       }
 
-      let patStr = pat.reduce((acc, cur) => acc + ThemeManager.getPatternBlockStr(cur), '')
+      let patStr = realPat.reduce((acc, cur) => acc + ThemeManager.getPatternBlockStr(cur), '')
       patStr = `
         ${patStr}
         <div class="color-edit-box underline hidden" data-idx="0">
@@ -95,21 +96,6 @@ class ThemeManager {
 
     // producing html
     let tb = this.themeBlock = ThemeManager.getThemeBlock(theme)
-
-    // NOTE: theme.poster may be just an label pointing into the storage, instead of the url itself
-    // Thanks to storage retrieval being asynchronous, we have to rewrite the url afterwards
-    // I have to expose the supposedly inner class PosterTheme to this file, which is stink.
-    if (theme.poster) {
-      theme.waitForStorageCallback(() => {
-        let url = theme.getPosterUrl()
-        if (url) {
-          tb.querySelector('.theme-poster div').style = `background-image: url(${url}), url(${PosterTheme.NOTFOUND_IMG})`
-        } else {
-          // may happen when the selected poster has already been deleted
-          tb.querySelector('.theme-poster').innerHTML = "<span>NONE</span>"
-        }
-      })
-    }
 
     // identify components
     this.editBtn = tb.querySelector('.js-edit-btn')
@@ -239,6 +225,32 @@ class ThemeManager {
    */
   getPatternBlockColors() {
      return this.patternBlocks.map(pb => pb.style['background-color'])
+  }
+
+  /*
+   * Set one of the patterns to be icon
+   * @param { Int } ind
+   *    The index of the pattern block to be modified
+   * @param { String } iconLabel
+   *    The label for the icon to be saved into Theme
+   *    For predefined icons, it is the file path
+   *    For user-uploaded icons (which stored as probably long dataurl), it is the icon id
+   * @param { String } cssStr
+   *    The value which can be directly used as css
+   */
+  setPatternToIcon(ind, iconLabel, cssStr) {
+    this.theme.setPattern(ind, iconLabel)
+
+    let pb = this.patternBlocks[ind]
+    pb.style['background-color'] = ''
+    pb.style['background-image'] = cssStr
+
+    if (ind === this.getEditingPatternBlockIdx()) this.colorInput.value = '<icon>'
+
+    CGC.saveThemes()
+    if (this.isSelected()) CGC.sendTheme(manager.theme)
+
+    this.callEventCb('patternChanged', ind, iconLabel)
   }
 
   /*
