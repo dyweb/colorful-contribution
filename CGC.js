@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-14 18:52:22
+* @Last Modified time: 2018-11-14 19:11:14
 */
 
 // CGC means colorful github contributino
@@ -464,11 +464,14 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
 
       // update each theme
       oldData['CGC_all'].forEach(theme => {
+        // no dynamic thresholds then
+        theme.thresholds = Theme.DETECTED_THRESHOLDS
+
+        if (!theme.colors) return
+
         // attr name change from colors to patterns
-        if (theme.colors) {
-          theme.patterns = theme.colors.reverse() // reversed order then
-          delete theme.colors
-        }
+        theme.patterns = theme.colors.reverse() // reversed order then
+        delete theme.colors
 
         // there was only types of themes then
         theme.type = ChromaTheme.TYPE_STR
@@ -477,13 +480,10 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
         theme.patterns.forEach((pat, ind) => {
           if (pat.startsWith('icons/')) theme.patterns[ind] = pat.replace(/^icons/, CGC.presetIconDir)
         })
-
-        // no dynamic thresholds then
-        theme.thresholds = Theme.DETECTED_THRESHOLDS
       })
 
       // handle user-uploaded img
-      oldData['CGC_user_icons'].forEach(data => { // old key is CGC_user_icons
+      oldData['CGC_user_icons'] && oldData['CGC_user_icons'].forEach(data => { // old key is CGC_user_icons
         let [id, dataURL] = data
         id = "usrico_" + id
         CGC._addToDataset('CGC_upload_icons', [id, dataURL])
