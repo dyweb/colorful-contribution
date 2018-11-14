@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-14 11:05:13
+* @Last Modified time: 2018-11-14 18:52:22
 */
 
 // CGC means colorful github contributino
@@ -32,7 +32,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
     new ChromaTheme('Solemn').setPatterns(['#eee', '#bbb'   , '#888'   , '#555'   , '#111'   ]),
     new ChromaTheme('Flower').setPatterns(['#eee', '#c6e48b', '#7bc96f', '#239a3b', 'presets/icons/flower.png']),
     new ChromaTheme('Mario') .setPatterns(['#eee', 'presets/icons/mario-coin.png', 'presets/icons/mario-star.png', 'presets/icons/mario-fireflower.png', 'presets/icons/mario-1up.png']),
-    new PosterTheme('Comet').setPoster('presets/posters/arcarum.png'),
+    new PosterTheme('Ravine').setPoster('presets/posters/arcarum.png'),
   ],
 
   // deprecated default themes from older versions
