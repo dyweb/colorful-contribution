@@ -19,16 +19,16 @@ Sorry, but for now, it has not yet been published to Chrome Web Store.
 
 * Tweak now and then
 
-![screenshot](.github/screenshot-customization.png)
+![screenshot](.github/screenshot-customization-v2.png)
 
 * New icons at hand
 
 ![screenshot](.github/screenshot-gallery.png)
 
-# Todo
-- [x] Support transition
-- [x] Support icon day blocks
-- [x] Add UI for icons
-- [ ] Support images comprised of multiple / all blocks
-- [ ] Test on various devices
-- [ ] Image exportation
+* Hang your wallpaper
+
+![screenshot](.github/screenshot-poster.png)
+
+* Loot the net
+
+![screenshot](.github/screenshot-gallery-poster.png)
