@@ -2,13 +2,14 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 13:00:35
+* @Last Modified time: 2018-11-14 10:12:12
 */
 
 body {
   background-color: #ddd;
   margin: 0 0 -10px; /* -10px for foot panel */
   width: 215px;
+  min-height: 600px; /* Expand the height to the max so that the window-height-change animation does not get janky */
 }
 
 /*****************
@@ -284,11 +285,14 @@ body {
   background-color: #eee;
   height: 7px;
   box-shadow: 0 0 3px #aaa;
-  margin: 1px;
   transition: height .2s;
   overflow-y: hidden;
 
   text-align: center;
+  margin-bottom: 30px;
+    /* a large margin bottom so that
+      users can always scroll the focused area
+      away from the bottom of the screen */
 }
 
 #foot-panel > .btn {
@@ -362,7 +366,7 @@ body {
 
   white-space: nowrap; /* make all the sub galleries in the same line (since they are inline blocks) */
   word-spacing: -0.5em; /* remove the whitespace between inline blocks */
-  transition: margin-bottom 1s, max-height 1s;
+  transition: margin-bottom .7s, max-height .7s;
 }
 
 #galleries[data-type-name|=icon]   > .tab { left: 0; }
@@ -402,7 +406,9 @@ body {
   overflow-y: hidden;
 
   white-space: nowrap;  /* because icons inside will be displayed as inline blocks */
-  /* line-height: 50px;    /* same as the height as .tab */
+  line-height: 50px;    /* same as the height as .tab */
+
+  user-select: none;
 }
 
 #icon-gallery .icon {

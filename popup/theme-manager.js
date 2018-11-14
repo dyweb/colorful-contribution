@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 13:02:43
+* @Last Modified time: 2018-11-14 10:04:53
 */
 
 class ThemeManager {
@@ -415,7 +415,6 @@ class ThemeManager {
       event.stopPropagation()
 
       let activated = this.themeBlock.parentElement.classList.toggle('show-extended-editor')
-      this.callEventCb(activated ? 'showExtendedEditorBtns' : 'hideExtendedEditorBtns')
     })
   }
 
