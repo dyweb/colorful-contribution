@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-05 08:11:35
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 10:44:21
+* @Last Modified time: 2018-11-14 17:49:29
 */
 
 /*
@@ -136,6 +136,13 @@ class Theme {
       thresholds[colorInd][1] = max ? Math.max(max, count) : count
     })
 
+    // by the way, we also detect the rect size and gap
+    {
+      let width = days[0].getAttribute('width')
+      let gap = [width, days[0].getAttribute('y'), days[1].getAttribute('y')].map(x => parseInt(x))
+      Theme.DETECTED_RECT_SIZE = [gap[0], gap[2] - gap[1]]
+    }
+
     Theme._THRESHOLDS_DETECTED = true
     Theme.DETECTED_THRESHOLDS = thresholds
     return thresholds
@@ -221,6 +228,7 @@ class Theme {
 //     Theme.DETECTED_THRESHOLDS has already been changed. Directly use the value
 Theme.DEFAULT_THRESHOLDS = [[0, 0], [1, 5], [6, 10], [11, Number.POSITIVE_INFINITY]]
 Theme.DETECTED_THRESHOLDS = "<to_be_detected>"
+Theme.DETECTED_RECT_SIZE = [10, 12]
 Theme.nextId = 0
 Theme.COLOR_REG = /^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$|^rgb\(\w+,?\s*\w+,?\s*\w+\s*\)$|^hsl\(\w+,?\s*\w+(\.\w+)?\%,?\s*\w+(\.\w+)?\%\s*\)$/
   // e.g. '#1ad', '#11AAdd', `rgb(1,2,3)', 'hsl(1, 1%, 2%)'
@@ -351,6 +359,8 @@ class ChromaTheme extends Theme {
     for (let ind = 0; ind < legends.length; ++ind) {
       let [pat, leg] = [ patterns[ind], legends[ind] ]
       let css = null
+
+      leg.style.cssText = ''
 
       switch (ChromaTheme.getPatternType(pat)) {
         case ChromaTheme.PATTERN_TYPE_COL:
@@ -540,6 +550,8 @@ class PosterTheme extends Theme {
       let [leg, alpha] = [ legends[ind], PosterTheme._ALPHAS[ind] ]
       let x = ind * 15
 
+      leg.style.cssText = ''
+
       let css = {
         'opacity': `${alpha}`,
         'background-image': `url(${this.getPosterUrl()})`,
@@ -562,8 +574,8 @@ class PosterTheme extends Theme {
 
     // enlarge the blocks to make the poster more visible
     Array.from(svg.querySelectorAll('rect.day')).forEach(elem => {
-      elem.setAttribute('width', 12)
-      elem.setAttribute('height', 12)
+      elem.setAttribute('width', Theme.DETECTED_RECT_SIZE[1]) // larger rect to make the canvas seamless
+      elem.setAttribute('height', Theme.DETECTED_RECT_SIZE[1])
     })
 
     // insert our poster
@@ -617,8 +629,8 @@ class PosterTheme extends Theme {
     if (posterGroup) posterGroup.parentNode.removeChild(posterGroup)
 
     Array.from(contribChart.querySelectorAll('rect.day')).forEach(elem => {
-      elem.setAttribute('width', 10)
-      elem.setAttribute('height', 10)
+      elem.setAttribute('width', Theme.DETECTED_RECT_SIZE[0]) // reset to the original value
+      elem.setAttribute('height', Theme.DETECTED_RECT_SIZE[0])
     })
   }
 

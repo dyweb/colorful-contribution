@@ -2,8 +2,9 @@
  * @Author: gigaflower
  * @Date:   2017-11-19 13:55:57
  * @Last Modified by:   gigaflw
- * @Last Modified time: 2018-11-09 16:07:24
+ * @Last Modified time: 2018-11-14 10:29:18
  *
+ * TODO: this doc is used in version 0.2.1 and is now deprecated
  * This file is intended as content script for github contribution page
  *
  * For the script to work, the html is assumed to

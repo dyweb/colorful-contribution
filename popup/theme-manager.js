@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-11-05 15:11:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-14 10:04:53
+* @Last Modified time: 2018-11-14 17:47:39
 */
 
 class ThemeManager {
@@ -251,7 +251,7 @@ class ThemeManager {
     if (ind === this.getEditingPatternBlockIdx()) this.colorInput.value = '<icon>'
 
     CGC.saveThemes()
-    if (this.isSelected()) CGC.sendTheme(manager.theme)
+    if (this.isSelected()) CGC.sendTheme(this.theme)
 
     this.callEventCb('patternChanged', ind, iconLabel)
   }

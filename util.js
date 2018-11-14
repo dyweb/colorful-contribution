@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-09-09 22:39:44
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 22:52:23
+* @Last Modified time: 2018-11-14 11:03:42
 */
 
 // TODO: determine whether or not to put this into a namespace
@@ -27,6 +27,24 @@ function findAncestor(elem, elemClass, guardPred=null) {
     elem = elem.parentNode
   }
   return null
+}
+
+// Compare vesion string like "0.2" > "0.1.0"
+// Number and dot only, no letters considered
+// @return 1 if lhs > rhs, -1 is lhs < rhs, 0 if lhs == rhs
+function versionCmp(lhs, rhs) {
+  [lhs, rhs] = [lhs, rhs].map(str => str.split('.').map(x => parseInt(x)))
+
+  {
+    let [shorter, longer] = lhs.length > rhs.length ? [rhs, lhs] : [lhs, rhs]
+    shorter.splice(shorter.length, 0, ...[...Array(longer.length - shorter.length)].map(_ => 0)) // pad with 0
+  }
+
+  for (let ind = 0, len = lhs.length; ind < len; ++ind) {
+    if (lhs[ind] > rhs[ind]) return 1
+    else if (lhs[ind] < rhs[ind]) return -1
+  }
+  return 0
 }
 
 /*****************

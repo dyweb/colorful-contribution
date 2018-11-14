@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-22 21:46:54
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-13 23:10:09
+* @Last Modified time: 2018-11-14 11:05:13
 */
 
 // CGC means colorful github contributino
@@ -106,9 +106,14 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
         CGC.allThemes = CGC.defaultThemes
       } else {
 
-        if (obj['version'] !== CGC.version){
+        let _versionCmp = versionCmp(obj['version'], CGC.version)
+        if (_versionCmp == 1){
+          // got newr version from user data than the code, theoretically impossible (except when developing)
+          console.warn(`Got new version ${obj['version']} from user data than extension version ${CGC.version}. Are you using the old version?`)
+        } else if (_versionCmp == -1){
+          // upgrade from older version
           obj = CGC._updateFromOldVersion(obj['version'], obj)
-          // chrome.storage.sync.set(obj)
+          chrome.storage.sync.set(obj)
         }
 
         Theme.nextId = obj['next_theme_id']
@@ -486,7 +491,7 @@ window.CGC = {  // ok to add a variable to `window` since this `window` is priva
       delete oldData['CGC_user_icons']
 
     } else {
-      throw new Error(`CGC> unknown version: ${oldVersion}`)
+      throw new Error(`CGC> Can not upgrade from ${oldVersion} to unknown version: ${CGC.version}`)
     }
 
     chrome.storage.local.clear() // local are used to save temp data for html rendering, clear them anyway
