@@ -2,7 +2,7 @@
 * @Author: gigaflw
 * @Date:   2018-01-25 16:34:29
 * @Last Modified by:   gigaflw
-* @Last Modified time: 2018-11-14 10:12:12
+* @Last Modified time: 2018-11-14 18:48:53
 */
 
 body {
@@ -289,10 +289,6 @@ body {
   overflow-y: hidden;
 
   text-align: center;
-  margin-bottom: 30px;
-    /* a large margin bottom so that
-      users can always scroll the focused area
-      away from the bottom of the screen */
 }
 
 #foot-panel > .btn {
@@ -620,4 +616,18 @@ body {
 .palette-btns .fa-btn.activated {
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000, 0 0 3px #000;
+}
+
+/*****************
+ * Footer
+ *****************/
+#footer {
+  font-family: "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 30px;
+  user-select: none;
+  color: rgba(20, 30, 50, 0.5);
+  margin: 45px 0;
 }
